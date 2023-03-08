@@ -1,4 +1,4 @@
-//! The [`AbstractExchange`] trait represent common functionality all exchanges should have.
+//! The [`AbstractExchange`] trait represents common functionality all exchanges should have.
 
 use crate::coin;
 use rand;
