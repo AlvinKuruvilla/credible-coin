@@ -1,0 +1,9 @@
+[package]
+name = "credible-coin"
+version = "0.1.0"
+edition = "2021"
+description = "A zero-knowledge proof system to asses cryptocurrency exchange solvency."
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
