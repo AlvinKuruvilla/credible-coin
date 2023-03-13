@@ -9,3 +9,4 @@ description = "A zero-knowledge proof system to asses cryptocurrency exchange so
 [dependencies]
 secp256k1 =  {version = "0.26.0", features = ["rand"]}
 rand = "0.8.5"
+sha2 = "0.10.6"

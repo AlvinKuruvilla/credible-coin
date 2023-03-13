@@ -12,7 +12,7 @@ CredibleCoin can be broken into the following core modules:
 - [`utils/`](src/utils/): a collection of utilities used by the library
   to get up and running with.
 - [`accumulator`](src/accumulator/): CredibleCoin's accumulator algorithms:
-  - [`merkle`](src/accumulator/merkle/): A modified merkle-tree data structure with a MerkleNode wrapper type
+  - [`merkle`](src/accumulator/merkle/): A simple merkle-tree data structure
   - [`binary accumulator`](src/accumulator/binacc/): A binary accumulator module
 
 ## Running CredibleCoin

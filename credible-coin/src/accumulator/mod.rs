@@ -1,5 +1,11 @@
 //! An accumulator is a one way hash function that certifies that candidates are a member of a set without revealing the individual members of the set.
+//!
+//! This crate implements 2 types of accumulators:
+//! 1. Merkle Trees
+//! 2. Binary Accumulators
 use crate::coin;
+/// A relatively simple merkle-tree Implementation which is a slightly modified version of [toy-merkle](https://github.com/samvrlewis/toy-merkle)
+pub mod merkle;
 /// A blanket trait type representing a "proof of membership". A membership proof is an interactive proof for a statement of the form x in L, where L is some formal language.
 pub trait MembershipProof {}
 /// Common Functionality an accumulator should have
