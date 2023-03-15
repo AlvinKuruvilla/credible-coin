@@ -6,6 +6,7 @@
 use crate::coin;
 /// A relatively simple merkle-tree Implementation which is a slightly modified version of [toy-merkle](https://github.com/samvrlewis/toy-merkle)
 pub mod merkle;
+pub mod uint_typecast;
 /// A blanket trait type representing a "proof of membership". A membership proof is an interactive proof for a statement of the form x in L, where L is some formal language.
 pub trait MembershipProof {}
 /// Common Functionality an accumulator should have
