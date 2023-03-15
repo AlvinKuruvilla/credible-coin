@@ -1,11 +1,8 @@
 use sha2::Digest;
-/// The "data" to construct the merkle tree from
-pub type Data = Vec<u8>;
-pub type Hash = Vec<u8>;
 /// A Merkle Tree is a data structure typically used in cryptocurrency exchanges where every  "leaf" is labelled with the cryptographic hash of a data block, and every node that is not a leaf is labelled with the cryptographic hash of the labels of its child nodes.
 pub struct MerkleTree {
     /// The nodes are represented as of `Vec<Vec<u8>>` so they can be use with the `SHA256::digest()` function
-    pub nodes: Vec<Hash>,
+    pub nodes: Vec<Vec<u8>>,
     pub levels: usize,
 }
 
@@ -23,7 +20,7 @@ pub enum HashDirection {
 pub struct Proof<'a> {
     /// The hashes to use when verifying the proof
     /// The first element of the tuple is which side the hash should be on when concatenating
-    hashes: Vec<(HashDirection, &'a Hash)>,
+    hashes: Vec<(HashDirection, &'a Vec<u8>)>,
 }
 
 #[derive(Debug)]
@@ -35,7 +32,7 @@ pub enum Error {
 type Result<T> = std::result::Result<T, Error>;
 
 impl MerkleTree {
-    fn construct_level_up(level: &[Hash]) -> Vec<Hash> {
+    fn construct_level_up(level: &[Vec<u8>]) -> Vec<Vec<u8>> {
         assert!(is_power_of_two(level.len()));
 
         // Step through the previous level, finding the parents by concatenating the children hashes
@@ -46,11 +43,11 @@ impl MerkleTree {
     }
 
     /// Constructs a Merkle tree from given input data
-    pub fn construct(input: &[Data]) -> MerkleTree {
+    pub fn construct(input: &[Vec<u8>]) -> MerkleTree {
         assert!(is_power_of_two(input.len()));
 
         // Get the hashes of our input data. These will be the leaves of the Merkle tree
-        let mut hashes: Vec<Vec<Hash>> = vec![input.iter().map(hash_data).collect()];
+        let mut hashes: Vec<Vec<Vec<u8>>> = vec![input.iter().map(hash_data).collect()];
         let mut last_level = &hashes[0];
 
         let num_levels = (input.len() as f64).log2() as usize;
@@ -69,12 +66,12 @@ impl MerkleTree {
     }
 
     /// Verifies that the given input data produces the given root hash
-    pub fn verify(input: &[Data], root_hash: &Hash) -> bool {
+    pub fn verify(input: &[Vec<u8>], root_hash: &Vec<u8>) -> bool {
         MerkleTree::construct(input).root_hash() == *root_hash
     }
 
     /// Returns the root hash of the Merkle tree, by returning the root node of the tree
-    pub fn root_hash(&self) -> Hash {
+    pub fn root_hash(&self) -> Vec<u8> {
         self.nodes[self.nodes.len() - 1].clone()
     }
 
@@ -84,7 +81,7 @@ impl MerkleTree {
     }
 
     /// Returns the leaves (the hashes of the underlying data) of the Merkle tree
-    pub fn leaves(&self) -> &[Hash] {
+    pub fn leaves(&self) -> &[Vec<u8>] {
         &self.nodes[0..self.num_leaves()]
     }
 
@@ -128,7 +125,7 @@ impl MerkleTree {
 
     /// Produces a Merkle proof for the first occurrence of the given data
     /// returns an error if the data cant be found in the merkle tree
-    pub fn get_merkle_proof_by_data(&self, data: &Data) -> Result<Proof> {
+    pub fn get_merkle_proof_by_data(&self, data: &Vec<u8>) -> Result<Proof> {
         let data_hash = hash_data(data);
         let leaf_index = self
             .leaves()
@@ -141,7 +138,7 @@ impl MerkleTree {
 }
 
 /// Verifies that the given proof is valid for a given root hash and data
-pub fn verify_merkle_proof(proof: &Proof, data: &Data, root_hash: &Hash) -> bool {
+pub fn verify_merkle_proof(proof: &Proof, data: &Vec<u8>, root_hash: &Vec<u8>) -> bool {
     let mut current_hash = hash_data(data);
 
     for (hash_direction, hash) in proof.hashes.iter() {
@@ -154,11 +151,11 @@ pub fn verify_merkle_proof(proof: &Proof, data: &Data, root_hash: &Hash) -> bool
     current_hash == *root_hash
 }
 /// Compute the SHA256 digest of a given `Vec<u8>`
-pub fn hash_data(data: &Data) -> Hash {
+pub fn hash_data(data: &Vec<u8>) -> Vec<u8> {
     sha2::Sha256::digest(data).to_vec()
 }
 /// Take 2 sets of hashes (represented by Vec<u8>) and combine them into one vector and rehash them
-pub fn hash_concat(h1: &Hash, h2: &Hash) -> Hash {
+pub fn hash_concat(h1: &Vec<u8>, h2: &Vec<u8>) -> Vec<u8> {
     let h3 = h1.iter().chain(h2).copied().collect();
     hash_data(&h3)
 }

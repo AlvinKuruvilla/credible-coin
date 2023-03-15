@@ -1,9 +1,9 @@
 #[cfg(test)]
 mod tests {
     use credible_coin::accumulator::merkle::{
-        hash_concat, hash_data, verify_merkle_proof, Data, MerkleTree,
+        hash_concat, hash_data, verify_merkle_proof, MerkleTree,
     };
-
+    type Data = Vec<u8>;
     // Helper function to verify Merkle proofs for each data leaf in the tree
     fn verify_merkle_proofs(data: &Vec<Vec<u8>>, tree: &MerkleTree) {
         for data_leaf in data {
