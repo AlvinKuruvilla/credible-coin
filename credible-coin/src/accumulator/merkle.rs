@@ -1,8 +1,10 @@
+use num::{Unsigned, Zero};
 use sha2::Digest;
 /// A Merkle Tree is a data structure typically used in cryptocurrency exchanges where every  "leaf" is labelled with the cryptographic hash of a data block, and every node that is not a leaf is labelled with the cryptographic hash of the labels of its child nodes.
-pub struct MerkleTree {
+#[derive(Debug, Clone, Copy, PartialEq)]
+pub struct MerkleTree<T: Unsigned + Zero> {
     /// The nodes are represented as of `Vec<Vec<u8>>` so they can be use with the `SHA256::digest()` function
-    pub nodes: Vec<Vec<u8>>,
+    pub nodes: Vec<Vec<T>>,
     pub levels: usize,
 }
 
@@ -31,8 +33,11 @@ pub enum Error {
 
 type Result<T> = std::result::Result<T, Error>;
 
-impl MerkleTree {
-    fn construct_level_up(level: &[Vec<u8>]) -> Vec<Vec<u8>> {
+impl<T> MerkleTree<T>
+where
+    T: Unsigned + Zero,
+{
+    fn construct_level_up(level: &[Vec<T>]) -> Vec<Vec<T>> {
         assert!(is_power_of_two(level.len()));
 
         // Step through the previous level, finding the parents by concatenating the children hashes
@@ -43,11 +48,11 @@ impl MerkleTree {
     }
 
     /// Constructs a Merkle tree from given input data
-    pub fn construct(input: &[Vec<u8>]) -> MerkleTree {
+    pub fn construct(input: &[Vec<T>]) -> MerkleTree<T> {
         assert!(is_power_of_two(input.len()));
 
         // Get the hashes of our input data. These will be the leaves of the Merkle tree
-        let mut hashes: Vec<Vec<Vec<u8>>> = vec![input.iter().map(hash_data).collect()];
+        let mut hashes: Vec<Vec<Vec<T>>> = vec![input.iter().map(hash_data).collect()];
         let mut last_level = &hashes[0];
 
         let num_levels = (input.len() as f64).log2() as usize;
@@ -66,12 +71,12 @@ impl MerkleTree {
     }
 
     /// Verifies that the given input data produces the given root hash
-    pub fn verify(input: &[Vec<u8>], root_hash: &Vec<u8>) -> bool {
+    pub fn verify(input: &[Vec<T>], root_hash: &Vec<u8>) -> bool {
         MerkleTree::construct(input).root_hash() == *root_hash
     }
 
     /// Returns the root hash of the Merkle tree, by returning the root node of the tree
-    pub fn root_hash(&self) -> Vec<u8> {
+    pub fn root_hash(&self) -> Vec<T> {
         self.nodes[self.nodes.len() - 1].clone()
     }
 
@@ -81,7 +86,7 @@ impl MerkleTree {
     }
 
     /// Returns the leaves (the hashes of the underlying data) of the Merkle tree
-    pub fn leaves(&self) -> &[Vec<u8>] {
+    pub fn leaves(&self) -> &[Vec<T>] {
         &self.nodes[0..self.num_leaves()]
     }
 
