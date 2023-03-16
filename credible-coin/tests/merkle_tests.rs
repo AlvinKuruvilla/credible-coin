@@ -1,243 +1,143 @@
 #[cfg(test)]
 mod tests {
-    use credible_coin::accumulator::merkle::{
-        hash_concat, hash_data, verify_merkle_proof, MerkleTree,
+    use credible_coin::accumulator::uint_typecast::{
+        u128_slice_to_byte_vector, u16_slice_to_byte_vector, u32_slice_to_byte_vector,
+        u64_slice_to_byte_vector,
     };
-    type Data = Vec<u8>;
-    // Helper function to verify Merkle proofs for each data leaf in the tree
-    fn verify_merkle_proofs(data: &Vec<Vec<u8>>, tree: &MerkleTree) {
-        for data_leaf in data {
-            let proof = tree
-                .get_merkle_proof_by_data(&data_leaf)
-                .expect("Should be able to create proof");
-
-            assert!(verify_merkle_proof(&proof, &data_leaf, &tree.root_hash()));
-        }
-    }
-
+    use rs_merkle::{algorithms::Sha256, Hasher, MerkleProof, MerkleTree};
     #[test]
-    fn two_level_tree() {
-        let data = vec![Data::from("A"), Data::from("B")];
+    pub fn sanity() {
+        let leaf_values = ["a", "b", "c", "d", "e", "f"];
+        let leaves: Vec<[u8; 32]> = leaf_values
+            .iter()
+            .map(|x| Sha256::hash(x.as_bytes()))
+            .collect();
 
-        assert!(MerkleTree::verify(
-            &data,
-            &hash_concat(&hash_data(&data[0]), &hash_data(&data[1]))
+        let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
+        let indices_to_prove = vec![3, 4];
+        let leaves_to_prove = leaves.get(3..5).ok_or("can't get leaves to prove").unwrap();
+        let merkle_proof = merkle_tree.proof(&indices_to_prove);
+        let merkle_root = merkle_tree
+            .root()
+            .ok_or("couldn't get the merkle root")
+            .unwrap();
+        // Serialize proof to pass it to the client
+        let proof_bytes = merkle_proof.to_bytes();
+
+        // Parse proof back on the client
+        let proof = MerkleProof::<Sha256>::try_from(proof_bytes).unwrap();
+
+        assert!(proof.verify(
+            merkle_root,
+            &indices_to_prove,
+            leaves_to_prove,
+            leaves.len()
         ));
-
-        let tree = MerkleTree::construct(&data);
-
-        assert_eq!(tree.levels, 2);
-        assert_eq!(tree.num_leaves(), 2);
-        assert_eq!(tree.nodes.len(), 3);
-        assert_eq!(tree.leaves().len(), 2);
     }
-
     #[test]
-    fn three_level_tree() {
-        let data = vec![
-            Data::from("AAA"),
-            Data::from("BBB"),
-            Data::from("CCC"),
-            Data::from("DDD"),
-        ];
+    pub fn u32_test() {
+        let leaf_values: [u32; 6] = [12, 15, 17, 39, 34, 55];
+        let leaf_bytes = u32_slice_to_byte_vector(&leaf_values);
+        let leaves: Vec<[u8; 32]> = leaf_bytes.iter().map(|x| Sha256::hash(x)).collect();
+        let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
+        let indices_to_prove = vec![3, 4];
+        let leaves_to_prove = leaves.get(3..5).ok_or("can't get leaves to prove").unwrap();
+        let merkle_proof = merkle_tree.proof(&indices_to_prove);
+        let merkle_root = merkle_tree
+            .root()
+            .ok_or("couldn't get the merkle root")
+            .unwrap();
+        // Serialize proof to pass it to the client
+        let proof_bytes = merkle_proof.to_bytes();
 
-        let expected_hash = hash_concat(
-            &hash_concat(&hash_data(&data[0]), &hash_data(&data[1])),
-            &hash_concat(&hash_data(&data[2]), &hash_data(&data[3])),
-        );
+        // Parse proof back on the client
+        let proof = MerkleProof::<Sha256>::try_from(proof_bytes).unwrap();
 
-        assert!(MerkleTree::verify(&data, &expected_hash));
-
-        let tree = MerkleTree::construct(&data);
-
-        assert_eq!(tree.levels, 3);
-        assert_eq!(tree.num_leaves(), 4);
-        assert_eq!(tree.nodes.len(), 7);
-        assert_eq!(tree.leaves().len(), 4);
+        assert!(proof.verify(
+            merkle_root,
+            &indices_to_prove,
+            leaves_to_prove,
+            leaves.len()
+        ));
     }
-
     #[test]
-    fn four_level_tree() {
-        let data = vec![
-            Data::from("AAAA"),
-            Data::from("BBBB"),
-            Data::from("CCCC"),
-            Data::from("DDDD"),
-            Data::from("EEEE"),
-            Data::from("FFFF"),
-            Data::from("GGGG"),
-            Data::from("HHHH"),
-        ];
+    pub fn u16_test() {
+        let leaf_values: [u16; 6] = [87, 42, 16, 55, 73, 29];
+        let leaf_bytes = u16_slice_to_byte_vector(&leaf_values);
+        let leaves: Vec<[u8; 32]> = leaf_bytes.iter().map(|x| Sha256::hash(x)).collect();
+        let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
+        let indices_to_prove = vec![3, 4];
+        let leaves_to_prove = leaves.get(3..5).ok_or("can't get leaves to prove").unwrap();
+        let merkle_proof = merkle_tree.proof(&indices_to_prove);
+        let merkle_root = merkle_tree
+            .root()
+            .ok_or("couldn't get the merkle root")
+            .unwrap();
+        // Serialize proof to pass it to the client
+        let proof_bytes = merkle_proof.to_bytes();
 
-        let expected_hash = hash_concat(
-            &hash_concat(
-                &hash_concat(&hash_data(&data[0]), &hash_data(&data[1])),
-                &hash_concat(&hash_data(&data[2]), &hash_data(&data[3])),
-            ),
-            &hash_concat(
-                &hash_concat(&hash_data(&data[4]), &hash_data(&data[5])),
-                &hash_concat(&hash_data(&data[6]), &hash_data(&data[7])),
-            ),
-        );
+        // Parse proof back on the client
+        let proof = MerkleProof::<Sha256>::try_from(proof_bytes).unwrap();
 
-        assert!(MerkleTree::verify(&data, &expected_hash));
-
-        let tree = MerkleTree::construct(&data);
-
-        assert_eq!(tree.levels, 4);
-        assert_eq!(tree.num_leaves(), 8);
-        assert_eq!(tree.nodes.len(), 15);
-        assert_eq!(tree.leaves().len(), 8);
-    }
-
-    #[test]
-    fn verify_merkle_proof_two_layer() {
-        let data = vec![Data::from("AAAA"), Data::from("BBBB")];
-
-        let tree = MerkleTree::construct(&data);
-
-        verify_merkle_proofs(&data, &tree);
-    }
-
-    #[test]
-    fn verify_merkle_proof_larger() {
-        let data = vec![
-            Data::from("AAAA"),
-            Data::from("BBBB"),
-            Data::from("CCCC"),
-            Data::from("DDDD"),
-        ];
-
-        let tree = MerkleTree::construct(&data);
-
-        verify_merkle_proofs(&data, &tree);
-    }
-
-    #[test]
-    fn verify_merkle_tree_middle_node() {
-        let data = vec![
-            Data::from("AAAA"),
-            Data::from("BBBB"),
-            Data::from("CCCC"),
-            Data::from("DDDD"),
-        ];
-
-        let tree = MerkleTree::construct(&data);
-
-        verify_merkle_proofs(&data, &tree);
-    }
-
-    #[test]
-    fn verify_merkle_tree_8() {
-        let data = vec![
-            Data::from("AAAA"),
-            Data::from("BBBB"),
-            Data::from("CCCC"),
-            Data::from("DDDD"),
-            Data::from("EEEE"),
-            Data::from("FFFF"),
-            Data::from("GGGG"),
-            Data::from("HHHH"),
-        ];
-
-        let tree = MerkleTree::construct(&data);
-
-        verify_merkle_proofs(&data, &tree);
-    }
-
-    #[test]
-    fn verify_merkle_tree_16() {
-        let data = vec![
-            Data::from("AAAA"),
-            Data::from("BBBB"),
-            Data::from("CCCC"),
-            Data::from("DDDD"),
-            Data::from("EEEE"),
-            Data::from("FFFF"),
-            Data::from("GGGG"),
-            Data::from("HHHH"),
-            Data::from("IIII"),
-            Data::from("JJJJ"),
-            Data::from("KKKK"),
-            Data::from("LLLL"),
-            Data::from("MMMM"),
-            Data::from("NNNN"),
-            Data::from("OOOO"),
-            Data::from("PPPP"),
-        ];
-
-        let tree = MerkleTree::construct(&data);
-
-        verify_merkle_proofs(&data, &tree);
-    }
-
-    #[test]
-    fn merkle_proof_fails_for_wrong_data() {
-        let data = vec![Data::from("AAAA"), Data::from("BBBB")];
-
-        let tree = MerkleTree::construct(&data);
-        let proof = tree
-            .get_merkle_proof_by_data(&Data::from("BBBB"))
-            .expect("Should be able to create proof");
-        assert!(!verify_merkle_proof(
-            &proof,
-            &Data::from("AAAA"),
-            &tree.root_hash()
+        assert!(proof.verify(
+            merkle_root,
+            &indices_to_prove,
+            leaves_to_prove,
+            leaves.len()
         ));
     }
 
     #[test]
-    fn merkle_proof_fails_for_wrong_tree() {
-        let data = vec![Data::from("AAAA"), Data::from("BBBB")];
+    pub fn u64_test() {
+        let leaf_values: [u64; 6] = [12, 89, 67, 23, 58, 99];
+        let leaf_bytes = u64_slice_to_byte_vector(&leaf_values);
+        let leaves: Vec<[u8; 32]> = leaf_bytes.iter().map(|x| Sha256::hash(x)).collect();
+        let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
+        let indices_to_prove = vec![3, 4];
+        let leaves_to_prove = leaves.get(3..5).ok_or("can't get leaves to prove").unwrap();
+        let merkle_proof = merkle_tree.proof(&indices_to_prove);
+        let merkle_root = merkle_tree
+            .root()
+            .ok_or("couldn't get the merkle root")
+            .unwrap();
+        // Serialize proof to pass it to the client
+        let proof_bytes = merkle_proof.to_bytes();
 
-        let tree = MerkleTree::construct(&data);
+        // Parse proof back on the client
+        let proof = MerkleProof::<Sha256>::try_from(proof_bytes).unwrap();
 
-        let other_data = vec![
-            Data::from("AAAA"),
-            Data::from("BBBB"),
-            Data::from("CCCC"),
-            Data::from("DDDD"),
-        ];
-
-        let other_tree = MerkleTree::construct(&other_data);
-
-        let proof = tree
-            .get_merkle_proof_by_data(&Data::from("AAAA"))
-            .expect("Should be able to create proof");
-        assert!(!verify_merkle_proof(
-            &proof,
-            &Data::from("AAAA"),
-            &other_tree.root_hash()
+        assert!(proof.verify(
+            merkle_root,
+            &indices_to_prove,
+            leaves_to_prove,
+            leaves.len()
         ));
     }
 
     #[test]
-    fn merkle_proof_fails_if_tree_changed() {
-        let data = vec![Data::from("AAAA"), Data::from("BBBB")];
+    pub fn u128_test() {
+        let leaf_values: [u128; 6] = [12, 89, 67, 23, 58, 99];
+        let leaf_bytes = u128_slice_to_byte_vector(&leaf_values);
+        let leaves: Vec<[u8; 32]> = leaf_bytes.iter().map(|x| Sha256::hash(x)).collect();
+        let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
+        let indices_to_prove = vec![3, 4];
+        let leaves_to_prove = leaves.get(3..5).ok_or("can't get leaves to prove").unwrap();
+        let merkle_proof = merkle_tree.proof(&indices_to_prove);
+        let merkle_root = merkle_tree
+            .root()
+            .ok_or("couldn't get the merkle root")
+            .unwrap();
+        // Serialize proof to pass it to the client
+        let proof_bytes = merkle_proof.to_bytes();
 
-        let tree = MerkleTree::construct(&data);
+        // Parse proof back on the client
+        let proof = MerkleProof::<Sha256>::try_from(proof_bytes).unwrap();
 
-        let other_data = vec![Data::from("AAAA"), Data::from("BBBA")];
-
-        let other_tree = MerkleTree::construct(&other_data);
-
-        let proof = tree
-            .get_merkle_proof_by_data(&Data::from("AAAA"))
-            .expect("Should be able to create proof");
-
-        assert!(!verify_merkle_proof(
-            &proof,
-            &Data::from("AAAA"),
-            &other_tree.root_hash()
+        assert!(proof.verify(
+            merkle_root,
+            &indices_to_prove,
+            leaves_to_prove,
+            leaves.len()
         ));
-    }
-
-    #[test]
-    fn test_merkle_proof_fails_for_invalid_index() {
-        let data = vec![Data::from("AAAA"), Data::from("BBBB")];
-
-        let tree = MerkleTree::construct(&data);
-
-        assert!(tree.get_merkle_proof_by_index(3).is_err());
     }
 }
