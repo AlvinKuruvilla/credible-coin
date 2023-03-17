@@ -2,7 +2,7 @@
 mod tests {
     use credible_coin::accumulator::uint_typecast::{
         u128_slice_to_byte_vector, u16_slice_to_byte_vector, u32_slice_to_byte_vector,
-        u64_slice_to_byte_vector,
+        u64_slice_to_byte_vector, u32_vector_to_byte_vector, u16_vector_to_byte_vector, u64_vector_to_byte_vector, u128_vector_to_byte_vector,
     };
     use rs_merkle::{algorithms::Sha256, Hasher, MerkleProof, MerkleTree};
     #[test]
