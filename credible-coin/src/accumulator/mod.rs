@@ -4,8 +4,9 @@
 //! 1. Merkle Trees
 //! 2. Binary Accumulators
 use crate::coin;
-/// A relatively simple merkle-tree Implementation which is a slightly modified version of [toy-merkle](https://github.com/samvrlewis/toy-merkle)
-pub mod merkle;
+
+/// A set of helper functions to convert to convert Vector and slice types
+/// to Vec<[N;u8]> where N is the size of the slice
 pub mod uint_typecast;
 /// A blanket trait type representing a "proof of membership". A membership proof is an interactive proof for a statement of the form x in L, where L is some formal language.
 pub trait MembershipProof {}
@@ -13,7 +14,7 @@ pub trait MembershipProof {}
 pub trait AbstractAccumulator {
     /// Prove that a [`coin::Coin`] is a member of a particular [`MembershipProof`]. For example,
     /// we have 2 concrete implementors of the [`MembershipProof`] trait
-    /// 1. [`MerkleProof`]
+    /// 1. [`rs_merkle::MerkleProof`]
     /// 2. [`BinaryAccumulatorProof`]
     /// By providing a Generic parameter `M` on the function signature we specify that we will return a type `M` which has this trait as its bound (so either  [`MerkleProof`] or [`BinaryAccumulatorProof`])
     fn prove_member<M: MembershipProof>(element: coin::Coin) -> M;
