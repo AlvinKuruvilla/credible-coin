@@ -8,18 +8,14 @@ A zero-knowledge proof system to asses cryptocurrency exchange solvency.
 
 CredibleCoin can be broken into the following core modules:
 
-- [`exchange/`](src/exchange/): everything that an exchange needs to be considered as such by our library. This includes a generic exchange interface which all cryptocurrency exchange types need to implement
-- [`utils/`](src/utils/): a collection of utilities used by the library
-  to get up and running with.
-- [`accumulator`](src/accumulator/): CredibleCoin's accumulator algorithms:
-  - [`merkle`](src/accumulator/merkle/): A simple merkle-tree data structure
-  - [`binary accumulator`](src/accumulator/binacc/): A binary accumulator module
+- [`credible-coin/`](credible-coin/): Rust crate implementing our solvency protocol and corresponding test suite. See the README.md in the crate for more details
 
 ## Running CredibleCoin
 
 Stable Rust is all that is needed to build `credible-coin`. To build simply run
 
 ```console
+$ cd credible-coin
 $ cargo build --release
 ```
 
@@ -28,11 +24,13 @@ NOTE: Currently there is no binary application built for `credible-coin`, aside 
 To run the test suite, use:
 
 ```console
+$ cd credible-coin
 $ cargo test
 ```
 
 Build and open the documentation with:
 
 ```console
+$ cd credible-coin
 $ cargo doc --open
 ```
