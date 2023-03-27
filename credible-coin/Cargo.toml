@@ -12,3 +12,5 @@ rand = "0.8.5"
 sha2 = "0.10.6"
 num = "0.4.0"
 rs_merkle = "1.3.0"
+# TEMP Dependency
+polars = "0.27.2"
