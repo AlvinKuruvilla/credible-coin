@@ -7,3 +7,4 @@ pub mod accumulator;
 pub mod coin;
 pub mod exchange;
 pub mod utils;
+pub mod cli;
