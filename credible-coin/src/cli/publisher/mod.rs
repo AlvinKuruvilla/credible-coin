@@ -1,7 +1,8 @@
-use clap::{Subcommand, Parser};
+use clap::{Parser, Subcommand};
 use eyre::Result;
 
 mod database;
+mod shell;
 
 const VERSION: &str = "0.0.1";
 
@@ -22,7 +23,6 @@ static HELP_TEMPLATE: &str = "\
 pub struct PublisherCLI {
     #[command(subcommand)]
     cmd: PublisherCmd,
-
 }
 impl PublisherCLI {
     pub fn run(self) -> Result<()> {
@@ -34,7 +34,7 @@ pub enum PublisherCmd {
     /// Save the database into a csv file
     Create(database::CreateCmd),
     /// Load the database from a csv file and load as a merkle tree into memory
-    Load(database::LoadCmd), 
+    Load(database::LoadCmd),
 }
 impl PublisherCmd {
     pub fn run(self) -> Result<()> {
@@ -42,12 +42,12 @@ impl PublisherCmd {
         // So we have 2 potential commands to run: load or create, now we just have to parse the arguments
         match self {
             Self::Create(cmd) => {
-            cmd.run();
-        },
+                cmd.run();
+            }
             Self::Load(cmd) => {
-                cmd.run(); 
-            },
+                cmd.run();
+            }
         }
         return Ok(());
-    } 
+    }
 }
