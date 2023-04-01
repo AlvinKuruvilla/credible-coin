@@ -15,15 +15,15 @@ pub fn shell_commands() -> Vec<String> {
     ];
 }
 /// Get all of the info for a coin in the merkle tree given its public address
-fn get_coin_info(public_address: &str) {
+fn get_coin_info(_public_address: &str) {
     unimplemented!()
 }
 /// Update a coin in the merkle tree given its public address and its new value
-fn update_coin(public_address: &str, new_value: u32) {
+fn update_coin(_public_address: &str, _new_value: u32) {
     unimplemented!()
 }
 /// Prove that a coin is a member of the merkle tree given its public address
-fn prove_membership(public_address: &str, value: u32) {
+fn prove_membership(_public_address: &str, _value: u32) {
     unimplemented!()
 }
 /// The user is automatically brought into the publisher shell once they
