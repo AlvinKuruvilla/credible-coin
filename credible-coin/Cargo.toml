@@ -24,3 +24,10 @@ log = "0.4.17"
 # TODO: Currently this is only being used in coin.rs. If we can find a way to implement a similar functionallity
 # without another crate dependency that would be ideal
 itertools = "0.10.5"
+
+[dev-dependencies]
+criterion = "0.3"
+
+[[bench]]
+name = "csv"
+harness = false
