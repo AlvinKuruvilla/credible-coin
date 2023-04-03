@@ -29,3 +29,22 @@ pub fn write_csv(filename: &str, mut data: DataFrame) {
     let mut file = std::fs::File::create(filename).unwrap();
     CsvWriter::new(&mut file).finish(&mut data).unwrap();
 }
+pub fn addresses_and_values_as_vectors() -> (Vec<String>, Vec<String>) {
+    let address_series = get_dataset_column_by_name("addresses");
+    let value_series = get_dataset_column_by_name("value");
+    // TODO: Remove unwrap()
+    let value_vec = value_series
+        .i64()
+        .unwrap()
+        .into_no_null_iter()
+        .map(|s| s.to_string())
+        .collect();
+    let address_vec = address_series
+        .utf8()
+        .unwrap()
+        .into_no_null_iter()
+        .map(|s| s.to_string())
+        .collect();
+
+    return (value_vec, address_vec);
+}
