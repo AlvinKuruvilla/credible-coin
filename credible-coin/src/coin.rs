@@ -1,4 +1,7 @@
-//! A simple wrapper type representing a u32 value
+//! A simple wrapper type representing a piece of cryptocurrency
+//!
+//! Contains a String value and a String address mostly mirroring how transactions are
+//! reflected in a cryptocurrency-system with a blockchain ledger
 
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize, Serialize)]
