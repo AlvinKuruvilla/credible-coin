@@ -21,3 +21,6 @@ serde = "1.0.159"
 reedline = "0.17.0"
 pretty_env_logger = "0.4.0"
 log = "0.4.17"
+# TODO: Currently this is only being used in coin.rs. If we can find a way to implement a similar functionallity
+# without another crate dependency that would be ideal
+itertools = "0.10.5"

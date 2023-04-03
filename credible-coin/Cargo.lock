@@ -380,6 +380,7 @@ dependencies = [
  "bitcoin",
  "clap",
  "eyre",
+ "itertools",
  "log",
  "num",
  "polars",
