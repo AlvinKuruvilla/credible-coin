@@ -15,6 +15,16 @@ impl MerkleNode {
         return bincode::serialize(&self).unwrap();
     }
 }
+
+//converts vector of coins to vector of nodes
+pub fn from_vec_coins_to_vec_nodes(vec_coin: Vec<Coin>) -> Vec<MerkleNode>{
+	let mut vec_nodes: Vec<MerkleNode> = Vec::new();
+	for coin_tuple in vec_coin{
+    		vec_nodes.push(MerkleNode{coin: coin_tuple}); //turn coin vec into mn vec
+    	}
+    	return vec_nodes;
+}
+
 /// Converts a vector of bytes back into the struct
 pub fn from_bytes_into_struct(encoded: Vec<u8> ) {
     return bincode::deserialize(&encoded[..]).unwrap();
