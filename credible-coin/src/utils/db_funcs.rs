@@ -6,3 +6,39 @@ pub fn createDB(){
 	let mut file = std::fs::File::create("test.csv").unwrap();
 	CsvWriter::new(&mut file).finish(&mut datafr).unwrap();
 }
+
+use crate::utils::address_generator::*;
+use polars::prelude::*;
+use crate::utils::csv_utils::*;
+use crate::coin::*;
+use crate::merkle::*;
+use rs_merkle::{algorithms::Sha256, MerkleTree};
+
+//creates a csv file 
+pub fn createDB(){
+	let mut datafr = generate_n_address_value_dataframe(5);
+	let mut file = std::fs::File::create("test.csv").unwrap();
+	CsvWriter::new(&mut file).finish(&mut datafr).unwrap();
+}
+
+//creates leaves from coin vectors
+pub fn load_merkle_leaves() -> Vec<[u8; 32]>{
+	let (v1, v2) = addresses_and_values_as_vectors(); //utils::csv_utils::
+   	let vec_coin = Coin::create_coin_vector(v2,v1); //coin::Coin::
+    	let vec_nodes: Vec<MerkleNode> = from_vec_coins_to_vec_nodes(vec_coin);
+    
+    	let mut u8coins: Vec<Vec<u8>> = Vec::new();
+
+    	for node in vec_nodes{
+    		u8coins.push(MerkleNode::into_bytevec(&node));
+    	}
+
+    	let leaves_vec: Vec<[u8; 32]> = u8coins.into_iter().flat_map(|item|hash_bytes(item)).collect();
+    	return leaves_vec;
+}
+
+//loads a merkle tree from the coin leaves
+pub fn loadDB(coin_leaves: Vec<[u8; 32]>) -> MerkleTree<Sha256> {
+    let loaded_merkle_tree = MerkleTree::<Sha256>::from_leaves(&coin_leaves);
+    return loaded_merkle_tree;
+}
