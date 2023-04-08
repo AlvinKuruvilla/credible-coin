@@ -14,7 +14,7 @@ pub struct LoadCmd {
     filename: String,
 }
 impl CreateCmd {
-    // TODO: Yhis needs to return an eyere::Result<()> at the end
+    // TODO: This needs to return an eyere::Result<()> at the end
     pub fn run(self) {
         // 1. Check that the outfile doesn't already exist and handle errors
         // 2. IDK
