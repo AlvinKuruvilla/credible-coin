@@ -1,20 +1,11 @@
 use crate::utils::address_generator::*;
 use polars::prelude::*;
-
-pub fn createDB(){
-	let mut datafr = generate_n_address_value_dataframe(5);
-	let mut file = std::fs::File::create("test.csv").unwrap();
-	CsvWriter::new(&mut file).finish(&mut datafr).unwrap();
-}
-
-use crate::utils::address_generator::*;
-use polars::prelude::*;
 use crate::utils::csv_utils::*;
 use crate::coin::*;
 use crate::merkle::*;
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 
-//creates a csv file 
+//creates csv file from random addresses and values
 pub fn createDB(){
 	let mut datafr = generate_n_address_value_dataframe(5);
 	let mut file = std::fs::File::create("test.csv").unwrap();
