@@ -4,17 +4,20 @@ use crate::utils::address_generator::*;
 use crate::utils::csv_utils::*;
 use polars::prelude::*;
 use rs_merkle::{algorithms::Sha256, MerkleTree};
-
+use std::path::Path;
 //creates csv file from random addresses and values
-pub fn create_db() {
-    let mut datafr = generate_n_address_value_dataframe(5);
-    let mut file = std::fs::File::create("test.csv").unwrap();
+pub fn create_db(FILENAME :&str, row_count: u32) {
+    assert!(!Path::new(FILENAME)
+            .try_exists()
+            .expect("file already exists"), "file already exists");
+    let mut datafr = generate_n_address_value_dataframe(row_count);
+    let mut file = std::fs::File::create(FILENAME).unwrap();
     CsvWriter::new(&mut file).finish(&mut datafr).unwrap();
 }
 
 //creates leaves from coin vectors
-pub fn load_merkle_leaves() -> Vec<[u8; 32]> {
-    let (v1, v2) = addresses_and_values_as_vectors();
+pub fn load_merkle_leaves(file_name: &str) -> Vec<[u8; 32]> {
+    let (v1, v2) = addresses_and_values_as_vectors(file_name);
     let vec_coin = Coin::create_coin_vector(v2, v1);
     let vec_nodes: Vec<MerkleNode> = from_vec_coins_to_vec_nodes(vec_coin);
 
