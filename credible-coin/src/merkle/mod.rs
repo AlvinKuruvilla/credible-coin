@@ -14,6 +14,10 @@ impl MerkleNode {
     pub fn into_bytevec(&self) -> Vec<u8> {
         return bincode::serialize(&self).unwrap();
     }
+    /// Converts a vector of bytes back into the struct
+    pub fn from_bytes_into_struct(encoded: Vec<u8>) {
+        return bincode::deserialize(&encoded[..]).unwrap();
+    }
 }
 
 /// Converts a vector of coins to a vector of MerkleNodes
@@ -25,10 +29,6 @@ pub fn from_vec_coins_to_vec_nodes(vec_coin: Vec<Coin>) -> Vec<MerkleNode> {
     return vec_nodes;
 }
 
-/// Converts a vector of bytes back into the struct
-pub fn from_bytes_into_struct(encoded: Vec<u8>) {
-    return bincode::deserialize(&encoded[..]).unwrap();
-}
 /// Take the given vector of u8's iterate each element and turn into bytes, hash it,
 /// and then collect into a new vector
 pub fn hash_bytes(bytevector: Vec<u8>) -> Vec<[u8; 32]> {
