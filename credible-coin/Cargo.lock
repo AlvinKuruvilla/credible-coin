@@ -398,7 +398,6 @@ dependencies = [
  "clap 4.2.1",
  "criterion",
  "eyre",
- "itertools",
  "log",
  "num",
  "polars",

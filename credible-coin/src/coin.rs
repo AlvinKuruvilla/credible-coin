@@ -3,8 +3,6 @@
 //! Contains a String value and a String address mostly mirroring how transactions are
 //! reflected in a cryptocurrency-system with a blockchain ledger
 
-use itertools::EitherOrBoth::{Both, Left, Right};
-use itertools::Itertools;
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Coin {
@@ -27,16 +25,9 @@ impl Coin {
     pub fn create_coin_vector(addresses: Vec<String>, values: Vec<i64>) -> Vec<Coin> {
         assert_eq!(addresses.len(), values.len());
         let mut coins: Vec<Coin> = Vec::new();
-        for it in addresses.iter().zip_longest(values.iter()) {
-            match it {
-                Both(x, y) => {
-                    println!("x={}, y={}", x, y);
-                    coins.push(Coin::new(x.to_string(), *y))
-                }
-                Left(x) => unreachable!(),
-
-                Right(y) => unreachable!(),
-            };
+        for (a, v) in addresses.iter().zip(values.iter()) {
+            println!("Address={}, Value={}", a, v);
+            coins.push(Coin::new(a.to_string(), *v))
         }
         return coins;
     }
