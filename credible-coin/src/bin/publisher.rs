@@ -1,7 +1,6 @@
 use clap::Parser;
-use eyre::Result;
 use credible_coin::cli::publisher::PublisherCLI;
+use eyre::Result;
 pub fn main() -> Result<()> {
     return PublisherCLI::parse().run();
-   
 }

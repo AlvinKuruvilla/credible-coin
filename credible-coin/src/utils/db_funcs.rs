@@ -3,16 +3,19 @@ use crate::merkle::*;
 use crate::utils::address_generator::*;
 use crate::utils::csv_utils::*;
 use polars::prelude::*;
-use std::path::Path;
 use rs_merkle::{algorithms::Sha256, MerkleTree};
+use std::path::Path;
 
 //creates csv file from random addresses and values
-pub fn create_db(FILENAME :&str, row_count: u32) {
-    assert!(!Path::new(FILENAME)
+pub fn create_db(filename: &str, row_count: u32) {
+    assert!(
+        !Path::new(filename)
             .try_exists()
-            .expect("file already exists"), "file already exists"); 
+            .expect("file already exists"),
+        "file already exists"
+    );
     let mut datafr = generate_n_address_value_dataframe(row_count);
-    let mut file = std::fs::File::create(FILENAME).unwrap();
+    let mut file = std::fs::File::create(filename).unwrap();
     CsvWriter::new(&mut file).finish(&mut datafr).unwrap();
 }
 

@@ -18,7 +18,8 @@ mod tests {
     //tests load_merkle_leaves and load_DB
     #[test]
     pub fn load_db_test() {
-        let merkle_coin_leaves = load_merkle_leaves("BigQuery Bitcoin Historical Data - outputs.csv"); 
+        let merkle_coin_leaves =
+            load_merkle_leaves("BigQuery Bitcoin Historical Data - outputs.csv");
         let merkle_with_coins = load_db(merkle_coin_leaves.clone());
 
         let indices_to_prove = vec![3, 4];

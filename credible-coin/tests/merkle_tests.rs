@@ -1,8 +1,9 @@
 #[cfg(test)]
 mod tests {
     use credible_coin::accumulator::uint_typecast::{
-        u128_slice_to_byte_vector, u16_slice_to_byte_vector, u32_slice_to_byte_vector,
-        u64_slice_to_byte_vector, u32_vector_to_byte_vector, u16_vector_to_byte_vector, u64_vector_to_byte_vector, u128_vector_to_byte_vector,
+        u128_slice_to_byte_vector, u128_vector_to_byte_vector, u16_slice_to_byte_vector,
+        u16_vector_to_byte_vector, u32_slice_to_byte_vector, u32_vector_to_byte_vector,
+        u64_slice_to_byte_vector, u64_vector_to_byte_vector,
     };
     use rs_merkle::{algorithms::Sha256, Hasher, MerkleProof, MerkleTree};
     #[test]
@@ -140,11 +141,10 @@ mod tests {
             leaves.len()
         ));
     }
-    
-    #[test]
-    pub fn u32_vector_test(){
 
-        let leaf_values: Vec<u32> = vec![55,23,16,24,19,83];
+    #[test]
+    pub fn u32_vector_test() {
+        let leaf_values: Vec<u32> = vec![55, 23, 16, 24, 19, 83];
         let leaf_bytes = u32_vector_to_byte_vector(&leaf_values);
         let leaves: Vec<[u8; 32]> = leaf_bytes.iter().map(|x| Sha256::hash(x)).collect();
         let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
@@ -168,9 +168,8 @@ mod tests {
     }
 
     #[test]
-    pub fn u16_vector_test(){
-
-        let leaf_values: Vec<u16> = vec![55,23,16,24,19,83];
+    pub fn u16_vector_test() {
+        let leaf_values: Vec<u16> = vec![55, 23, 16, 24, 19, 83];
         let leaf_bytes = u16_vector_to_byte_vector(&leaf_values);
         let leaves: Vec<[u8; 32]> = leaf_bytes.iter().map(|x| Sha256::hash(x)).collect();
         let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
@@ -192,12 +191,10 @@ mod tests {
             leaves.len()
         ));
     }
-    
-    
-    #[test]
-    pub fn u64_vector_test(){
 
-        let leaf_values: Vec<u64> = vec![55,23,16,24,19,83];
+    #[test]
+    pub fn u64_vector_test() {
+        let leaf_values: Vec<u64> = vec![55, 23, 16, 24, 19, 83];
         let leaf_bytes = u64_vector_to_byte_vector(&leaf_values);
         let leaves: Vec<[u8; 32]> = leaf_bytes.iter().map(|x| Sha256::hash(x)).collect();
         let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
@@ -219,11 +216,10 @@ mod tests {
             leaves.len()
         ));
     }
-    
-    #[test]
-    pub fn u128_vector_test(){
 
-        let leaf_values: Vec<u128> = vec![55,23,16,24,19,83];
+    #[test]
+    pub fn u128_vector_test() {
+        let leaf_values: Vec<u128> = vec![55, 23, 16, 24, 19, 83];
         let leaf_bytes = u128_vector_to_byte_vector(&leaf_values);
         let leaves: Vec<[u8; 32]> = leaf_bytes.iter().map(|x| Sha256::hash(x)).collect();
         let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
