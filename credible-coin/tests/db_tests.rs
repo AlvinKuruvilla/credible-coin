@@ -5,7 +5,7 @@ mod tests {
     use std::fs;
     use std::path::Path;
 
-    //tests the createDB function
+    //tests the create_db function
     #[test]
     pub fn create_db_test() {
         create_db("test.csv", 20);
