@@ -8,7 +8,7 @@ mod tests {
     //tests the createDB function
     #[test]
     pub fn create_db_test() {
-        create_db();
+        create_db("test.csv", 20);
         assert!(Path::new("test.csv")
             .try_exists()
             .expect("Can't find the file"));
@@ -18,7 +18,7 @@ mod tests {
     //tests load_merkle_leaves and load_DB
     #[test]
     pub fn load_db_test() {
-        let merkle_coin_leaves = load_merkle_leaves();
+        let merkle_coin_leaves = load_merkle_leaves("BigQuery Bitcoin Historical Data - outputs.csv"); 
         let merkle_with_coins = load_db(merkle_coin_leaves.clone());
 
         let indices_to_prove = vec![3, 4];
