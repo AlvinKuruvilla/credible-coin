@@ -3,6 +3,7 @@ use crate::merkle::*;
 use crate::utils::address_generator::*;
 use crate::utils::csv_utils::*;
 use polars::prelude::*;
+use std::path::Path;
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 
 //creates csv file from random addresses and values
