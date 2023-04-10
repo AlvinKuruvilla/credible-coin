@@ -2,6 +2,9 @@ use reedline::{
     ColumnarMenu, DefaultCompleter, DefaultPrompt, DefaultValidator, ExampleHighlighter, Reedline,
     ReedlineMenu, Signal,
 };
+use rs_merkle::{algorithms::Sha256, MerkleTree};
+
+use crate::merkle::MerkleNode;
 
 #[derive(Default)]
 pub struct PublisherShell;
@@ -15,15 +18,18 @@ pub fn shell_commands() -> Vec<String> {
     ];
 }
 /// Get all of the info for a coin in the merkle tree given its public address
-fn get_coin_info(_public_address: &str) {
-    unimplemented!()
+fn get_coin_info(_public_address: &str, tree: &MerkleTree<Sha256>) {
+    let tree_leaves = tree.leaves();
+    for slice in tree_leaves.iter() {
+        print!("{:?}", slice);
+    }
 }
 /// Update a coin in the merkle tree given its public address and its new value
-fn update_coin(_public_address: &str, _new_value: u32) {
+fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<Sha256>) {
     unimplemented!()
 }
 /// Prove that a coin is a member of the merkle tree given its public address
-fn prove_membership(_public_address: &str, _value: u32) {
+fn prove_membership(_public_address: &str, _value: u32, tree: &MerkleTree<Sha256>) {
     unimplemented!()
 }
 /// The user is automatically brought into the publisher shell once they
@@ -33,7 +39,7 @@ impl PublisherShell {
     pub fn new() -> Self {
         return Self::default();
     }
-    pub fn start(&self) -> std::io::Result<()> {
+    pub fn start(&self, tree: &MerkleTree<Sha256>) -> std::io::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
         pretty_env_logger::init();
         let commands = shell_commands();
@@ -57,26 +63,27 @@ impl PublisherShell {
                 Signal::Success(buffer) => {
                     println!("We processed: {buffer}");
                     // This is where command processing goes, see the reedline example demo for details
-                    if buffer.trim() == "exit" {
+                    let args: Vec<&str> = buffer.split(" ").collect();
+                    if args[0] == "exit" {
                         println!("Exiting Shell");
                         break;
                     }
-                    if buffer.trim() == "clear" {
+                    if args[0] == "clear" {
                         line_editor.clear_scrollback()?;
                         continue;
                     }
-                    if buffer.trim() == "getCoinInfo" {
-                        let args: Vec<&str> = buffer.split(" ").collect();
-                        let element = args.get(2); // Get the provided coin address and skip getCoinInfo
+                    if args[0] == "getCoinInfo" {
+                        let element = args.get(1); // Get the provided coin address and skip getCoinInfo
+                        println!("Provided public address {:?}", element);
                         if let Some(public_address) = element {
-                            get_coin_info(&public_address);
+                            get_coin_info(&public_address, tree);
                         } else {
-                            log::error!("No public address provided");
+                            log::error!("No public address provided for getCoinInfo");
                             break;
                         };
                     }
-                    if buffer.trim() == "updateCoin" {
-                        let args: Vec<&str> = buffer.split(" ").collect();
+                    // TODO: change the if buffer trim statements to be similar to getCoinInfo
+                    if args[0] == "updateCoin" {
                         let element = args.get(2); // Get the provided coin address and skip getCoinInfo
                         let element2 = args.get(3); // Get the new value to assign to the coin
                         let public_address;
@@ -89,14 +96,13 @@ impl PublisherShell {
                         if element2.is_some() {
                             let value = element2.unwrap();
                             // TODO: We should do some math or 'if let Some' magic for the value in case we cannot parse it
-                            update_coin(public_address, value.parse().unwrap());
+                            update_coin(public_address, value.parse().unwrap(), tree);
                         } else {
                             log::error!("No new value provided");
                             break;
                         }
                     }
-                    if buffer.trim() == "prove-membership" {
-                        let args: Vec<&str> = buffer.split(" ").collect();
+                    if args[0] == "prove-membership" {
                         let element = args.get(2); // Get the provided coin address and skip getCoinInfo
                         let element2 = args.get(3); // Get the new value to assign to the coin
                         let public_address;
@@ -108,8 +114,8 @@ impl PublisherShell {
                         };
                         if element2.is_some() {
                             let value = element2.unwrap();
-                            // TODO: We should do some math or 'if let Some' magic for the value in case we cannot parse it
-                            prove_membership(public_address, value.parse().unwrap());
+                            // TODO: We should do some match or 'if let Some' magic for the value in case we cannot parse it
+                            prove_membership(public_address, value.parse().unwrap(), tree);
                         } else {
                             log::error!("No new value provided");
                             break;
