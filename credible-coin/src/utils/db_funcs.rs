@@ -6,7 +6,7 @@ use polars::prelude::*;
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 use std::path::Path;
 
-//creates csv file from random addresses and values
+/// Creates csv file from random addresses and values
 pub fn create_db(filename: &str, row_count: u32) {
     assert!(
         !Path::new(filename)
@@ -19,7 +19,7 @@ pub fn create_db(filename: &str, row_count: u32) {
     CsvWriter::new(&mut file).finish(&mut datafr).unwrap();
 }
 
-//creates leaves from coin vectors
+/// Creates leaves from coin vectors
 pub fn load_merkle_leaves(file_name: &str) -> Vec<[u8; 32]> {
     let (v1, v2) = addresses_and_values_as_vectors(file_name);
     let vec_coin = Coin::create_coin_vector(v1, v2);
@@ -38,7 +38,7 @@ pub fn load_merkle_leaves(file_name: &str) -> Vec<[u8; 32]> {
     return leaves_vec;
 }
 
-//loads a merkle tree from the coin leaves
+// Loads a merkle tree from the coin leaves
 pub fn load_db(coin_leaves: Vec<[u8; 32]>) -> MerkleTree<Sha256> {
     let loaded_merkle_tree = MerkleTree::<Sha256>::from_leaves(&coin_leaves);
     return loaded_merkle_tree;

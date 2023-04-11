@@ -10,6 +10,7 @@ pub struct MerkleNode {
     coin: Coin,
 }
 impl MerkleNode {
+    /// Construct a new `MerkleNode` from the provided `Coin`
     pub fn new(coin: Coin) -> Self {
         return Self { coin };
     }
@@ -35,12 +36,6 @@ pub fn from_vec_coins_to_vec_nodes(vec_coin: Vec<Coin>) -> Vec<MerkleNode> {
 /// Take the given vector of u8's iterate each element and turn into bytes, hash it,
 /// and then collect into a new vector
 pub fn hash_bytes(bytevector: Vec<u8>) -> [u8; 32] {
-    let leaves = [
-        Sha256::hash("a".as_bytes()),
-        Sha256::hash("b".as_bytes()),
-        Sha256::hash("c".as_bytes()),
-    ];
-
     let leaves: [u8; 32] = Sha256::hash(&bytevector);
     return leaves;
 }
