@@ -42,16 +42,32 @@ fn get_coin_info(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
     let bytes = MerkleNode::into_bytevec(&node);
     let hashed_bytes = [hash_bytes(bytes)];
     assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
-    println!("Coin Address:{:?}", _public_address);
-    println!("Coin Value:{:?}", value);
+    log::info!("Coin Address:{:?}", _public_address);
+    log::info!("Coin Value:{:?}", value);
 }
 /// Update a coin in the merkle tree given its public address and its new value
 fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<merkle_sha>) {
     unimplemented!()
 }
 /// Prove that a coin is a member of the merkle tree given its public address
-fn prove_membership(_public_address: &str, _value: u32, tree: &MerkleTree<merkle_sha>) {
-    unimplemented!()
+fn prove_membership(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
+    let tree_leaves = tree
+        .leaves()
+        .ok_or("Could not get leaves to prove")
+        .unwrap();
+    let map = CoinMap::generate_address_value_map();
+    //TODO: Remove unwrap
+    let value = map.inner.get(_public_address).unwrap();
+    let generated_coin = Coin::new(_public_address.to_owned(), *value);
+    let address_index = get_address_position(_public_address.to_string());
+    let indices = vec![address_index];
+    let proof = tree.proof(&indices);
+    let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
+    let node = MerkleNode::new(generated_coin);
+    let bytes = MerkleNode::into_bytevec(&node);
+    let hashed_bytes = [hash_bytes(bytes)];
+    assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
+    log::info!("Address {:?} found in merkle tree", _public_address);
 }
 /// The user is automatically brought into the publisher shell once they
 /// provide a valid CSV file of their coin addresses and values and it
@@ -124,8 +140,7 @@ impl PublisherShell {
                         }
                     }
                     if args[0] == "prove-membership" {
-                        let element = args.get(2); // Get the provided coin address and skip getCoinInfo
-                        let element2 = args.get(3); // Get the new value to assign to the coin
+                        let element = args.get(1); // Get the provided coin address and skip getCoinInfo
                         let public_address;
                         if element.is_some() {
                             public_address = element.unwrap();
@@ -133,14 +148,7 @@ impl PublisherShell {
                             log::error!("No public address provided");
                             break;
                         };
-                        if element2.is_some() {
-                            let value = element2.unwrap();
-                            // TODO: We should do some match or 'if let Some' magic for the value in case we cannot parse it
-                            prove_membership(public_address, value.parse().unwrap(), tree);
-                        } else {
-                            log::error!("No new value provided");
-                            break;
-                        }
+                        prove_membership(public_address, tree);
                     }
                 }
                 Signal::CtrlD | Signal::CtrlC => {
