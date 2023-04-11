@@ -41,8 +41,9 @@ fn get_coin_info(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
     let node = MerkleNode::new(generated_coin);
     let bytes = MerkleNode::into_bytevec(&node);
     let hashed_bytes = [hash_bytes(bytes)];
-    println!("Value was:{:?}", address_index);
     assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
+    println!("Coin Address:{:?}", _public_address);
+    println!("Coin Value:{:?}", value);
 }
 /// Update a coin in the merkle tree given its public address and its new value
 fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<merkle_sha>) {
