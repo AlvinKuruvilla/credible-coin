@@ -1,6 +1,7 @@
 use clap::{Parser, Subcommand};
 use eyre::Result;
 
+mod coin_map;
 mod database;
 mod shell;
 
