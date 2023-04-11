@@ -10,6 +10,9 @@ pub struct MerkleNode {
     coin: Coin,
 }
 impl MerkleNode {
+    pub fn new(coin: Coin) -> Self {
+        return Self { coin };
+    }
     /// Convert the given reference to the struct into a vector u8's
     pub fn into_bytevec(&self) -> Vec<u8> {
         return bincode::serialize(&self).unwrap();
