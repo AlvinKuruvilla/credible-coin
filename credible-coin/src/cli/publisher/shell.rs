@@ -2,9 +2,16 @@ use reedline::{
     ColumnarMenu, DefaultCompleter, DefaultPrompt, DefaultValidator, ExampleHighlighter, Reedline,
     ReedlineMenu, Signal,
 };
-use rs_merkle::{algorithms::Sha256, MerkleTree};
+use rs_merkle::algorithms::Sha256 as merkle_sha;
+use rs_merkle::MerkleTree;
 
-use crate::merkle::MerkleNode;
+use crate::{
+    coin::Coin,
+    merkle::{hash_bytes, MerkleNode},
+    utils::csv_utils::get_address_position,
+};
+
+use super::coin_map::CoinMap;
 
 #[derive(Default)]
 pub struct PublisherShell;
@@ -18,18 +25,31 @@ pub fn shell_commands() -> Vec<String> {
     ];
 }
 /// Get all of the info for a coin in the merkle tree given its public address
-fn get_coin_info(_public_address: &str, tree: &MerkleTree<Sha256>) {
-    let tree_leaves = tree.leaves();
-    for slice in tree_leaves.iter() {
-        print!("{:?}", slice);
-    }
+fn get_coin_info(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
+    let tree_leaves = tree
+        .leaves()
+        .ok_or("Could not get leaves to prove")
+        .unwrap();
+    let map = CoinMap::generate_address_value_map();
+    //TODO: Remove unwrap
+    let value = map.inner.get(_public_address).unwrap();
+    let generated_coin = Coin::new(_public_address.to_owned(), *value);
+    let address_index = get_address_position(_public_address.to_string());
+    let indices = vec![address_index];
+    let proof = tree.proof(&indices);
+    let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
+    let node = MerkleNode::new(generated_coin);
+    let bytes = MerkleNode::into_bytevec(&node);
+    let hashed_bytes = [hash_bytes(bytes)];
+    println!("Value was:{:?}", address_index);
+    assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
 }
 /// Update a coin in the merkle tree given its public address and its new value
-fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<Sha256>) {
+fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<merkle_sha>) {
     unimplemented!()
 }
 /// Prove that a coin is a member of the merkle tree given its public address
-fn prove_membership(_public_address: &str, _value: u32, tree: &MerkleTree<Sha256>) {
+fn prove_membership(_public_address: &str, _value: u32, tree: &MerkleTree<merkle_sha>) {
     unimplemented!()
 }
 /// The user is automatically brought into the publisher shell once they
@@ -39,7 +59,7 @@ impl PublisherShell {
     pub fn new() -> Self {
         return Self::default();
     }
-    pub fn start(&self, tree: &MerkleTree<Sha256>) -> std::io::Result<()> {
+    pub fn start(&self, tree: &MerkleTree<merkle_sha>) -> std::io::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
         pretty_env_logger::init();
         let commands = shell_commands();

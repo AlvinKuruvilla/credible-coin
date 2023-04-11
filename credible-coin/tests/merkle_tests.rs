@@ -241,4 +241,25 @@ mod tests {
             leaves.len()
         ));
     }
+    #[test]
+    pub fn bincode_serializer() {
+        let leaves = [
+            Sha256::hash(&bincode::serialize("a").unwrap()),
+            Sha256::hash(&bincode::serialize("b").unwrap()),
+            Sha256::hash(&bincode::serialize("c").unwrap()),
+        ];
+
+        let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
+
+        let indices_to_prove = vec![0, 1];
+        let leaves_to_prove = leaves.get(0..2).ok_or("can't get leaves to prove").unwrap();
+
+        let proof = merkle_tree.proof(&indices_to_prove);
+        let root = merkle_tree
+            .root()
+            .ok_or("couldn't get the merkle root")
+            .unwrap();
+
+        assert!(proof.verify(root, &indices_to_prove, leaves_to_prove, leaves.len()));
+    }
 }

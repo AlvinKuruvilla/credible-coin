@@ -26,7 +26,7 @@ pub fn write_csv(filename: &str, mut data: DataFrame) {
     let mut file = std::fs::File::create(filename).unwrap();
     CsvWriter::new(&mut file).finish(&mut data).unwrap();
 }
-pub fn addresses_and_values_as_vectors(file_name: &str) -> (Vec<i64>, Vec<String>) {
+pub fn addresses_and_values_as_vectors(file_name: &str) -> (Vec<String>, Vec<i64>) {
     let address_series = get_dataset_column_by_name(file_name, "addresses");
     let value_series = get_dataset_column_by_name(file_name, "value");
     // TODO: Remove unwrap()
@@ -38,5 +38,23 @@ pub fn addresses_and_values_as_vectors(file_name: &str) -> (Vec<i64>, Vec<String
         .map(|s| s.to_string())
         .collect();
 
-    return (value_vec, address_vec);
+    return (address_vec, value_vec);
+}
+pub fn get_address_position(public_address: String) -> usize {
+    let address_series = get_dataset_column_by_name(
+        "BigQuery Bitcoin Historical Data - outputs.csv",
+        "addresses",
+    );
+    let address_vec: Vec<_> = address_series
+        .utf8()
+        .unwrap()
+        .into_no_null_iter()
+        .map(|s| s.to_string())
+        .collect();
+    // TODO: Remove unwrap()
+    let index = address_vec
+        .iter()
+        .position(|r| r == &public_address)
+        .unwrap();
+    return index;
 }

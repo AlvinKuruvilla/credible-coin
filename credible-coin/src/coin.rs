@@ -31,4 +31,23 @@ impl Coin {
         }
         return coins;
     }
+    pub fn serialize_coin(&self) -> Vec<u8> {
+        self.coin_address().push_str(&self.coin_value().to_string());
+        return bincode::serialize(&self.coin_address()).unwrap();
+    }
+}
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_serialize() {
+        let address = "17wNSD33wQFDwMnzUHRPCsXseWctUZVQEC";
+        let value = 72160;
+        let coin = Coin::new(address.to_string(), value);
+        let coin_bytes = bincode::serialize(&coin).unwrap();
+        coin.coin_address().push_str(&coin.coin_value().to_string());
+        let distinct_bytes = bincode::serialize(&coin.coin_address()).unwrap();
+        assert_ne!(coin_bytes, distinct_bytes);
+    }
 }
