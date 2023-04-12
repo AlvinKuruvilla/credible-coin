@@ -38,4 +38,8 @@ impl CoinMap {
         );
         return CoinMap::from_vectors(addresses, values);
     }
+    
+    pub fn replace (&mut self, address_key: String, new_val: i64){
+    	self.inner.insert(address_key, new_val);
+    }
 }
