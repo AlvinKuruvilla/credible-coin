@@ -47,7 +47,40 @@ fn get_coin_info(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
 }
 /// Update a coin in the merkle tree given its public address and its new value
 fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<merkle_sha>) {
-    unimplemented!()
+    //unimplemented!()
+    let tree_leaves = tree
+        .leaves()
+        .ok_or("Could not get leaves to prove")
+        .unwrap();
+    let mut map = CoinMap::generate_address_value_map();
+    //TODO: Remove unwrap
+    let value = map.inner.get(_public_address).unwrap();
+    let generated_coin = Coin::new(_public_address.to_owned(), *value);
+    let address_index = get_address_position(_public_address.to_string());
+    let indices = vec![address_index];
+    let proof = tree.proof(&indices);
+    let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
+    let node = MerkleNode::new(generated_coin);
+    let bytes = MerkleNode::into_bytevec(&node);
+    let hashed_bytes = [hash_bytes(bytes)];
+    assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
+    
+    //replace value in hashmap
+    let new_gen_coin = Coin::new(_public_address.to_owned(), i64::from(_new_value));
+    map.replace(_public_address.to_string(), i64::from(_new_value));
+    let check = map.inner.get(_public_address).unwrap();
+    assert!(check == &i64::from(_new_value));
+    log::info!("Coin Address:{:?}", _public_address);
+    log::info!("New Coin Value:{:?}", _new_value);
+    /*
+    //replace value in merkle tree
+    let new_node = MerkleNode::new(new_gen_coin);
+    let new_bytes = MerkleNode::into_bytevec(&new_node);
+    let new_hashed_bytes = [hash_bytes(new_bytes)];
+    let mut vec_nodes: Vec<MerkleNode> = tree_leaves.to_vec();
+    vec_nodes[address_index] = new_hashed_bytes;
+    return MerkleTree::<merkle_sha>::from_leaves(vec_nodes);
+    */
 }
 /// Prove that a coin is a member of the merkle tree given its public address
 fn prove_membership(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
