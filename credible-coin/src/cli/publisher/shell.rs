@@ -7,14 +7,16 @@ use rs_merkle::MerkleTree;
 
 use crate::{
     coin::Coin,
-    merkle::{hash_bytes, MerkleNode},
+    merkle::{hash_bytes, MerkleNode,from_vec_coins_to_vec_nodes},
     utils::csv_utils::get_address_position,
 };
 
 use super::coin_map::CoinMap;
 
 #[derive(Default)]
-pub struct PublisherShell;
+pub struct PublisherShell{
+    tree: MerkleTree<merkle_sha>,
+}
 pub fn shell_commands() -> Vec<String> {
     return vec![
         "exit".into(),
@@ -25,7 +27,8 @@ pub fn shell_commands() -> Vec<String> {
     ];
 }
 /// Get all of the info for a coin in the merkle tree given its public address
-fn get_coin_info(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
+fn get_coin_info(_public_address: &str,tree: &MerkleTree<merkle_sha>) {
+    //let tree = PublisherShell::shell_tree();
     let tree_leaves = tree
         .leaves()
         .ok_or("Could not get leaves to prove")
@@ -46,7 +49,7 @@ fn get_coin_info(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
     log::info!("Coin Value:{:?}", value);
 }
 /// Update a coin in the merkle tree given its public address and its new value
-fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<merkle_sha>) {
+fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<merkle_sha>) -> MerkleTree<merkle_sha>{
     //unimplemented!()
     let tree_leaves = tree
         .leaves()
@@ -72,15 +75,25 @@ fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<merkle_
     assert!(check == &i64::from(_new_value));
     log::info!("Coin Address:{:?}", _public_address);
     log::info!("New Coin Value:{:?}", _new_value);
-    /*
-    //replace value in merkle tree
-    let new_node = MerkleNode::new(new_gen_coin);
-    let new_bytes = MerkleNode::into_bytevec(&new_node);
-    let new_hashed_bytes = [hash_bytes(new_bytes)];
-    let mut vec_nodes: Vec<MerkleNode> = tree_leaves.to_vec();
-    vec_nodes[address_index] = new_hashed_bytes;
-    return MerkleTree::<merkle_sha>::from_leaves(vec_nodes);
-    */
+    
+    //make new merkle tree
+    let new_addr_vec: Vec<String> = map.inner.keys().cloned().collect();
+    let new_val_vec: Vec<i64> = map.inner.values().cloned().collect();
+    let new_vec_coin = Coin::create_coin_vector(new_addr_vec, new_val_vec);
+    let new_merkle_nodes: Vec<MerkleNode> = from_vec_coins_to_vec_nodes(new_vec_coin);
+    let mut u8coins: Vec<Vec<u8>> = Vec::new();
+    for nodes in new_merkle_nodes {
+        u8coins.push(MerkleNode::into_bytevec(&nodes));
+    }
+
+    let mut new_leaves: Vec<[u8; 32]> = Vec::new();
+    for u8s in u8coins {
+        new_leaves.push(hash_bytes(u8s))
+    }
+    let new_tree = MerkleTree::<merkle_sha>::from_leaves(&new_leaves);
+ 
+    return new_tree;
+    
 }
 /// Prove that a coin is a member of the merkle tree given its public address
 fn prove_membership(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
@@ -106,10 +119,15 @@ fn prove_membership(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
 /// provide a valid CSV file of their coin addresses and values and it
 /// gets created into an in-memory merkle tree.
 impl PublisherShell {
-    pub fn new() -> Self {
-        return Self::default();
+    pub fn new(tree: MerkleTree<merkle_sha>) -> Self {
+        return Self{
+          tree,
+        };//::default();
     }
-    pub fn start(&self, tree: &MerkleTree<merkle_sha>) -> std::io::Result<()> {
+    pub fn shell_tree(&self) -> &MerkleTree<merkle_sha> {
+        return &self.tree;
+    }
+    pub fn start(&mut self) -> std::io::Result<()> { //, tree: &MerkleTree<merkle_sha>
         println!("Ctrl-D or Ctrl-C to quit");
         pretty_env_logger::init();
         let commands = shell_commands();
@@ -146,7 +164,7 @@ impl PublisherShell {
                         let element = args.get(1); // Get the provided coin address and skip getCoinInfo
                         println!("Provided public address {:?}", element);
                         if let Some(public_address) = element {
-                            get_coin_info(&public_address, tree);
+                            get_coin_info(&public_address, &self.tree);
                         } else {
                             log::error!("No public address provided for getCoinInfo");
                             break;
@@ -154,8 +172,8 @@ impl PublisherShell {
                     }
                     // TODO: change the if buffer trim statements to be similar to getCoinInfo
                     if args[0] == "updateCoin" {
-                        let element = args.get(2); // Get the provided coin address and skip getCoinInfo
-                        let element2 = args.get(3); // Get the new value to assign to the coin
+                        let element = args.get(1); // Get the provided coin address and skip getCoinInfo
+                        let element2 = args.get(2); // Get the new value to assign to the coin
                         let public_address;
                         if element.is_some() {
                             public_address = element.unwrap();
@@ -166,7 +184,7 @@ impl PublisherShell {
                         if element2.is_some() {
                             let value = element2.unwrap();
                             // TODO: We should do some math or 'if let Some' magic for the value in case we cannot parse it
-                            update_coin(public_address, value.parse().unwrap(), tree);
+                            self.tree = update_coin(public_address, value.parse().unwrap(), &self.tree);
                         } else {
                             log::error!("No new value provided");
                             break;
@@ -181,7 +199,7 @@ impl PublisherShell {
                             log::error!("No public address provided");
                             break;
                         };
-                        prove_membership(public_address, tree);
+                        prove_membership(public_address, &self.tree);
                     }
                 }
                 Signal::CtrlD | Signal::CtrlC => {
