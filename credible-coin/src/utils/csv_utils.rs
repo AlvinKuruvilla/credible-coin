@@ -1,7 +1,23 @@
 use polars::{
-    prelude::{CsvReader, CsvWriter, DataFrame, SerReader, SerWriter},
+    prelude::{CsvReader, CsvWriter, DataFrame, SerWriter, SerReader},
     series::Series,
 };
+use serde::{Deserialize, Serialize};
+
+#[derive(Debug, Deserialize, Serialize)]
+pub struct CsvRecord {
+    transaction_hash: String,
+    block_hash: String,
+    block_number: String,
+    block_timestamp: String,
+    index: u32,
+    script_asm: String,
+    script_hex: String,
+    required_signatures: String,
+    hash_type: String,
+    addresses: String,
+    value: i64,
+}
 /// Read a test bitcoin dataset in the project root. For right now we assume
 /// its the bigquery dataset but eventually the filename should be a parameter
 pub fn read_bitcoin_address_dataframe(file_name: &str) -> DataFrame {
@@ -59,4 +75,18 @@ pub fn get_address_position(public_address: String) -> usize {
         .position(|r| r == &public_address)
         .unwrap();
     return index;
+}
+pub fn update_csv_value(address: String, value: i64) {
+    let mut rdr = csv::Reader::from_path("BigQuery Bitcoin Historical Data - outputs.csv").unwrap();
+    let mut writer = csv::Writer::from_path("temp.csv").unwrap();
+    for result in rdr.deserialize() {
+        let mut record: CsvRecord = result.unwrap();
+        if record.addresses == address {
+            record.value = value;
+        }
+        writer.serialize(record);
+    }
+    std::fs::remove_file("BigQuery Bitcoin Historical Data - outputs.csv").unwrap();
+    std::fs::rename("temp.csv", "BigQuery Bitcoin Historical Data - outputs.csv").unwrap();
+    return 
 }

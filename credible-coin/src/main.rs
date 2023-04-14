@@ -1,10 +1,5 @@
-use credible_coin::utils;
+use credible_coin::utils::csv_utils::update_csv_value;
 fn main() {
-    // let series = utils::csv_utils::get_dataset_column_by_name("addresses");
-    // println!("The series is {}", series);
 
-    let (v1, v2) = utils::csv_utils::addresses_and_values_as_vectors(
-        "BigQuery Bitcoin Historical Data - outputs.csv",
-    );
-    println!("V1 {:?}", v2);
+    update_csv_value("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(), 99999);
 }

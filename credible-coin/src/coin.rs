@@ -29,7 +29,7 @@ impl Coin {
         assert_eq!(addresses.len(), values.len());
         let mut coins: Vec<Coin> = Vec::new();
         for (a, v) in addresses.iter().zip(values.iter()) {
-            println!("Address={}, Value={}", a, v);
+            println!("Address= {}, Value= {}", a, v);
             coins.push(Coin::new(a.to_string(), *v))
         }
         return coins;

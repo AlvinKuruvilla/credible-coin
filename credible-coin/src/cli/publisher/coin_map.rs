@@ -39,7 +39,13 @@ impl CoinMap {
         return CoinMap::from_vectors(addresses, values);
     }
     
-    pub fn replace (&mut self, address_key: String, new_val: i64){
-    	self.inner.insert(address_key, new_val);
+    pub fn replace(&mut self, address_key: String, new_val: i64){
+        assert!(self.inner.contains_key(&address_key));
+    	self.inner.entry(address_key).and_modify(|old_value|*old_value = new_val);
+    }
+    pub fn dbg_print(&self) {
+        for (key, value) in &self.inner {
+            println!("{}: {}", key, value);
+        }        
     }
 }
