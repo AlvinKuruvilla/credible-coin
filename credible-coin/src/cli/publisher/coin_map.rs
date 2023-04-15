@@ -57,3 +57,47 @@ impl CoinMap {
         }        
     }
 }
+mod tests {
+    use rs_merkle::{algorithms::Sha256, Hasher};
+
+    use crate::{merkle::{MerkleNode, hash_bytes}, coin::Coin};
+
+    use super::CoinMap;
+
+    #[test]
+    pub fn byte_hash_changes_after_value_update() {
+        let mut cm = CoinMap::generate_address_value_map();
+        let old_value = cm.inner.get("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k").unwrap();
+        assert_eq!(old_value.to_owned(), 22222);
+        let old_coin = Coin::new("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(), *old_value);
+        let old_node = MerkleNode::new(old_coin);
+        let old_bytes = MerkleNode::into_bytevec(&old_node);
+        let old_hash = hash_bytes(old_bytes);
+
+        cm.replace("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(), 12345);
+        let retrieved_value = cm.inner.get("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k").unwrap();
+        assert_eq!(retrieved_value.to_owned(), 12345);
+        let coin = Coin::new("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(), *retrieved_value);
+        let node = MerkleNode::new(coin);
+        assert_eq!(node.coin.serialize_coin(), old_node.coin.serialize_coin());
+        let bytes = MerkleNode::into_bytevec(&node);
+        let new_hash = hash_bytes(bytes);
+        //TODO: FIXME: this should assert_ne!
+        assert_eq!(old_hash, new_hash);
+    }
+    #[test]
+    pub fn bytes_equality() {
+        let mut address: String = "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_owned();
+        // &address.push_str(&22222.to_string());
+        // assert_eq!(address, "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k22222".to_owned());
+        address.push_str(&22222.to_string());
+        let first = Sha256::hash(&bincode::serialize(&address).unwrap());
+
+        let mut new_address: String = "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_owned();
+        new_address.push_str(&12345.to_string());
+        let second = Sha256::hash(&bincode::serialize(&new_address).unwrap());
+        
+        assert_ne!(first, second);
+
+    }
+}

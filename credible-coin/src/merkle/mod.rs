@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 /// A Coin contains the address and the value
 #[derive(Serialize, Deserialize)]
 pub struct MerkleNode {
-    coin: Coin,
+    pub coin: Coin,
 }
 impl MerkleNode {
     /// Construct a new `MerkleNode` from the provided `Coin`
@@ -15,8 +15,9 @@ impl MerkleNode {
         return Self { coin };
     }
     /// Convert the given reference to the struct into a vector u8's
-    pub fn into_bytevec(&self) -> Vec<u8> {
-        return self.coin.serialize_coin();
+    pub fn into_bytevec(node: &MerkleNode) -> Vec<u8> {
+        let res = node.coin.serialize_coin();
+        return res;
     }
     /// Converts a vector of bytes back into the struct
     pub fn from_bytes_into_struct(encoded: Vec<u8>) {
