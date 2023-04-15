@@ -34,18 +34,24 @@ fn get_coin_info(_public_address: &str,tree: &MerkleTree<merkle_sha>) {
         .ok_or("Could not get leaves to prove")
         .unwrap();
     let map = CoinMap::generate_address_value_map();
+    println!(" Key Count: {:?}", map.inner.keys().len());
     //TODO: Remove unwrap
     let value = map.inner.get(_public_address).unwrap();
     let generated_coin = Coin::new(_public_address.to_owned(), *value);
     let address_index = get_address_position(_public_address.to_string());
+    println!("Address Index:{:?}", address_index);
+    println!("Address Value:{:?}", value);
     let indices = vec![address_index];
     let proof = tree.proof(&indices);
     let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
     let node = MerkleNode::new(generated_coin);
     let bytes = MerkleNode::into_bytevec(&node);
     let hashed_bytes = [hash_bytes(bytes)];
+    println!("Indices:{:?}", indices);
+    println!("Leaf count:{:?}", tree_leaves.len());
+
     //FIXME: We should figure out why after updating a coin value the proof fails to verify 
-    // assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
+    assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
     log::info!("Coin Address:{:?}", _public_address);
     log::info!("Coin Value:{:?}", value);
 }
@@ -115,7 +121,7 @@ fn prove_membership(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
     let bytes = MerkleNode::into_bytevec(&node);
     let hashed_bytes = [hash_bytes(bytes)];
     //FIXME: We should figure out why after updating a coin value the proof fails to verify 
-    // assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
+    assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
     log::info!("Address {:?} found in merkle tree", _public_address);
 }
 /// The user is automatically brought into the publisher shell once they

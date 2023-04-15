@@ -39,6 +39,6 @@ impl LoadCmd {
 
         print!("Provided filename: {:?}", self.filename);
         let mut publisher_shell = PublisherShell::new(coin_tree);
-        publisher_shell.start();//&coin_tree
+        publisher_shell.start();
     }
 }

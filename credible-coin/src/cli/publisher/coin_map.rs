@@ -28,14 +28,22 @@ impl CoinMap {
         return Self { inner: map };
     }
     pub fn from_vectors(key_vector: Vec<String>, value_vector: Vec<i64>) -> Self {
-        let pairs: Vec<(String, i64)> = key_vector.into_iter().zip(value_vector).collect();
-        let map: HashMap<String, i64> = pairs.into_iter().collect();
+        assert_eq!(key_vector.len(), value_vector.len());
+        let mut map = HashMap::new();
+        for(pos, element) in key_vector.iter().enumerate() {
+            // NOTE: If the address occurs multiple times, only the value will be updated 
+            // in the map so the map will have fewer keys compared to rows in the csv file
+            // causing issues
+            map.insert(element.to_owned(), value_vector[pos]);
+        }
         return Self { inner: map };
     }
     pub fn generate_address_value_map() -> Self {
         let (addresses, values) = crate::utils::csv_utils::addresses_and_values_as_vectors(
             "BigQuery Bitcoin Historical Data - outputs.csv",
         );
+        println!("Address Length: {:?}", addresses.len());
+        println!("Values Length: {:?}", values.len());
         return CoinMap::from_vectors(addresses, values);
     }
     

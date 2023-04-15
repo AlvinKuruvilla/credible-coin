@@ -32,6 +32,8 @@ impl Coin {
             println!("Address= {}, Value= {}", a, v);
             coins.push(Coin::new(a.to_string(), *v))
         }
+        println!();
+        println!("{:?}", coins.len());
         return coins;
     }
     /// Serialize a coin into bytes
