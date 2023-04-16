@@ -77,11 +77,10 @@ mod tests {
         let retrieved_value = cm.inner.get("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k").unwrap();
         assert_eq!(retrieved_value.to_owned(), 12345);
         let coin = Coin::new("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(), *retrieved_value);
-        assert_eq!(coin.serialize_coin(), old_coin.serialize_coin());
+        assert_ne!(coin.serialize_coin(), old_coin.serialize_coin());
         let bytes = coin.serialize_coin();
         let new_hash = Coin::hash_bytes(bytes);
-        //TODO: FIXME: this should assert_ne!
-        assert_eq!(old_hash, new_hash);
+        assert_ne!(old_hash, new_hash);
     }
     #[test]
     pub fn bytes_equality() {

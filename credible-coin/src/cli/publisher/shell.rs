@@ -71,7 +71,7 @@ fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<merkle_
     let bytes = generated_coin.serialize_coin();
     let hashed_bytes = [Coin::hash_bytes(bytes)];
     //FIXME: We should figure out why after updating a coin value the proof fails to verify 
-    // assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
+    assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
     
     //replace value in hashmap
     let new_gen_coin = Coin::new(_public_address.to_owned(), i64::from(_new_value));
