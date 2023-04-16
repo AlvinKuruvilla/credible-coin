@@ -2,6 +2,7 @@
 //!
 //! Contains a String value and a String address mostly mirroring how transactions are
 //! reflected in a cryptocurrency-system with a blockchain ledger
+use rs_merkle::{algorithms::Sha256, Hasher};
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize, Serialize)]
 pub struct Coin {
@@ -44,6 +45,13 @@ impl Coin {
         self.coin_address().push_str(&self.coin_value().to_string());
         return bincode::serialize(&self.coin_address()).unwrap();
     }
+    /// Take the given vector of u8's iterate each element and turn into bytes, hash it,
+    /// and then collect into a new vector
+    pub fn hash_bytes(bytevector: Vec<u8>) -> [u8; 32] {
+        let leaves: [u8; 32] = Sha256::hash(&bytevector);
+        return leaves;
+    }
+
 }
 #[cfg(test)]
 mod tests {

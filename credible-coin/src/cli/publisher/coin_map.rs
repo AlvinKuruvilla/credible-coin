@@ -60,7 +60,7 @@ impl CoinMap {
 mod tests {
     use rs_merkle::{algorithms::Sha256, Hasher};
 
-    use crate::{merkle::{MerkleNode, hash_bytes}, coin::Coin};
+    use crate::coin::Coin;
 
     use super::CoinMap;
 
@@ -70,18 +70,16 @@ mod tests {
         let old_value = cm.inner.get("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k").unwrap();
         assert_eq!(old_value.to_owned(), 22222);
         let old_coin = Coin::new("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(), *old_value);
-        let old_node = MerkleNode::new(old_coin);
-        let old_bytes = MerkleNode::into_bytevec(&old_node);
-        let old_hash = hash_bytes(old_bytes);
+        let old_bytes = old_coin.serialize_coin();
+        let old_hash = Coin::hash_bytes(old_bytes);
 
         cm.replace("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(), 12345);
         let retrieved_value = cm.inner.get("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k").unwrap();
         assert_eq!(retrieved_value.to_owned(), 12345);
         let coin = Coin::new("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(), *retrieved_value);
-        let node = MerkleNode::new(coin);
-        assert_eq!(node.coin.serialize_coin(), old_node.coin.serialize_coin());
-        let bytes = MerkleNode::into_bytevec(&node);
-        let new_hash = hash_bytes(bytes);
+        assert_eq!(coin.serialize_coin(), old_coin.serialize_coin());
+        let bytes = coin.serialize_coin();
+        let new_hash = Coin::hash_bytes(bytes);
         //TODO: FIXME: this should assert_ne!
         assert_eq!(old_hash, new_hash);
     }
