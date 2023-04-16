@@ -67,4 +67,10 @@ mod tests {
         let distinct_bytes = bincode::serialize(&coin.coin_address()).unwrap();
         assert_ne!(coin_bytes, distinct_bytes);
     }
+    #[test]
+    pub fn combine_address_and_value() {
+        let mut address: String = "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_owned();
+        address.push_str(&22222.to_string());
+        assert_eq!(address, "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k22222".to_owned());
+    }
 }
