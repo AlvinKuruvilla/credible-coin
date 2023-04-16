@@ -14,7 +14,7 @@ use super::coin_map::CoinMap;
 
 #[derive(Default)]
 pub struct PublisherShell{
-    tree: MerkleTree<merkle_sha>,
+     tree: MerkleTree<merkle_sha>,
 }
 pub fn shell_commands() -> Vec<String> {
     return vec![
@@ -26,7 +26,7 @@ pub fn shell_commands() -> Vec<String> {
     ];
 }
 /// Get all of the info for a coin in the merkle tree given its public address
-fn get_coin_info(_public_address: &str,tree: &MerkleTree<merkle_sha>) {
+fn get_coin_info(_public_address: &str, tree: &MerkleTree<merkle_sha>) {
     //let tree = PublisherShell::shell_tree();
     let tree_leaves = tree
         .leaves()
@@ -55,11 +55,12 @@ fn get_coin_info(_public_address: &str,tree: &MerkleTree<merkle_sha>) {
 }
 /// Update a coin in the merkle tree given its public address and its new value
 // TODO: _new_value should be an i64 not a u32
-fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<merkle_sha>) -> MerkleTree<merkle_sha>{
+fn update_coin(_public_address: &str, _new_value: u32,  tree: &MerkleTree<merkle_sha>) -> MerkleTree<merkle_sha>{
+
     let tree_leaves = tree
         .leaves()
         .ok_or("Could not get leaves to prove")
-        .unwrap();
+        .unwrap(); 
     let mut map = CoinMap::generate_address_value_map();
     //TODO: Remove unwrap
     let value = map.inner.get(_public_address).unwrap();
@@ -72,6 +73,7 @@ fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<merkle_
     let hashed_bytes = [Coin::hash_bytes(bytes)];
     //FIXME: We should figure out why after updating a coin value the proof fails to verify 
     assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
+    
     
     //replace value in hashmap
     let new_gen_coin = Coin::new(_public_address.to_owned(), i64::from(_new_value));
@@ -96,6 +98,20 @@ fn update_coin(_public_address: &str, _new_value: u32, tree: &MerkleTree<merkle_
     }
     let new_tree = MerkleTree::<merkle_sha>::from_leaves(&new_leaves);
     update_csv_value(_public_address.to_owned(), i64::from(_new_value));
+    
+    
+    //TODO: Remove unwrap
+    let new_val = map.inner.get(_public_address).unwrap();
+    let new_generated_coin = Coin::new(_public_address.to_owned(), *new_val);
+    let new_address_index = get_address_position(_public_address.to_string());
+    let new_indices = vec![new_address_index];
+    let new_proof = new_tree.proof(&new_indices);
+    let new_root = new_tree.root().ok_or("couldn't get the merkle root").unwrap();
+    let new_bytes = new_gen_coin.serialize_coin();
+    let new_hashed_bytes = [Coin::hash_bytes(new_bytes)];
+    //FIXME: We should figure out why after updating a coin value the proof fails to verify 
+    assert!(proof.verify(new_root, &new_indices, &new_hashed_bytes, new_leaves.len()));
+    
     return new_tree;
     
 }
@@ -188,7 +204,7 @@ impl PublisherShell {
                         if element2.is_some() {
                             let value = element2.unwrap();
                             // TODO: We should do some math or 'if let Some' magic for the value in case we cannot parse it
-                            self.tree = update_coin(public_address, value.parse().unwrap(), &self.tree);
+                             self.tree = update_coin(public_address, value.parse().unwrap(), &self.tree);
                         } else {
                             log::error!("No new value provided");
                             break;
