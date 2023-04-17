@@ -1,10 +1,10 @@
 #[cfg(test)]
 mod tests {
-    use credible_coin::accumulator::uint_typecast::{
+    use credible_coin::{accumulator::uint_typecast::{
         u128_slice_to_byte_vector, u128_vector_to_byte_vector, u16_slice_to_byte_vector,
         u16_vector_to_byte_vector, u32_slice_to_byte_vector, u32_vector_to_byte_vector,
         u64_slice_to_byte_vector, u64_vector_to_byte_vector,
-    };
+    }, coin::Coin};
     use rs_merkle::{algorithms::Sha256, Hasher, MerkleProof, MerkleTree};
     #[test]
     pub fn sanity() {
@@ -261,5 +261,43 @@ mod tests {
             .unwrap();
 
         assert!(proof.verify(root, &indices_to_prove, leaves_to_prove, leaves.len()));
+    }
+    #[test]
+    pub fn two_layer_update_test() {
+        let leaves = [
+            Coin::hash_bytes(Coin::new("1234".to_owned(), 123).serialize_coin()),
+            Coin::hash_bytes(Coin::new("567".to_owned(), 567).serialize_coin()),
+            Coin::hash_bytes(Coin::new("893".to_owned(), 111).serialize_coin()),
+        ];
+        let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
+
+        let indices_to_prove = vec![0, 1];
+        let leaves_to_prove = leaves.get(0..2).ok_or("can't get leaves to prove").unwrap();
+
+        let proof = merkle_tree.proof(&indices_to_prove);
+        let root = merkle_tree
+            .root()
+            .ok_or("couldn't get the merkle root")
+            .unwrap();
+
+        assert!(proof.verify(root, &indices_to_prove, leaves_to_prove, leaves.len()));
+
+        let new_leaves = [
+            Coin::hash_bytes(Coin::new("901".to_owned(), 999).serialize_coin()),
+            Coin::hash_bytes(Coin::new("567".to_owned(), 567).serialize_coin()),
+            Coin::hash_bytes(Coin::new("893".to_owned(), 111).serialize_coin()),
+        ];
+        let tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
+
+        let new_indices = vec![0, 1];
+        let new_leaves_to_prove = new_leaves.get(0..2).ok_or("can't get leaves to prove").unwrap();
+
+        let new_proof = tree.proof(&new_indices);
+        let new_root = tree
+            .root()
+            .ok_or("couldn't get the merkle root")
+            .unwrap();
+
+        assert!(new_proof.verify(new_root, &new_indices, new_leaves_to_prove, new_leaves.len()));
     }
 }

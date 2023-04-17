@@ -71,7 +71,6 @@ fn update_coin(_public_address: &str, _new_value: u32,  tree: &MerkleTree<merkle
     let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
     let bytes = generated_coin.serialize_coin();
     let hashed_bytes = [Coin::hash_bytes(bytes)];
-    //FIXME: We should figure out why after updating a coin value the proof fails to verify 
     assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
     
     
@@ -86,6 +85,7 @@ fn update_coin(_public_address: &str, _new_value: u32,  tree: &MerkleTree<merkle
     //make new merkle tree
     let new_addr_vec: Vec<String> = map.inner.keys().cloned().collect();
     let new_val_vec: Vec<i64> = map.inner.values().cloned().collect();
+    assert!(new_val_vec.contains(&i64::from(_new_value)));
     let new_vec_coin = Coin::create_coin_vector(new_addr_vec, new_val_vec);
     let mut u8coins: Vec<Vec<u8>> = Vec::new();
     for i in new_vec_coin {
@@ -101,16 +101,18 @@ fn update_coin(_public_address: &str, _new_value: u32,  tree: &MerkleTree<merkle
     
     
     //TODO: Remove unwrap
-    let new_val = map.inner.get(_public_address).unwrap();
-    let new_generated_coin = Coin::new(_public_address.to_owned(), *new_val);
     let new_address_index = get_address_position(_public_address.to_string());
     let new_indices = vec![new_address_index];
     let new_proof = new_tree.proof(&new_indices);
     let new_root = new_tree.root().ok_or("couldn't get the merkle root").unwrap();
+    println!("{:?} {:?}", new_gen_coin.coin_address(), new_gen_coin.coin_value());
     let new_bytes = new_gen_coin.serialize_coin();
     let new_hashed_bytes = [Coin::hash_bytes(new_bytes)];
+    assert_ne!(new_tree.root(), tree.root());
+    assert_ne!(new_hashed_bytes, hashed_bytes);
+
     //FIXME: We should figure out why after updating a coin value the proof fails to verify 
-    assert!(proof.verify(new_root, &new_indices, &new_hashed_bytes, new_leaves.len()));
+    assert!(new_proof.verify(new_root, &new_indices, &new_hashed_bytes, new_leaves.len()));
     
     return new_tree;
     
