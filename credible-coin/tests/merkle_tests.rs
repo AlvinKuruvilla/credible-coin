@@ -299,5 +299,6 @@ mod tests {
             .unwrap();
 
         assert!(new_proof.verify(new_root, &new_indices, new_leaves_to_prove, new_leaves.len()));
+        assert_eq!(tree.depth(), 2);
     }
 }
