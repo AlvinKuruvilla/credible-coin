@@ -19,9 +19,9 @@ impl CreateCmd {
     // TODO: This needs to return an eyere::Result<()> at the end
     pub fn run(self) {
         // 1. Check that the outfile doesn't already exist and handle errors
-        // 2. IDK
+        // 2. Create the new file
         create_db(&self.out_filename, self.row_count);
-        //todo!();
+
     }
 }
 impl LoadCmd {

@@ -77,7 +77,6 @@ impl PublisherShell {
                             break;
                         };
                     }
-                    // TODO: change the if buffer trim statements to be similar to getCoinInfo
                     if args[0] == "updateCoin" {
                         let element = args.get(1); // Get the provided coin address and skip getCoinInfo
                         let element2 = args.get(2); // Get the new value to assign to the coin

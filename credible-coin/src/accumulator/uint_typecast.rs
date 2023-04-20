@@ -1,4 +1,4 @@
-//TODO: I think a better overall design ould be to have 2 traits
+// TODO: I think a better overall design ould be to have 2 traits
 // that implement these functions (and the other endians) for slice 
 // and Vec parameters respectiveely
 

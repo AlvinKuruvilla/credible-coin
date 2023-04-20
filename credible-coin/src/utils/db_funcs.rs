@@ -21,7 +21,7 @@ pub fn create_db(filename: &str, row_count: u32) {
     writer.write_record(&["transaction_hash","block_hash","block_number","block_timestamp","index","script_asm","script_hex","required_signatures","hash_type","addresses","value"]).unwrap();
     
     for (index, address) in addresses.iter().enumerate() {
-        //TODO: Since our CSVRecord struct has more feilds than just addresses and values
+        // Since our CSVRecord struct has more field than just addresses and values
         // we need to have garbage data when we are writing a new file so if we ever read 
         // the file again we donn't crash because of mismatched feilds
         writer.write_record(&["0", "0", "0", "0", "0", "0", "0", "0", "0", address, &values[index].to_string()]).unwrap();
