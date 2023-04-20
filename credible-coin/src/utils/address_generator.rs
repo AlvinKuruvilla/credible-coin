@@ -1,7 +1,6 @@
 use bitcoin::secp256k1::{rand, Secp256k1};
 use bitcoin::{Address, Network, PublicKey};
-use polars::prelude::{DataFrame, NamedFrom};
-use polars::series::Series;
+
 /// Generate a valid random bitcoin address
 pub fn generate_address() -> String {
     // Generate random key pair.
@@ -17,7 +16,7 @@ pub fn generate_bitcoin_value<R: rand::Rng>(rng: &mut R, n: u32) -> u32 {
 }
 /// Given a number, n,  generate that many pairs of addresses and values and
 /// save them to a DataFrame so they can be easily be written to a CSV later
-pub fn generate_n_address_value_dataframe(n: u32) -> DataFrame {
+pub fn generate_n_address_value_pairs(n: u32) -> (Vec<String>, Vec<u32>) {
     let mut addresses = Vec::new();
     let mut values = Vec::new();
     for _ in 0..n {
@@ -25,9 +24,5 @@ pub fn generate_n_address_value_dataframe(n: u32) -> DataFrame {
         addresses.push(generate_address());
         values.push(generate_bitcoin_value(&mut rng, 6));
     }
-    return DataFrame::new(vec![
-        Series::new("addresses", addresses),
-        Series::new("value", values),
-    ])
-    .unwrap();
+    return (addresses, values)
 }

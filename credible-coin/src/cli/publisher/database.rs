@@ -38,7 +38,7 @@ impl LoadCmd {
         let coin_tree = load_db(merkle_leaves.clone());
 
         print!("Provided filename: {:?}", self.filename);
-        let mut publisher_shell = PublisherShell::new(coin_tree);
+        let mut publisher_shell = PublisherShell::new(coin_tree, self.filename);
         publisher_shell.start();
     }
 }
