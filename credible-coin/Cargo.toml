@@ -21,6 +21,7 @@ serde = "1.0.159"
 reedline = "0.17.0"
 pretty_env_logger = "0.4.0"
 log = "0.4.17"
+csv = "1.2.1"
 
 [dev-dependencies]
 criterion = "0.4.0"
@@ -31,3 +32,6 @@ harness = false
 [[bench]]
 name = "merkle_bench"
 harness = false
+
+[profile.release]
+debug = true
