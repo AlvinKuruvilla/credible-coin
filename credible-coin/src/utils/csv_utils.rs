@@ -51,38 +51,18 @@ pub fn get_dataset_column_by_name(file_name: &str, name: &str) -> Vec<String> {
     for result in rdr.deserialize() {
         let record: CsvRecord = result.unwrap();
 
-        if name == "transaction_hash" {
-            let val = record.transaction_hash;
-            col.push(val)
-        } else if name == "block_hash" {
-            let val = record.block_hash;
-            col.push(val)
-        } else if name == "block_number" {
-            let val = record.block_number;
-            col.push(val)
-        } else if name == "block_timestamp" {
-            let val = record.block_timestamp;
-            col.push(val)
-        } else if name == "script_asm" {
-            let val = record.script_asm;
-            col.push(val)
-        } else if name == "script_hex" {
-            let val = record.script_hex;
-            col.push(val)
-        } else if name == "required_signatures" {
-            let val = record.required_signatures;
-            col.push(val)
-        } else if name == "hash_type" {
-            let val = record.hash_type;
-            col.push(val)
-        } else if name == "addresses" {
-            let val = record.addresses;
-            col.push(val)
-        } else if name == "value" || name == "index" {
-            panic!("If you want to get the index or value column call the make_index_vector or make_value_vector function respectively")
-        } else {
-            panic!("Unrecognized column name: {:?}", name)
-        }
+        match name {
+            "transaction_hash" => col.push(record.transaction_hash),
+            "block_hash" => col.push(record.block_hash),
+            "block_number" => col.push(record.block_number),
+            "block_timestamp" => col.push(record.block_timestamp),
+            "script_asm" => col.push(record.script_asm),
+            "script_hex" => col.push(record.script_hex),
+            "hash_type" => col.push(record.hash_type),
+            "addresses" => col.push(record.addresses),
+            "value" | "index" =>  panic!("If you want to get the index or value column call the make_index_vector or make_value_vector function respectively"),
+            _ => panic!("Unrecognized column name: {:?}", name)}   
+       
     }
     return col;
 }
