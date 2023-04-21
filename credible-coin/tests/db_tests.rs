@@ -8,6 +8,7 @@ mod tests {
     //tests the create_db function
     #[test]
     pub fn create_db_test() {
+        // TODO: This should return a result with an error variant if the file already exists
         create_db("test.csv", 20);
         assert!(Path::new("test.csv")
             .try_exists()

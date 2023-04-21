@@ -37,6 +37,7 @@ impl Coin {
         println!("{:?}", coins.len());
         return coins;
     }
+
     /// Serialize a coin into bytes
     ///
     /// The serialization algorithm just takes the address String and concatenates it to

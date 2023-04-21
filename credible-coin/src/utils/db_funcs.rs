@@ -1,7 +1,7 @@
 use crate::coin::*;
-use crate::utils::address_generator::*;
+use crate::utils::address_generator::generate_n_address_value_pairs;
 use crate::utils::csv_utils::*;
-use polars::prelude::*;
+use csv::Writer;
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 use std::path::Path;
 
@@ -13,9 +13,20 @@ pub fn create_db(filename: &str, row_count: u32) {
             .expect("file already exists"),
         "file already exists"
     );
-    let mut datafr = generate_n_address_value_dataframe(row_count);
-    let mut file = std::fs::File::create(filename).unwrap();
-    CsvWriter::new(&mut file).finish(&mut datafr).unwrap();
+    let (addresses, values )= generate_n_address_value_pairs(row_count);
+    // Create the file but don't save the handle
+    std::fs::File::create(filename).unwrap();
+    let mut writer = Writer::from_path(filename).unwrap();
+    assert_eq!(addresses.len(), values.len());
+    writer.write_record(&["transaction_hash","block_hash","block_number","block_timestamp","index","script_asm","script_hex","required_signatures","hash_type","addresses","value"]).unwrap();
+    
+    for (index, address) in addresses.iter().enumerate() {
+        // Since our CSVRecord struct has more field than just addresses and values
+        // we need to have garbage data when we are writing a new file so if we ever read 
+        // the file again we donn't crash because of mismatched feilds
+        writer.write_record(&["0", "0", "0", "0", "0", "0", "0", "0", "0", address, &values[index].to_string()]).unwrap();
+    }
+    writer.flush().unwrap();
 }
 
 /// Creates leaves from coin vectors

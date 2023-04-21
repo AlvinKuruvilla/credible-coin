@@ -1,7 +1,4 @@
-use polars::{
-    prelude::{CsvReader, CsvWriter, DataFrame, SerWriter, SerReader},
-    series::Series,
-};
+use csv::{Reader, Writer};
 use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
@@ -18,57 +15,69 @@ pub struct CsvRecord {
     addresses: String,
     value: i64,
 }
-/// Read a test bitcoin dataset in the project root. For right now we assume
-/// its the bigquery dataset but eventually the filename should be a parameter
-pub fn read_bitcoin_address_dataframe(file_name: &str) -> DataFrame {
-    //TODO: Remove unwrap and handle errors with match construct
-    let df = CsvReader::from_path(file_name).unwrap().finish().unwrap();
-    return df;
+
+/// Given a filename as input return the value
+/// column as a Vec<i64>
+pub fn make_value_vector(filename: &str) -> Vec<i64> {
+    let mut rdr = csv::Reader::from_path(filename).unwrap();
+    let mut col = Vec::new();
+    for result in rdr.deserialize() {
+        let record: CsvRecord = result.unwrap();
+        col.push(record.value)
+    }
+    return col;
 }
-/// Given a dataframe as input return the specified
-/// column as a series
-pub fn get_dataset_column_by_name(file_name: &str, name: &str) -> Series {
-    let df = read_bitcoin_address_dataframe(file_name);
-    //TODO: Remove unwrap and handle errors with match construct
-    return df.column(name).unwrap().clone();
+/// Given a filename as input return the index
+/// column as a Vec<u32>
+pub fn make_index_vector(filename: &str) -> Vec<u32> {
+    let mut rdr = csv::Reader::from_path(filename).unwrap();
+    let mut col = Vec::new();
+    for result in rdr.deserialize() {
+        let record: CsvRecord = result.unwrap();
+        col.push(record.index)
+    }
+    return col;
 }
-/// Write a provided dataframe to a csv file of the provided filename in the
-/// root of the project directory.
-///
-/// __NOTE: It is the caller's responsibility to preemptively check that the
-/// filename they provided does not already exist before calling this
-/// function__
-pub fn write_csv(filename: &str, mut data: DataFrame) {
-    let mut file = std::fs::File::create(filename).unwrap();
-    CsvWriter::new(&mut file).finish(&mut data).unwrap();
+/// Given a filename as input return the specified
+/// column as a Vec<String>
+/// <mark> The current implementation forces the returned Vec to be a `Vec<String>. If
+/// you need the index or value columns call the `make_index_vector` or `make_value_vector` 
+/// respectively </mark>
+pub fn get_dataset_column_by_name(file_name: &str, name: &str) -> Vec<String> {
+    //TODO: Remove unwrap and handle errors with match construct
+    // FIXME: Factor this better 
+    let mut rdr = csv::Reader::from_path(file_name).unwrap();
+    let mut col = Vec::new();
+    for result in rdr.deserialize() {
+        let record: CsvRecord = result.unwrap();
+
+        match name {
+            "transaction_hash" => col.push(record.transaction_hash),
+            "block_hash" => col.push(record.block_hash),
+            "block_number" => col.push(record.block_number),
+            "block_timestamp" => col.push(record.block_timestamp),
+            "script_asm" => col.push(record.script_asm),
+            "script_hex" => col.push(record.script_hex),
+            "hash_type" => col.push(record.hash_type),
+            "addresses" => col.push(record.addresses),
+            "value" | "index" =>  panic!("If you want to get the index or value column call the make_index_vector or make_value_vector function respectively"),
+            _ => panic!("Unrecognized column name: {:?}", name)}   
+       
+    }
+    return col;
 }
 /// Retrieve the address and value columns in the dataframe as vectors
 pub fn addresses_and_values_as_vectors(file_name: &str) -> (Vec<String>, Vec<i64>) {
-    let address_series = get_dataset_column_by_name(file_name, "addresses");
-    let value_series = get_dataset_column_by_name(file_name, "value");
-    // TODO: Remove unwrap()
-    let value_vec = value_series.i64().unwrap().into_no_null_iter().collect();
-    let address_vec = address_series
-        .utf8()
-        .unwrap()
-        .into_no_null_iter()
-        .map(|s| s.to_string())
-        .collect();
-
+    let address_vec = get_dataset_column_by_name(file_name, "addresses");
+    let value_vec = make_value_vector(file_name);
     return (address_vec, value_vec);
 }
-/// Given a public address find its position within the address vector
-pub fn get_address_position(public_address: String) -> usize {
-    let address_series = get_dataset_column_by_name(
-        "BigQuery Bitcoin Historical Data - outputs.csv",
+/// Given a filename, and a public address in that file, find its position within the address vector
+pub fn get_address_position(filename: &str, public_address: String) -> usize {
+    let address_vec = get_dataset_column_by_name(
+        filename,
         "addresses",
     );
-    let address_vec: Vec<_> = address_series
-        .utf8()
-        .unwrap()
-        .into_no_null_iter()
-        .map(|s| s.to_string())
-        .collect();
     // TODO: Remove unwrap()
     let index = address_vec
         .iter()
@@ -76,9 +85,13 @@ pub fn get_address_position(public_address: String) -> usize {
         .unwrap();
     return index;
 }
-pub fn update_csv_value(address: String, value: i64) {
-    let mut rdr = csv::Reader::from_path("BigQuery Bitcoin Historical Data - outputs.csv").unwrap();
-    let mut writer = csv::Writer::from_path("temp.csv").unwrap();
+/// Update the value for the given address in a provided dataset file
+/// with the provided value
+/// This function works by updating the record in the old csv file, creating a new temporary one
+/// and renaming it to the same name as the old file
+pub fn update_csv_value(filename: &str, address: String, value: i64) {
+    let mut rdr = Reader::from_path(filename).unwrap();
+    let mut writer = Writer::from_path("temp.csv").unwrap();
     for result in rdr.deserialize() {
         let mut record: CsvRecord = result.unwrap();
         if record.addresses == address {
@@ -86,7 +99,7 @@ pub fn update_csv_value(address: String, value: i64) {
         }
         writer.serialize(record);
     }
-    std::fs::remove_file("BigQuery Bitcoin Historical Data - outputs.csv").unwrap();
-    std::fs::rename("temp.csv", "BigQuery Bitcoin Historical Data - outputs.csv").unwrap();
-    return 
+    std::fs::remove_file(filename).unwrap();
+    std::fs::rename("temp.csv", filename).unwrap();
+    return;
 }
