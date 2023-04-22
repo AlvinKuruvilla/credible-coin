@@ -326,6 +326,7 @@ dependencies = [
  "criterion",
  "csv",
  "eyre",
+ "indexmap",
  "log",
  "pretty_env_logger",
  "rand",

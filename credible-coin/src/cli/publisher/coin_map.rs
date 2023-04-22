@@ -1,21 +1,24 @@
-use std::collections::HashMap;
+use indexmap::IndexMap;
 
-/// A coin_map is a mapping of address to value pairs. It is safe to keep these mappings in plain-text
-/// because this map is only used by the publisher. Internally, this just uses a Hashmap<String,i64>
+/// A CoinMap is a mapping of address to value pairs. It is safe to keep these mappings in plain-text
+/// because this map is only used by the publisher. Internally, this just uses a IndexMap<String,i64>
 #[derive(Default)]
 pub struct CoinMap {
-    pub inner: HashMap<String, i64>,
+    /// The `inner` type _must_ be an `IndexMap` so that insertion order can be maintained. 
+    /// This ensures that if a Merkle Tree is made from the map, we shouldn't get
+    /// proof verification crashes from misordered keys
+    pub inner: IndexMap<String, i64>,
 }
 impl CoinMap {
     pub fn new() -> Self {
         return Self::default();
     }
-    pub fn from_map(map: HashMap<String, i64>) -> Self {
+    pub fn from_map(map: IndexMap<String, i64>) -> Self {
         return Self { inner: map };
     }
     pub fn from_vectors(key_vector: Vec<String>, value_vector: Vec<i64>) -> Self {
         assert_eq!(key_vector.len(), value_vector.len());
-        let mut map = HashMap::new();
+        let mut map = IndexMap::new();
         for(pos, element) in key_vector.iter().enumerate() {
             // NOTE: If the address occurs multiple times, only the value will be updated 
             // in the map so the map will have fewer keys compared to rows in the csv file
