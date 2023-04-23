@@ -4,9 +4,11 @@ use rs_merkle::{algorithms::Sha256, MerkleTree};
 
 use crate::utils::{
     address_generator::generate_address,
-    csv_utils::{make_value_vector, PublisherCSVRecord},
-    merkle_utils::load_merkle_leaves_for_exchange,
+    csv_utils::{make_value_vector, CSVRecord},
+    merkle_utils::load_merkle_leaves,
 };
+
+use super::shell::ExchangeShell;
 
 #[derive(Parser, Debug)]
 #[command(infer_subcommands = true)]
@@ -35,15 +37,18 @@ impl LoadCmd {
         if !std::path::Path::new(&self.filename).exists() {
             panic!("Exchange file: {} not found", self.filename)
         }
-        let merkle_leaves = load_merkle_leaves_for_exchange(&self.filename);
+        let merkle_leaves = load_merkle_leaves(&self.filename);
         let coin_tree = load_exchange_db(merkle_leaves.clone());
+        // I think the clone is unavoidable, hopefully it doesn't bite us
+        let mut exchange_shell = ExchangeShell::new(coin_tree, self.filename.clone());
+        exchange_shell.start();
     }
 }
 pub fn max_rows_in_csv(filepath: &str) -> usize {
     let mut rdr = csv::Reader::from_path(filepath).unwrap();
     let mut row_count: usize = 0;
     for result in rdr.deserialize() {
-        let _: PublisherCSVRecord = result.unwrap();
+        let _: CSVRecord = result.unwrap();
         row_count += 1;
     }
     return row_count;

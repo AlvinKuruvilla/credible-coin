@@ -330,11 +330,11 @@ dependencies = [
  "log",
  "pretty_env_logger",
  "rand",
+ "rand_chacha",
  "reedline",
  "rs_merkle",
  "secp256k1",
  "serde",
- "sha2",
 ]
 
 [[package]]

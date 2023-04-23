@@ -1,7 +1,7 @@
 #[cfg(test)]
 mod tests {
     use credible_coin::cli::publisher::database::{create_db, load_db};
-    use credible_coin::utils::merkle_utils::load_merkle_leaves_for_publisher;
+    use credible_coin::utils::merkle_utils::load_merkle_leaves;
     use rs_merkle::{algorithms::Sha256, MerkleProof};
     use std::fs;
     use std::path::Path;
@@ -21,7 +21,7 @@ mod tests {
     #[test]
     pub fn load_db_test() {
         let merkle_coin_leaves =
-            load_merkle_leaves_for_publisher("BigQuery Bitcoin Historical Data - outputs.csv");
+            load_merkle_leaves("BigQuery Bitcoin Historical Data - outputs.csv");
         let merkle_with_coins = load_db(merkle_coin_leaves.clone());
 
         let indices_to_prove = vec![3, 4];

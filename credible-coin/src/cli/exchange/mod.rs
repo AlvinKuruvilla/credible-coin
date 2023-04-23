@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use eyre::Result;
 
 mod asset_database;
-
+mod shell;
 const VERSION: &str = "0.0.1";
 
 static HELP_TEMPLATE: &str = "\

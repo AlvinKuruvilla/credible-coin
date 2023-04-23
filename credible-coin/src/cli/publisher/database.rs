@@ -5,7 +5,7 @@ use std::path::Path;
 
 use crate::cli::publisher::shell::PublisherShell;
 use crate::utils::address_generator::generate_n_address_value_pairs;
-use crate::utils::merkle_utils::load_merkle_leaves_for_publisher;
+use crate::utils::merkle_utils::load_merkle_leaves;
 
 #[derive(Parser, Debug)]
 #[command(infer_subcommands = true)]
@@ -36,7 +36,7 @@ impl LoadCmd {
         // 2. Try to read as dataframe and handle errors
         // 3. Try to get the data from the addresses and values columns and handle errors
         // 4. Turn into merkle tree and handle errors
-        let merkle_leaves = load_merkle_leaves_for_publisher(&self.filename);
+        let merkle_leaves = load_merkle_leaves(&self.filename);
         let coin_tree = load_db(merkle_leaves.clone());
 
         print!("Provided filename: {:?}", self.filename);
@@ -57,40 +57,11 @@ pub fn create_db(filename: &str, row_count: u32) {
     std::fs::File::create(filename).unwrap();
     let mut writer = Writer::from_path(filename).unwrap();
     assert_eq!(addresses.len(), values.len());
-    writer
-        .write_record(&[
-            "transaction_hash",
-            "block_hash",
-            "block_number",
-            "block_timestamp",
-            "index",
-            "script_asm",
-            "script_hex",
-            "required_signatures",
-            "hash_type",
-            "addresses",
-            "value",
-        ])
-        .unwrap();
+    writer.write_record(&["addresses", "value"]).unwrap();
 
     for (index, address) in addresses.iter().enumerate() {
-        // Since our CSVRecord struct has more field than just addresses and values
-        // we need to have garbage data when we are writing a new file so if we ever read
-        // the file again we donn't crash because of mismatched feilds
         writer
-            .write_record(&[
-                "0",
-                "0",
-                "0",
-                "0",
-                "0",
-                "0",
-                "0",
-                "0",
-                "0",
-                address,
-                &values[index].to_string(),
-            ])
+            .write_record(&[address, &values[index].to_string()])
             .unwrap();
     }
     writer.flush().unwrap();

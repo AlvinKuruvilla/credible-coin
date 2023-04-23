@@ -2,19 +2,22 @@ use reedline::{
     ColumnarMenu, DefaultCompleter, DefaultPrompt, DefaultValidator, ExampleHighlighter, Reedline,
     ReedlineMenu, Signal,
 };
-use rs_merkle::algorithms::Sha256 as merkle_sha;
+use rs_merkle::algorithms::Sha256;
 use rs_merkle::MerkleTree;
 
 use crate::{
     coin::Coin,
-    utils::csv_utils::{addresses_and_values_as_vectors, get_address_position, update_csv_value},
+    utils::{
+        csv_utils::{addresses_and_values_as_vectors, get_address_position, update_csv_value},
+        merkle_utils::prove_membership,
+    },
 };
 
 use super::coin_map::CoinMap;
 
 #[derive(Default)]
 pub struct PublisherShell {
-    tree: MerkleTree<merkle_sha>,
+    tree: MerkleTree<Sha256>,
     filename: String,
 }
 pub fn shell_commands() -> Vec<String> {
@@ -22,7 +25,7 @@ pub fn shell_commands() -> Vec<String> {
         "exit".into(),
         "getCoinInfo".into(),
         "updateCoin".into(),
-        "prove-membership".into(),
+        "proveMembership".into(),
         "clear".into(),
     ];
 }
@@ -30,11 +33,10 @@ pub fn shell_commands() -> Vec<String> {
 /// provide a valid CSV file of their coin addresses and values and it
 /// gets created into an in-memory merkle tree.
 impl PublisherShell {
-    pub fn new(tree: MerkleTree<merkle_sha>, filename: String) -> Self {
+    pub fn new(tree: MerkleTree<Sha256>, filename: String) -> Self {
         return Self { tree, filename };
     }
     pub fn start(&mut self) -> std::io::Result<()> {
-        //, tree: &MerkleTree<merkle_sha>
         println!("Ctrl-D or Ctrl-C to quit");
         pretty_env_logger::init();
         let commands = shell_commands();
@@ -56,7 +58,8 @@ impl PublisherShell {
             let sig = line_editor.read_line(&prompt)?;
             match sig {
                 Signal::Success(buffer) => {
-                    println!("We processed: {buffer}");
+                    // println!("We processed: {buffer}");
+
                     // This is where command processing goes, see the reedline example demo for details
                     let args: Vec<&str> = buffer.split(" ").collect();
                     if args[0] == "exit" {
@@ -100,7 +103,7 @@ impl PublisherShell {
                             break;
                         }
                     }
-                    if args[0] == "prove-membership" {
+                    if args[0] == "proveMembership" {
                         let element = args.get(1); // Get the provided coin address and skip getCoinInfo
                         let public_address;
                         if element.is_some() {
@@ -109,11 +112,10 @@ impl PublisherShell {
                             log::error!("No public address provided");
                             break;
                         };
-                        self.prove_membership(public_address, &self.tree);
+                        prove_membership(&self.filename, public_address, &self.tree);
                     }
                 }
                 Signal::CtrlD | Signal::CtrlC => {
-                    println!("\nAborted!");
                     break;
                 }
             }
@@ -122,7 +124,7 @@ impl PublisherShell {
         Ok(())
     }
     /// Get all of the info for a coin in the merkle tree given its public address
-    fn get_coin_info(&self, _public_address: &str, tree: &MerkleTree<merkle_sha>) {
+    fn get_coin_info(&self, _public_address: &str, tree: &MerkleTree<Sha256>) {
         //let tree = PublisherShell::shell_tree();
         let tree_leaves = tree
             .leaves()
@@ -154,8 +156,8 @@ impl PublisherShell {
         &self,
         _public_address: &str,
         _new_value: u32,
-        tree: &MerkleTree<merkle_sha>,
-    ) -> MerkleTree<merkle_sha> {
+        tree: &MerkleTree<Sha256>,
+    ) -> MerkleTree<Sha256> {
         let tree_leaves = tree
             .leaves()
             .ok_or("Could not get leaves to prove")
@@ -181,7 +183,11 @@ impl PublisherShell {
         log::info!("New Coin Value:{:?}", _new_value);
 
         //make new merkle tree
-        update_csv_value(&&self.filename, _public_address.to_owned(), i64::from(_new_value));
+        update_csv_value(
+            &&self.filename,
+            _public_address.to_owned(),
+            i64::from(_new_value),
+        );
         let (new_addr_vec, new_val_vec) = addresses_and_values_as_vectors(&self.filename);
         assert!(new_val_vec.contains(&i64::from(_new_value)));
         let new_vec_coin = Coin::create_coin_vector(new_addr_vec, new_val_vec);
@@ -201,7 +207,7 @@ impl PublisherShell {
         for u8s in u8coins {
             new_leaves.push(Coin::hash_bytes(u8s))
         }
-        let new_tree = MerkleTree::<merkle_sha>::from_leaves(&new_leaves);
+        let new_tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
         //TODO: Remove unwrap
         let new_address_index = get_address_position(&&self.filename, _public_address.to_string());
         let new_indices = vec![new_address_index];
@@ -223,25 +229,5 @@ impl PublisherShell {
         assert!(new_proof.verify(new_root, &new_indices, &new_hashed_bytes, new_leaves.len()));
 
         return new_tree;
-    }
-    /// Prove that a coin is a member of the merkle tree given its public address
-    fn prove_membership(&self, _public_address: &str, tree: &MerkleTree<merkle_sha>) {
-        let tree_leaves = tree
-            .leaves()
-            .ok_or("Could not get leaves to prove")
-            .unwrap();
-        let map = CoinMap::generate_address_value_map(&self.filename);
-        //TODO: Remove unwrap
-        let value = map.inner.get(_public_address).unwrap();
-        let generated_coin = Coin::new(_public_address.to_owned(), *value);
-        let address_index = get_address_position(&&self.filename, _public_address.to_string());
-        let indices = vec![address_index];
-        let proof = tree.proof(&indices);
-        let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
-        let bytes = generated_coin.serialize_coin();
-        let hashed_bytes = [Coin::hash_bytes(bytes)];
-
-        assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
-        log::info!("Address {:?} found in merkle tree", _public_address);
     }
 }
