@@ -1,4 +1,4 @@
-use credible_coin::utils::db_funcs::{load_db, load_merkle_leaves};
+use credible_coin::cli::publisher::database::{load_db, load_merkle_leaves};
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn bench_build_tree(c: &mut Criterion) {

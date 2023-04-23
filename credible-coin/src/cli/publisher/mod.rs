@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use eyre::Result;
 
 pub mod coin_map;
-mod database;
+pub mod database;
 mod shell;
 
 const VERSION: &str = "0.0.1";

@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use credible_coin::utils::db_funcs::{create_db, load_db, load_merkle_leaves};
+    use credible_coin::cli::publisher::database::{create_db, load_db, load_merkle_leaves};
     use rs_merkle::{algorithms::Sha256, MerkleProof};
     use std::fs;
     use std::path::Path;
