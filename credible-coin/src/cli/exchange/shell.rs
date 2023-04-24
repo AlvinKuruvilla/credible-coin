@@ -1,5 +1,10 @@
-use crate::utils::{
-    address_generator::generate_address, csv_utils::append_record, merkle_utils::prove_membership,
+use crate::{
+    coin::Coin,
+    utils::{
+        address_generator::generate_address,
+        csv_utils::{addresses_and_values_as_vectors, append_record},
+        merkle_utils::prove_membership,
+    },
 };
 use bitcoin::PublicKey;
 use rand::SeedableRng;
@@ -106,8 +111,9 @@ impl ExchangeShell {
                             break;
                         };
                         let address = generate_address();
-                        append_record(&self.filename, address, value)
-                        // FIXME: We have to make a new tree here and assign it to the old one like we did for the publisher
+                        append_record(&self.filename, address, value);
+                        // FIXME: Test that the new tree is correct
+                        self.tree = self.create_new_tree_from_file();
                     }
                 }
                 Signal::CtrlD | Signal::CtrlC => {
@@ -123,5 +129,19 @@ impl ExchangeShell {
     }
     pub fn createRNG(&self, seed: u64) -> ChaCha8Rng {
         return rand_chacha::ChaCha8Rng::seed_from_u64(seed);
+    }
+    pub fn create_new_tree_from_file(&self) -> MerkleTree<Sha256> {
+        let (new_addr_vec, new_val_vec) = addresses_and_values_as_vectors(&self.filename);
+        let new_vec_coin = Coin::create_coin_vector(new_addr_vec, new_val_vec);
+        let mut u8coins: Vec<Vec<u8>> = Vec::new();
+        for i in new_vec_coin {
+            u8coins.push(i.serialize_coin());
+        }
+        let mut new_leaves: Vec<[u8; 32]> = Vec::new();
+        for u8s in u8coins {
+            new_leaves.push(Coin::hash_bytes(u8s))
+        }
+        let new_tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
+        return new_tree;
     }
 }
