@@ -25,7 +25,7 @@ impl Coin {
     pub fn coin_address(&self) -> String {
         return self.coin_address.clone();
     }
-    /// Given a vector of Strings and i64 values construct a Ve<Coin> using each (String, i64) pair
+    /// Given a vector of Strings and i64 values construct a `Vec<Coin>` using each (String, i64) pair
     pub fn create_coin_vector(addresses: Vec<String>, values: Vec<i64>) -> Vec<Coin> {
         assert_eq!(addresses.len(), values.len());
         let mut coins: Vec<Coin> = Vec::new();
@@ -52,7 +52,6 @@ impl Coin {
         let leaves: [u8; 32] = Sha256::hash(&bytevector);
         return leaves;
     }
-
 }
 #[cfg(test)]
 mod tests {
@@ -72,6 +71,9 @@ mod tests {
     pub fn combine_address_and_value() {
         let mut address: String = "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_owned();
         address.push_str(&22222.to_string());
-        assert_eq!(address, "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k22222".to_owned());
+        assert_eq!(
+            address,
+            "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k22222".to_owned()
+        );
     }
 }

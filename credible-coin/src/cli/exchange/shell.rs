@@ -98,8 +98,8 @@ impl ExchangeShell {
                         // FIXME: This function call does not save the generated RNG anywhere, but we
                         // should have another function responsible for that
                         // FIXME: We may also need to change the code so that it usues the RNG that we generate
-                        // and give to it rather than making a thread_rng every time
-                        self.createRNG(seed);
+                        // and give to it rather than making a thread_rng every time when generating the private key
+                        self.create_rng(seed);
                     }
                     if args[0] == "addCoinToDB" {
                         let element = args.get(1); // Get the provided seed
@@ -127,7 +127,7 @@ impl ExchangeShell {
         let s = Secp256k1::new();
         return PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
     }
-    pub fn createRNG(&self, seed: u64) -> ChaCha8Rng {
+    pub fn create_rng(&self, seed: u64) -> ChaCha8Rng {
         return rand_chacha::ChaCha8Rng::seed_from_u64(seed);
     }
     pub fn create_new_tree_from_file(&self) -> MerkleTree<Sha256> {

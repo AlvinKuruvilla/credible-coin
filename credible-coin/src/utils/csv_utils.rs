@@ -8,7 +8,7 @@ pub struct CSVRecord {
 }
 
 /// Given a filename as input return the value
-/// column as a Vec<i64>
+/// column as a `Vec<i64>`
 pub fn make_value_vector(filename: &str) -> Vec<i64> {
     let mut rdr = csv::Reader::from_path(filename).unwrap();
     let mut col = Vec::new();
@@ -19,10 +19,10 @@ pub fn make_value_vector(filename: &str) -> Vec<i64> {
     return col;
 }
 /// Given a filename as input return the specified
-/// column as a Vec<String>
-/// <mark> The current implementation forces the returned Vec to be a `Vec<String>. If
-/// you need the value column call the `make_value_vector`
-/// respectively </mark>
+/// column as a `Vec<String>`
+/// __The current implementation forces the returned Vec to be a `Vec<String>`. If
+/// you need the value column call the `make_value_vector` respectively__
+
 pub fn get_dataset_column_by_name(file_name: &str, name: &str) -> Vec<String> {
     //TODO: Remove unwrap and handle errors with match construct
     let mut rdr: Reader<std::fs::File> = csv::Reader::from_path(file_name).unwrap();

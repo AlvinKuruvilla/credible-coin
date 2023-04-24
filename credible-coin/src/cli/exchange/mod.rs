@@ -1,7 +1,7 @@
 use clap::{Parser, Subcommand};
 use eyre::Result;
 
-mod asset_database;
+pub mod asset_database;
 mod shell;
 const VERSION: &str = "0.0.1";
 
