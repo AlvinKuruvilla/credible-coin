@@ -85,7 +85,6 @@ pub fn get_exchange_addresses_and_values_from_file(file_name: &str) -> (Vec<Stri
 }
 /// Given a file, and an address and value, write it as a record
 /// to the end of the file
-/// FIXME: Currently the implementation overwrites existing data in the file so the new record is the only onw in the file
 pub fn append_record(file: &str, adddress: String, value: i64) {
     let mut rdr: Reader<std::fs::File> = csv::Reader::from_path(file).unwrap();
     for result in rdr.deserialize() {
