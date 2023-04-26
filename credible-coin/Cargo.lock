@@ -287,6 +287,18 @@ dependencies = [
 ]
 
 [[package]]
+name = "comfy-table"
+version = "6.1.4"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "6e7b787b0dc42e8111badfdbe4c3059158ccb2db8780352fa1b01e8ccf45cc4d"
+dependencies = [
+ "crossterm 0.25.0",
+ "strum",
+ "strum_macros",
+ "unicode-width",
+]
+
+[[package]]
 name = "concolor-override"
 version = "1.0.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -323,6 +335,7 @@ dependencies = [
  "bincode",
  "bitcoin",
  "clap 4.2.1",
+ "comfy-table",
  "criterion",
  "csv",
  "eyre",
@@ -330,11 +343,11 @@ dependencies = [
  "log",
  "pretty_env_logger",
  "rand",
+ "rand_chacha",
  "reedline",
  "rs_merkle",
  "secp256k1",
  "serde",
- "sha2",
 ]
 
 [[package]]
@@ -428,6 +441,22 @@ dependencies = [
  "mio",
  "parking_lot",
  "serde",
+ "signal-hook",
+ "signal-hook-mio",
+ "winapi",
+]
+
+[[package]]
+name = "crossterm"
+version = "0.25.0"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e64e6c0fbe2c17357405f7c758c1ef960fce08bdfb2c03d88d2a18d7e09c4b67"
+dependencies = [
+ "bitflags",
+ "crossterm_winapi",
+ "libc",
+ "mio",
+ "parking_lot",
  "signal-hook",
  "signal-hook-mio",
  "winapi",
@@ -1041,7 +1070,7 @@ source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "e3afcd7fc553d129e9a03d17f15c4b4748baa589570f01a372caae2de81989b8"
 dependencies = [
  "chrono",
- "crossterm",
+ "crossterm 0.24.0",
  "fd-lock",
  "itertools",
  "nu-ansi-term",
