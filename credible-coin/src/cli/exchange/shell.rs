@@ -130,13 +130,26 @@ impl ExchangeShell {
         }
         Ok(())
     }
+    /// Create a SECP256K1 Private Key
+    /// FIXME: This function call does not save the generated private key anywhere, but we
+    /// should have another function responsible for that
+    /// FIXME: We may also need to change the code so that it usues the RNG that we generate
+    /// and give to it rather than making a thread_rng every time
     pub fn create_private_key(&self) -> PublicKey {
         let s = Secp256k1::new();
         return PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
     }
+    /// Crreate a Random Number Generator (RNG) from a provided
+    /// seed value
+    /// FIXME: This function call does not save the generated RNG anywhere, but we
+    /// should have another function responsible for that
+    /// FIXME: We may also need to change the code so that it usues the RNG that we generate
+    /// and give to it rather than making a thread_rng every time when generating the private key
     pub fn create_rng(&self, seed: u64) -> ChaCha8Rng {
         return rand_chacha::ChaCha8Rng::seed_from_u64(seed);
     }
+    /// Read in the csv file at the procided path and
+    /// construct a new Merkle Tree from it
     pub fn create_new_tree_from_file(&self) -> MerkleTree<Sha256> {
         let (new_addr_vec, new_val_vec) = addresses_and_values_as_vectors(&self.filename);
         let new_vec_coin = Coin::create_coin_vector(new_addr_vec, new_val_vec);
@@ -151,6 +164,7 @@ impl ExchangeShell {
         let new_tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
         return new_tree;
     }
+    /// The table of commands, descriptions, and usage
     pub fn cmd_table(&self) {
         let mut table = Table::new();
         table
