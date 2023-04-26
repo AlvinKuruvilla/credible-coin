@@ -7,6 +7,7 @@ use crate::{
     },
 };
 use bitcoin::PublicKey;
+use comfy_table::{presets::UTF8_FULL, Attribute, Cell, ContentArrangement, Table};
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use reedline::{
@@ -16,6 +17,7 @@ use reedline::{
 use rs_merkle::algorithms::Sha256;
 use rs_merkle::MerkleTree;
 use secp256k1::{rand, Secp256k1};
+
 #[derive(Default)]
 pub struct ExchangeShell {
     tree: MerkleTree<Sha256>,
@@ -29,6 +31,8 @@ pub fn shell_commands() -> Vec<String> {
         "addCoinToDB".into(),
         "createRNG".into(),
         "clear".into(),
+        "help".into(),
+        "?".into(),
     ];
 }
 /// The user is automatically brought into the exchange shell once they
@@ -115,6 +119,9 @@ impl ExchangeShell {
                         // FIXME: Test that the new tree is correct
                         self.tree = self.create_new_tree_from_file();
                     }
+                    if args[0] == "help" || args[0] == "?" {
+                        self.cmd_table();
+                    }
                 }
                 Signal::CtrlD | Signal::CtrlC => {
                     break;
@@ -143,5 +150,51 @@ impl ExchangeShell {
         }
         let new_tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
         return new_tree;
+    }
+    pub fn cmd_table(&self) {
+        let mut table = Table::new();
+        table
+            .load_preset(UTF8_FULL)
+            .set_content_arrangement(ContentArrangement::Dynamic)
+            .set_width(80)
+            .set_header(vec![
+                Cell::new("Command").add_attribute(Attribute::Bold),
+                Cell::new("Description").add_attribute(Attribute::Bold),
+                Cell::new("Usage").add_attribute(Attribute::Bold),
+            ])
+            .add_row(vec![
+                Cell::new("?").add_attribute(Attribute::Bold),
+                Cell::new("Print this command table"),
+                Cell::new("Usage: `?`"),
+            ])
+            .add_row(vec![
+                Cell::new("addCoinToDB").add_attribute(Attribute::Bold),
+                Cell::new("Append a new coin to the CSV or SQL table given a particular value by autogenerating a new address"),
+                Cell::new("Usage: `addCoinToDB <VALUE>`"),
+            ]).add_row(vec![
+                Cell::new("clear").add_attribute(Attribute::Bold),
+                Cell::new("Clear the screen"),
+                Cell::new("Usage: `clear`"),
+            ]).add_row(vec![
+                Cell::new("createPrivateKey").add_attribute(Attribute::Bold),
+                Cell::new("Create a private key to be saved to the database"),
+                Cell::new("Usage: `createPrivateKey`"),
+            ]).add_row(vec![
+                Cell::new("createRNG").add_attribute(Attribute::Bold),
+                Cell::new("Given a seed value, create a RNG and save it to the database"),
+                Cell::new("Usage: `createRNG <SEED>`"),
+            ]).add_row(vec![
+                Cell::new("help").add_attribute(Attribute::Bold),
+                Cell::new("Print this command table"),
+                Cell::new("Usage: `help`"),
+            ]).add_row(vec![
+                Cell::new("proveMembership").add_attribute(Attribute::Bold),
+                Cell::new("Prove that the provided address is/isn't a member of the merkle tree"),
+                Cell::new("Usage: `proveMembership <ADDRESS>`"),
+            ]);
+        println!("{table}")
+        //TODO: Once we actually start using sql tables for the privatekeys and RNGs
+        // we should also add commands to list the available ones if they are going
+        // to be selectable to be used for executing other commands like generating addresses
     }
 }

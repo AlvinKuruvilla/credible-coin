@@ -1,6 +1,6 @@
 //! A simple wrapper type representing a piece of cryptocurrency
 //!
-//! Contains a String value and a String address mostly mirroring how transactions are
+//! Contains a `i64` value and a `String` address mostly mirroring how transactions are
 //! reflected in a cryptocurrency-system with a blockchain ledger
 use rs_merkle::{algorithms::Sha256, Hasher};
 use serde::{Deserialize, Serialize};
