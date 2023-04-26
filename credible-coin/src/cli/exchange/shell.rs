@@ -198,6 +198,10 @@ impl ExchangeShell {
                 Cell::new("Given a seed value, create a RNG and save it to the database"),
                 Cell::new("Usage: `createRNG <SEED>`"),
             ]).add_row(vec![
+                Cell::new("exit").add_attribute(Attribute::Bold),
+                Cell::new("Exit the shell"),
+                Cell::new("Usage: `exit`"),
+            ]).add_row(vec![
                 Cell::new("help").add_attribute(Attribute::Bold),
                 Cell::new("Print this command table"),
                 Cell::new("Usage: `help`"),

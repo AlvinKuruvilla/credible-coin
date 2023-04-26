@@ -1,3 +1,4 @@
+use comfy_table::{presets::UTF8_FULL, Attribute, Cell, ContentArrangement, Table};
 use reedline::{
     ColumnarMenu, DefaultCompleter, DefaultPrompt, DefaultValidator, ExampleHighlighter, Reedline,
     ReedlineMenu, Signal,
@@ -27,6 +28,8 @@ pub fn shell_commands() -> Vec<String> {
         "updateCoin".into(),
         "proveMembership".into(),
         "clear".into(),
+        "help".into(),
+        "?".into(),
     ];
 }
 /// The user is automatically brought into the publisher shell once they
@@ -113,6 +116,9 @@ impl PublisherShell {
                             break;
                         };
                         prove_membership(&self.filename, public_address, &self.tree);
+                    }
+                    if args[0] == "help" || args[0] == "?" {
+                        self.cmd_table();
                     }
                 }
                 Signal::CtrlD | Signal::CtrlC => {
@@ -229,5 +235,54 @@ impl PublisherShell {
         assert!(new_proof.verify(new_root, &new_indices, &new_hashed_bytes, new_leaves.len()));
 
         return new_tree;
+    }
+    /// The table of commands, descriptions, and usage
+    pub fn cmd_table(&self) {
+        let mut table = Table::new();
+        table
+            .load_preset(UTF8_FULL)
+            .set_content_arrangement(ContentArrangement::Dynamic)
+            .set_width(80)
+            .set_header(vec![
+                Cell::new("Command").add_attribute(Attribute::Bold),
+                Cell::new("Description").add_attribute(Attribute::Bold),
+                Cell::new("Usage").add_attribute(Attribute::Bold),
+            ])
+            .add_row(vec![
+                Cell::new("?").add_attribute(Attribute::Bold),
+                Cell::new("Print this command table"),
+                Cell::new("Usage: `?`"),
+            ])
+            .add_row(vec![
+                Cell::new("clear").add_attribute(Attribute::Bold),
+                Cell::new("Clear the screen"),
+                Cell::new("Usage: `clear`"),
+            ])
+            .add_row(vec![
+                Cell::new("exit").add_attribute(Attribute::Bold),
+                Cell::new("Exit the shell"),
+                Cell::new("Usage: `exit`"),
+            ])
+            .add_row(vec![
+                Cell::new("getCoinInfo").add_attribute(Attribute::Bold),
+                Cell::new("Given an address, if the address is present in the CSV return basic information about it"),
+                Cell::new("Usage: `getCoinInfo <ADDRESS>`"),
+            ])
+            .add_row(vec![
+                Cell::new("help").add_attribute(Attribute::Bold),
+                Cell::new("Print this command table"),
+                Cell::new("Usage: `help`"),
+            ])
+            .add_row(vec![
+                Cell::new("proveMembership").add_attribute(Attribute::Bold),
+                Cell::new("Prove that the provided address is/isn't a member of the merkle tree"),
+                Cell::new("Usage: `proveMembership <ADDRESS>`"),
+            ]).add_row(vec![
+                Cell::new("updateCoin").add_attribute(Attribute::Bold),
+                Cell::new("Given an address, if the address is present in the CSV, update its value with the provided value"),
+                Cell::new("Usage: `updateCoin <ADDRESS> <NEW VALUE>`"),
+            ]);
+        // TODO: Once we start integrating sql we will have to change the descriptions
+        println!("{table}")
     }
 }
