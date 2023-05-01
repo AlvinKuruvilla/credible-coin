@@ -60,4 +60,16 @@ mod tests {
             .expect("Can't find the file"));
         fs::remove_file("test.csv").expect("Could not delete file");
     }
+    #[test]
+    pub fn string_bytes() {
+        let a = 123;
+        let numeric_bytes = bincode::serialize(&a).unwrap();
+        let s = match std::str::from_utf8(&numeric_bytes) {
+            Ok(v) => v,
+            Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
+        };
+        assert_eq!(s.as_bytes(), numeric_bytes);
+        let b = bincode::deserialize(s.as_bytes()).unwrap();
+        assert_eq!(a, b);
+    }
 }
