@@ -1,3 +1,4 @@
+use crate::cli::exchange::publisher_db_connector::init_tables;
 use crate::{
     coin::Coin,
     utils::{
@@ -59,6 +60,7 @@ impl ExchangeShell {
             ColumnarMenu::default().with_name("completion_menu"),
         )));
         let prompt = DefaultPrompt::default();
+        init_tables();
         loop {
             let sig = line_editor.read_line(&prompt)?;
             match sig {
@@ -137,7 +139,9 @@ impl ExchangeShell {
     /// and give to it rather than making a thread_rng every time
     pub fn create_private_key(&self) -> PublicKey {
         let s = Secp256k1::new();
-        return PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
+        let key = PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
+        println!("{:?}", key.to_bytes());
+        return key;
     }
     /// Crreate a Random Number Generator (RNG) from a provided
     /// seed value
