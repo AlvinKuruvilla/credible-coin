@@ -23,12 +23,15 @@ Stable Rust is all that is needed to build `credible-coin`. To build simply run
 
 See `Running our binaries` section below for details
 
-NOTE: Currently there is no binary application built for `credible-coin`, aside from the boilerplate main.rs cargo makes for you.
 
 To run the test suite, use:
 
 ```console
 $ cargo test
+```
+NOTE: The redis unit test is ignored by default so to run it when connected to the redis server run:
+```console
+$ cargo test --ignored
 ```
 
 Build and open the documentation with:

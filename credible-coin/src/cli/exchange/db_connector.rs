@@ -31,6 +31,7 @@ pub fn retrieve_public_key() -> bitcoin::PublicKey {
 mod tests {
 
     #[test]
+    #[ignore = "Only run when connected to the redis server"]
     fn bytes_to_public_key() {
         let s = secp256k1::Secp256k1::new();
         let key = bitcoin::PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
