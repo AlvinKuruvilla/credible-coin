@@ -2,7 +2,7 @@ use clap::{Parser, Subcommand};
 use eyre::Result;
 
 pub mod asset_database;
-pub mod publisher_db_connector;
+pub mod db_connector;
 mod shell;
 const VERSION: &str = "0.0.1";
 

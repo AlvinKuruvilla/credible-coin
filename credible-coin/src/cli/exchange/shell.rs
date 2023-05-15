@@ -1,4 +1,5 @@
-use crate::cli::exchange::publisher_db_connector::init_tables;
+use crate::cli::exchange::db_connector::{insert_key_or_update, retrieve_public_key};
+use crate::utils::address_generator::generate_address_with_provided_public_key;
 use crate::{
     coin::Coin,
     utils::{
@@ -60,7 +61,6 @@ impl ExchangeShell {
             ColumnarMenu::default().with_name("completion_menu"),
         )));
         let prompt = DefaultPrompt::default();
-        init_tables();
         loop {
             let sig = line_editor.read_line(&prompt)?;
             match sig {
@@ -116,7 +116,8 @@ impl ExchangeShell {
                             log::error!("No value provided");
                             break;
                         };
-                        let address = generate_address();
+                        let retrieved_key = retrieve_public_key();
+                        let address = generate_address_with_provided_public_key(retrieved_key);
                         append_record(&self.filename, address, value);
                         // FIXME: Test that the new tree is correct
                         self.tree = self.create_new_tree_from_file();
@@ -135,12 +136,13 @@ impl ExchangeShell {
     /// Create a SECP256K1 Private Key
     /// FIXME: This function call does not save the generated private key anywhere, but we
     /// should have another function responsible for that
-    /// FIXME: We may also need to change the code so that it usues the RNG that we generate
+    /// FIXME: We may also need to change the code so that it uses the RNG that we generate
     /// and give to it rather than making a thread_rng every time
     pub fn create_private_key(&self) -> PublicKey {
         let s = Secp256k1::new();
         let key = PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
         println!("{:?}", key.to_bytes());
+        insert_key_or_update(key.to_bytes());
         return key;
     }
     /// Crreate a Random Number Generator (RNG) from a provided
