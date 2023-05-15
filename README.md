@@ -41,3 +41,35 @@ $ cargo doc --open
 ```console
 $ cargo run --bin publisher [CMD] <ARGS>
 ```
+### exchange
+```console
+$ cargo run --bin exchange [CMD] <ARGS>
+```
+## Our Redis Backend
+Our backemd of choice to store data for all of the system components (exchange private keys, proofs, etc)
+is Redis for its simplicity
+
+### Installing Redis
+```console
+$ brew install redis
+```
+
+### Running an instance
+We have 2 Redis instances (one for the exchange, and one for the verifier and customer). 
+To run the exchange's Redis instance:
+
+```console
+$ redis-server ../credible_coin/redis-conf/redis-exchange.conf
+```
+To run the verifier's Redis instance:
+
+```console
+$ redis-server ../credible_coin/redis-conf/redis-proof.conf
+```
+The exchange instance runs on port 6380 and the proof instance runs oon port 6381. 
+
+To connect to the instance using the cli run (in this case this is the exchange instance): 
+```console
+$ redis-cli -p 6380
+# NOTE: the argument after the '-p' is the port number the instance should be running on
+```
