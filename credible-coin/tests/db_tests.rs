@@ -69,7 +69,7 @@ mod tests {
             Err(e) => panic!("Invalid UTF-8 sequence: {}", e),
         };
         assert_eq!(s.as_bytes(), numeric_bytes);
-        let b = bincode::deserialize(s.as_bytes()).unwrap();
+        let b: i32 = bincode::deserialize(s.as_bytes()).unwrap();
         assert_eq!(a, b);
     }
 }

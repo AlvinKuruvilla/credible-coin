@@ -10,6 +10,11 @@ pub fn generate_address() -> String {
     // Generate pay-to-pubkey-hash address.
     return Address::p2pkh(&public_key, Network::Bitcoin).to_string();
 }
+/// Generate a valid random bitcoin address using a provided public key
+pub fn generate_address_with_provided_public_key(public_key: PublicKey) -> String {
+    // Generate pay-to-pubkey-hash address.
+    return Address::p2pkh(&public_key, Network::Bitcoin).to_string();
+}
 /// Generate a random n digit number for the value associated with any bitcoin address
 pub fn generate_bitcoin_value<R: rand::Rng>(rng: &mut R, n: u32) -> u32 {
     return rng.gen_range(1u32..10) * 10u32.pow(n - 1) + rng.gen_range(0..10u32.pow(n - 1));
@@ -24,5 +29,5 @@ pub fn generate_n_address_value_pairs(n: u32) -> (Vec<String>, Vec<u32>) {
         addresses.push(generate_address());
         values.push(generate_bitcoin_value(&mut rng, 6));
     }
-    return (addresses, values)
+    return (addresses, values);
 }
