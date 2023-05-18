@@ -1,9 +1,8 @@
-use crate::cli::exchange::db_connector::{insert_key_or_update, retrieve_public_key};
-use crate::utils::address_generator::generate_address_with_provided_public_key;
+use crate::cli::exchange::db_connector::{insert_key_or_update, retrieve_public_key_bytes};
 use crate::{
     coin::Coin,
     utils::{
-        address_generator::generate_address,
+        address_generator::generate_address_with_provided_public_key,
         csv_utils::{addresses_and_values_as_vectors, append_record},
         merkle_utils::prove_membership,
     },
@@ -116,7 +115,13 @@ impl ExchangeShell {
                             log::error!("No value provided");
                             break;
                         };
-                        let retrieved_key = retrieve_public_key();
+                        let retrieved_bytes = retrieve_public_key_bytes();
+                        if retrieved_bytes.is_empty() {
+                            log::error!("Private key field not set. To set the private key call 'createPrivateKey <seed>'");
+                            continue;
+                        }
+                        let retrieved_key: PublicKey =
+                            PublicKey::from_slice(&retrieved_bytes).unwrap();
                         let address = generate_address_with_provided_public_key(retrieved_key);
                         append_record(&self.filename, address, value);
                         // FIXME: Test that the new tree is correct
