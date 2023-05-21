@@ -89,10 +89,6 @@ impl ExchangeShell {
                         prove_membership(&self.filename, public_address, &self.tree);
                     }
                     if args[0] == "createPrivateKey" {
-                        // FIXME: This function call does not save the generated private key anywhere, but we
-                        // should have another function responsible for that
-                        // FIXME: We may also need to change the code so that it usues the RNG that we generate
-                        // and give to it rather than making a thread_rng every time
                         self.create_private_key();
                     }
                     if args[0] == "createRNG" {
@@ -143,10 +139,6 @@ impl ExchangeShell {
         Ok(())
     }
     /// Create a SECP256K1 Private Key
-    /// FIXME: This function call does not save the generated private key anywhere, but we
-    /// should have another function responsible for that
-    /// FIXME: We may also need to change the code so that it uses the RNG that we generate
-    /// and give to it rather than making a thread_rng every time
     pub fn create_private_key(&self) -> PublicKey {
         let s = Secp256k1::new();
         let key = PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
@@ -226,8 +218,5 @@ impl ExchangeShell {
                 Cell::new("Usage: `proveMembership <ADDRESS>`"),
             ]);
         println!("{table}")
-        //TODO: Once we actually start using sql tables for the privatekeys and RNGs
-        // we should also add commands to list the available ones if they are going
-        // to be selectable to be used for executing other commands like generating addresses
     }
 }
