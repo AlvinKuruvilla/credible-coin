@@ -1,7 +1,8 @@
 use comfy_table::{presets::UTF8_FULL, Attribute, Cell, ContentArrangement, Table};
+use nu_ansi_term::{Color, Style};
 use reedline::{
-    ColumnarMenu, DefaultCompleter, DefaultPrompt, DefaultValidator, ExampleHighlighter, Reedline,
-    ReedlineMenu, Signal,
+    ColumnarMenu, DefaultCompleter, DefaultHinter, DefaultPrompt, DefaultValidator,
+    ExampleHighlighter, Reedline, ReedlineMenu, Signal,
 };
 use rs_merkle::algorithms::Sha256;
 use rs_merkle::MerkleTree;
@@ -49,6 +50,9 @@ impl PublisherShell {
             .with_completer(completer)
             .with_quick_completions(true)
             .with_partial_completions(true)
+            .with_hinter(Box::new(
+                DefaultHinter::default().with_style(Style::new().italic().fg(Color::LightGray)),
+            ))
             .with_validator(Box::new(DefaultValidator))
             .with_ansi_colors(true);
         // Adding default menus for the compiled reedline
