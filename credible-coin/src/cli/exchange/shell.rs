@@ -9,6 +9,7 @@ use crate::{
 };
 use bitcoin::PublicKey;
 use comfy_table::{presets::UTF8_FULL, Attribute, Cell, ContentArrangement, Table};
+use env_logger::Env;
 use nu_ansi_term::{Color, Style};
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
@@ -46,7 +47,7 @@ impl ExchangeShell {
     }
     pub fn start(&mut self) -> std::io::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
-        pretty_env_logger::init();
+        env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
         let commands = shell_commands();
         let completer = Box::new(DefaultCompleter::new_with_wordlen(commands.clone(), 2));
         let mut line_editor = Reedline::create()
@@ -70,7 +71,7 @@ impl ExchangeShell {
                 reedline::Signal::Success(buffer) => {
                     let args: Vec<&str> = buffer.split(" ").collect();
                     if args[0] == "exit" {
-                        println!("Exiting Shell");
+                        log::info!("Exiting Shell");
                         break;
                     }
                     if args[0] == "clear" {
