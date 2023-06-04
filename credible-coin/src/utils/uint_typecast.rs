@@ -1,7 +1,3 @@
-// TODO: I think a better overall design ould be to have 2 traits
-// that implement these functions (and the other endians) for slice 
-// and Vec parameters respectiveely
-
 /// Convert a refrence to a u32 slice to a sized Vec<> slice of u8
 pub fn u32_slice_to_byte_vector(slice: &[u32]) -> Vec<[u8; 4]> {
     let byte_slice: Vec<_> = slice.iter().map(|x| x.to_ne_bytes()).collect();
@@ -42,4 +38,3 @@ pub fn u128_vector_to_byte_vector(vec: &Vec<u128>) -> Vec<[u8; 16]> {
     let byte_slice: Vec<_> = vec.iter().map(|x| x.to_ne_bytes()).collect();
     return byte_slice;
 }
-

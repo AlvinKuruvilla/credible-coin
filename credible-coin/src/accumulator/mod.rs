@@ -4,10 +4,6 @@
 //! 1. Merkle Trees
 //! 2. Binary Accumulators
 use crate::coin;
-
-/// A set of helper functions to convert to convert Vector and slice types
-/// to Vec<[N;u8]> where N is the size of the slice
-pub mod uint_typecast;
 /// A blanket trait type representing a "proof of membership". A membership proof is an interactive proof for a statement of the form x in L, where L is some formal language.
 pub trait MembershipProof {}
 /// Common Functionality an accumulator should have
