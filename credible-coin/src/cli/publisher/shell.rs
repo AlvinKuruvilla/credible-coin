@@ -10,6 +10,7 @@ use rs_merkle::MerkleTree;
 
 use crate::{
     coin::Coin,
+    credible_logger::{error, info},
     utils::{
         csv_utils::{addresses_and_values_as_vectors, get_address_position, update_csv_value},
         merkle_utils::prove_membership,
@@ -43,7 +44,6 @@ impl PublisherShell {
     }
     pub fn start(&mut self) -> std::io::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
-        env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
         let commands = shell_commands();
         let completer = Box::new(DefaultCompleter::new_with_wordlen(commands.clone(), 2));
         let mut line_editor = Reedline::create()
@@ -71,7 +71,7 @@ impl PublisherShell {
                     // This is where command processing goes, see the reedline example demo for details
                     let args: Vec<&str> = buffer.split(" ").collect();
                     if args[0] == "exit" {
-                        log::info!("Exiting Shell");
+                        info("Exiting Shell");
                         break;
                     }
                     if args[0] == "clear" {
@@ -84,7 +84,7 @@ impl PublisherShell {
                         if let Some(public_address) = element {
                             self.get_coin_info(&public_address, &self.tree);
                         } else {
-                            log::error!("No public address provided for getCoinInfo");
+                            error("No public address provided for getCoinInfo");
                             break;
                         };
                     }
@@ -95,7 +95,7 @@ impl PublisherShell {
                         if element.is_some() {
                             public_address = element.unwrap();
                         } else {
-                            log::error!("No public address provided");
+                            error("No public address provided");
                             break;
                         };
                         if element2.is_some() {
@@ -107,7 +107,7 @@ impl PublisherShell {
                                 &self.tree,
                             );
                         } else {
-                            log::error!("No new value provided");
+                            error("No new value provided");
                             break;
                         }
                     }
@@ -117,7 +117,7 @@ impl PublisherShell {
                         if element.is_some() {
                             public_address = element.unwrap();
                         } else {
-                            log::error!("No public address provided");
+                            error("No public address provided");
                             break;
                         };
                         prove_membership(&self.filename, public_address, &self.tree);
@@ -142,13 +142,12 @@ impl PublisherShell {
             .ok_or("Could not get leaves to prove")
             .unwrap();
         let map = CoinMap::generate_address_value_map(&self.filename);
-        println!(" Key Count: {:?}", map.inner.keys().len());
         //TODO: Remove unwrap
         let value = map.inner.get(_public_address).unwrap();
         let generated_coin = Coin::new(_public_address.to_owned(), *value);
         let address_index = get_address_position(&self.filename, _public_address.to_string());
-        println!("Address Index:{:?}", address_index);
-        println!("Address Value:{:?}", value);
+        // println!("Address Index:{:?}", address_index);
+        // println!("Address Value:{:?}", value);
         let indices = vec![address_index];
         let proof = tree.proof(&indices);
         let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
@@ -158,8 +157,8 @@ impl PublisherShell {
         println!("Leaf count:{:?}", tree_leaves.len());
 
         assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
-        log::info!("Coin Address:{:?}", _public_address);
-        log::info!("Coin Value:{:?}", value);
+        println!("Coin Address:{:?}", _public_address);
+        println!("Coin Value:{:?}", value);
     }
     /// Update a coin in the merkle tree given its public address and its new value
     // TODO: _new_value should be an i64 not a u32
@@ -190,8 +189,8 @@ impl PublisherShell {
         map.replace(_public_address.to_string(), i64::from(_new_value));
         let check = map.inner.get(_public_address).unwrap();
         assert!(check == &i64::from(_new_value));
-        log::info!("Coin Address:{:?}", _public_address);
-        log::info!("New Coin Value:{:?}", _new_value);
+        println!("Coin Address:{:?}", _public_address);
+        println!("New Coin Value:{:?}", _new_value);
 
         //make new merkle tree
         update_csv_value(

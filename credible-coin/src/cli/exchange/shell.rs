@@ -1,4 +1,5 @@
 use crate::cli::exchange::db_connector::{insert_key_or_update, retrieve_public_key_bytes};
+use crate::credible_logger::{error, info};
 use crate::{
     coin::Coin,
     utils::{
@@ -9,7 +10,6 @@ use crate::{
 };
 use bitcoin::PublicKey;
 use comfy_table::{presets::UTF8_FULL, Attribute, Cell, ContentArrangement, Table};
-use env_logger::Env;
 use nu_ansi_term::{Color, Style};
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
@@ -47,7 +47,6 @@ impl ExchangeShell {
     }
     pub fn start(&mut self) -> std::io::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
-        env_logger::Builder::from_env(Env::default().default_filter_or("info")).init();
         let commands = shell_commands();
         let completer = Box::new(DefaultCompleter::new_with_wordlen(commands.clone(), 2));
         let mut line_editor = Reedline::create()
@@ -71,7 +70,7 @@ impl ExchangeShell {
                 reedline::Signal::Success(buffer) => {
                     let args: Vec<&str> = buffer.split(" ").collect();
                     if args[0] == "exit" {
-                        log::info!("Exiting Shell");
+                        info("Exiting Shell");
                         break;
                     }
                     if args[0] == "clear" {
@@ -84,7 +83,7 @@ impl ExchangeShell {
                         if element.is_some() {
                             public_address = element.unwrap();
                         } else {
-                            log::error!("No public address provided");
+                            error("No public address provided");
                             break;
                         };
                         prove_membership(&self.filename, public_address, &self.tree);
@@ -98,7 +97,7 @@ impl ExchangeShell {
                         if element.is_some() {
                             seed = element.unwrap().parse::<u64>().unwrap();
                         } else {
-                            log::error!("No seed provided");
+                            error("No seed provided");
                             break;
                         };
                         // FIXME: This function call does not save the generated RNG anywhere, but we
@@ -113,7 +112,7 @@ impl ExchangeShell {
                         if element.is_some() {
                             value = element.unwrap().parse::<i64>().unwrap();
                         } else {
-                            log::error!("No value provided");
+                            error("No value provided");
                             break;
                         };
                         let retrieved_bytes = retrieve_public_key_bytes();
