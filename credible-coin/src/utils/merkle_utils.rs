@@ -1,7 +1,8 @@
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 
 use crate::{
-    cli::publisher::coin_map::CoinMap, coin::Coin, utils::csv_utils::get_address_position,
+    cli::publisher::coin_map::CoinMap, coin::Coin, credible_logger::info,
+    utils::csv_utils::get_address_position,
 };
 
 use super::csv_utils::addresses_and_values_as_vectors;
@@ -50,5 +51,5 @@ pub fn prove_membership(filename: &str, _public_address: &str, tree: &MerkleTree
     // NOTE: It is fine that init was not called before we logged,
     // I think since the calling shell already calls pretty_env_logger::init()
     // prior to running this function we don't have to
-    log::info!("Address {:?} found in merkle tree", _public_address);
+    println!("Address {:?} found in merkle tree", _public_address);
 }

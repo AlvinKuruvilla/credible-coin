@@ -117,7 +117,7 @@ impl ExchangeShell {
                         };
                         let retrieved_bytes = retrieve_public_key_bytes();
                         if retrieved_bytes.is_empty() {
-                            log::error!("Private key field not set. To set the private key call 'createPrivateKey <seed>'");
+                            error("Private key field not set. To set the private key call 'createPrivateKey <seed>'");
                             continue;
                         }
                         let retrieved_key: PublicKey =
