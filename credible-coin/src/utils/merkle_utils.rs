@@ -1,8 +1,7 @@
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 
 use crate::{
-    cli::publisher::coin_map::CoinMap, coin::Coin, credible_logger::info,
-    utils::csv_utils::get_address_position,
+    cli::publisher::coin_map::CoinMap, coin::Coin, utils::csv_utils::get_address_position,
 };
 
 use super::csv_utils::addresses_and_values_as_vectors;

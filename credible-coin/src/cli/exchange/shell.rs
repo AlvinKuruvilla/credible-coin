@@ -14,8 +14,9 @@ use nu_ansi_term::{Color, Style};
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use reedline::{
-    ColumnarMenu, DefaultCompleter, DefaultHinter, DefaultPrompt, DefaultValidator,
-    ExampleHighlighter, Reedline, ReedlineMenu, Signal,
+    default_emacs_keybindings, ColumnarMenu, DefaultCompleter, DefaultHinter, DefaultPrompt,
+    DefaultValidator, Emacs, ExampleHighlighter, KeyCode, KeyModifiers, Reedline, ReedlineEvent,
+    ReedlineMenu, Signal,
 };
 use rs_merkle::algorithms::Sha256;
 use rs_merkle::MerkleTree;
@@ -48,21 +49,35 @@ impl ExchangeShell {
     pub fn start(&mut self) -> std::io::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
         let commands = shell_commands();
-        let completer = Box::new(DefaultCompleter::new_with_wordlen(commands.clone(), 2));
+        let completer: Box<DefaultCompleter> =
+            Box::new(DefaultCompleter::new_with_wordlen(commands.clone(), 2));
+        // Use the interactive menu to select options from the completer
+        let completion_menu = Box::new(ColumnarMenu::default().with_name("completion_menu"));
+        // Set up the required keybindings
+        let mut keybindings = default_emacs_keybindings();
+        keybindings.add_binding(
+            KeyModifiers::NONE,
+            KeyCode::Tab,
+            ReedlineEvent::UntilFound(vec![
+                ReedlineEvent::Menu("completion_menu".to_string()),
+                ReedlineEvent::MenuNext,
+            ]),
+        );
+
+        let edit_mode = Box::new(Emacs::new(keybindings));
+
         let mut line_editor = Reedline::create()
             .with_highlighter(Box::new(ExampleHighlighter::new(commands)))
             .with_completer(completer)
+            .with_menu(ReedlineMenu::EngineCompleter(completion_menu))
+            .with_ansi_colors(true)
             .with_quick_completions(true)
             .with_partial_completions(true)
-            .with_validator(Box::new(DefaultValidator))
             .with_hinter(Box::new(
                 DefaultHinter::default().with_style(Style::new().italic().fg(Color::LightGray)),
             ))
-            .with_ansi_colors(true);
-        // Adding default menus for the compiled reedline
-        line_editor = line_editor.with_menu(ReedlineMenu::EngineCompleter(Box::new(
-            ColumnarMenu::default().with_name("completion_menu"),
-        )));
+            .with_validator(Box::new(DefaultValidator))
+            .with_edit_mode(edit_mode);
         let prompt = DefaultPrompt::default();
         loop {
             let sig = line_editor.read_line(&prompt)?;
@@ -81,10 +96,14 @@ impl ExchangeShell {
                         let element = args.get(1); // Get the provided coin address and skip getCoinInfo
                         let public_address;
                         if element.is_some() {
+                            if element.unwrap().is_empty() {
+                                error("Address cannot be empty");
+                                continue;
+                            }
                             public_address = element.unwrap();
                         } else {
                             error("No public address provided");
-                            break;
+                            continue;
                         };
                         prove_membership(&self.filename, public_address, &self.tree);
                     }
@@ -98,7 +117,7 @@ impl ExchangeShell {
                             seed = element.unwrap().parse::<u64>().unwrap();
                         } else {
                             error("No seed provided");
-                            break;
+                            continue;
                         };
                         // FIXME: This function call does not save the generated RNG anywhere, but we
                         // should have another function responsible for that
