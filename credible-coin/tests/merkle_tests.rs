@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use credible_coin::{coin::Coin, utils::uint_typecast::ToHashable};
+    use credible_coin::{coin::Coin, utils::hashable::ToHashable};
     use rs_merkle::{algorithms::Sha256, Hasher, MerkleProof, MerkleTree};
     #[test]
     pub fn sanity() {

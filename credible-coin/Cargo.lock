@@ -359,6 +359,7 @@ dependencies = [
  "indexmap",
  "log",
  "nu-ansi-term",
+ "num-traits",
  "rand",
  "rand_chacha",
  "redis",

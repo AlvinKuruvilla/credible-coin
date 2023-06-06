@@ -24,6 +24,7 @@ indexmap = "1.9.3"
 rand_chacha = "0.3.1"
 comfy-table = "6.1.4"
 redis = "0.23.0"
+num-traits = "0.2.15"
 [dev-dependencies]
 criterion = "0.4.0"
 
