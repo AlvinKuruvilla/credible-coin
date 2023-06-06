@@ -1,6 +1,6 @@
 pub mod address_generator;
 pub mod csv_utils;
-/// A set of helper functions to convert to convert Vector and slice types
-/// to Vec<[N;u8]> where N is the size of the slice
+/// A set of helper functions to convert vector and slice types
+/// to Vec<&[u8]> to be hashed by the sha crate
 pub mod hashable;
 pub mod merkle_utils;
