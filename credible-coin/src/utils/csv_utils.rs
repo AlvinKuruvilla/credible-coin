@@ -13,12 +13,11 @@ pub struct CSVRecord {
 /// column as a `Vec<i64>`
 pub fn make_value_vector(filename: &str) -> Vec<i64> {
     let mut rdr = csv::Reader::from_path(filename).unwrap();
-    let mut col = Vec::new();
-    for result in rdr.deserialize() {
-        let record: CSVRecord = result.unwrap();
-        col.push(record.value)
-    }
-    return col;
+    let records: Vec<CSVRecord> = rdr
+        .deserialize()
+        .map(|result| result.expect("Error parsing CSV record"))
+        .collect();
+    return records.iter().map(|record| record.value.clone()).collect();
 }
 /// Given a filename as input return the specified
 /// column as a `Vec<String>`
