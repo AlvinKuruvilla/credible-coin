@@ -24,8 +24,7 @@ where
 
         let byte_slice: &[u8] = {
             let slice = unsafe { std::slice::from_raw_parts(byte_data, byte_len) };
-
-            // Safety: The temporary slice is valid and in a safe context.
+            // Safety: Stated above.
             slice
         };
 
@@ -45,8 +44,7 @@ where
 
         let byte_slice: &[u8] = {
             let slice = unsafe { std::slice::from_raw_parts(byte_data, byte_len) };
-
-            // Safety: The temporary slice is valid and in a safe context.
+            // Safety: Stated above.
             slice
         };
 
@@ -66,8 +64,7 @@ where
 
         let byte_slice: &[u8] = {
             let slice = unsafe { std::slice::from_raw_parts(byte_data, byte_len) };
-
-            // Safety: The temporary slice is valid and in a safe context.
+            // Safety: Stated above.
             slice
         };
 
@@ -87,8 +84,7 @@ where
 
         let byte_slice: &[u8] = {
             let slice = unsafe { std::slice::from_raw_parts(byte_data, byte_len) };
-
-            // Safety: The temporary slice is valid and in a safe context.
+            // Safety: Stated above.
             slice
         };
 
