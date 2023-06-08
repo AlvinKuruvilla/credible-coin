@@ -1,3 +1,4 @@
+use flexi_logger::{AdaptiveFormat, Duplicate, FileSpec, Logger};
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 
 use crate::{
@@ -50,5 +51,20 @@ pub fn prove_membership(filename: &str, _public_address: &str, tree: &MerkleTree
     // NOTE: It is fine that init was not called before we logged,
     // I think since the calling shell already calls pretty_env_logger::init()
     // prior to running this function we don't have to
-    println!("Address {:?} found in merkle tree", _public_address);
+    Logger::try_with_str("info")
+        .expect("Could not create logger object")
+        .duplicate_to_stderr(Duplicate::Warn)
+        .duplicate_to_stdout(Duplicate::All)
+        .log_to_file(
+            FileSpec::default()
+                .basename("credible")
+                .suffix("log")
+                .suppress_timestamp(),
+        )
+        .adaptive_format_for_stderr(AdaptiveFormat::Default)
+        .adaptive_format_for_stdout(AdaptiveFormat::Default)
+        .append()
+        .start()
+        .unwrap();
+    log::info!("Address {:?} found in merkle tree", _public_address);
 }

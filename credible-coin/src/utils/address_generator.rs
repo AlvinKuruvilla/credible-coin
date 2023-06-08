@@ -24,6 +24,7 @@ pub fn generate_bitcoin_value<R: rand::Rng>(rng: &mut R, n: u32) -> u32 {
 pub fn generate_n_address_value_pairs(n: u32) -> (Vec<String>, Vec<u32>) {
     let mut addresses = Vec::new();
     let mut values = Vec::new();
+    // use rayon here hopefully to make this faster: https://github.com/rayon-rs/rayon/issues/699
     for _ in 0..n {
         let mut rng = rand::thread_rng();
         addresses.push(generate_address());

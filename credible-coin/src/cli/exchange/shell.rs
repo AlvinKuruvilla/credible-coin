@@ -1,5 +1,4 @@
 use crate::cli::exchange::db_connector::{insert_key_or_update, retrieve_public_key_bytes};
-use crate::credible_logger::{error, info};
 use crate::{
     coin::Coin,
     utils::{
@@ -10,7 +9,8 @@ use crate::{
 };
 use bitcoin::PublicKey;
 use comfy_table::{presets::UTF8_FULL, Attribute, Cell, ContentArrangement, Table};
-use nu_ansi_term::{Color, Style};
+use flexi_logger::{AdaptiveFormat, Duplicate, FileSpec, Logger};
+use nu_ansi_term::Color;
 use rand::SeedableRng;
 use rand_chacha::ChaCha8Rng;
 use reedline::{
@@ -73,19 +73,35 @@ impl ExchangeShell {
             .with_ansi_colors(true)
             .with_quick_completions(true)
             .with_partial_completions(true)
-            .with_hinter(Box::new(
-                DefaultHinter::default().with_style(Style::new().italic().fg(Color::LightGray)),
-            ))
+            .with_hinter(Box::new(DefaultHinter::default().with_style(
+                nu_ansi_term::Style::new().italic().fg(Color::LightGray),
+            )))
             .with_validator(Box::new(DefaultValidator))
             .with_edit_mode(edit_mode);
         let prompt = DefaultPrompt::default();
+        //TODO: Eventually swap WriteMode::Default with WriteMode::Async
+        Logger::try_with_str("info")
+            .expect("Could not create logger object")
+            .duplicate_to_stderr(Duplicate::Warn)
+            .duplicate_to_stdout(Duplicate::All)
+            .log_to_file(
+                FileSpec::default()
+                    .basename("credible")
+                    .suffix("log")
+                    .suppress_timestamp(),
+            )
+            .adaptive_format_for_stderr(AdaptiveFormat::Default)
+            .adaptive_format_for_stdout(AdaptiveFormat::Default)
+            .append()
+            .start()
+            .unwrap();
         loop {
             let sig = line_editor.read_line(&prompt)?;
             match sig {
                 reedline::Signal::Success(buffer) => {
                     let args: Vec<&str> = buffer.split(" ").collect();
                     if args[0] == "exit" {
-                        info("Exiting Shell");
+                        log::info!("Exiting Shell");
                         break;
                     }
                     if args[0] == "clear" {
@@ -97,12 +113,12 @@ impl ExchangeShell {
                         let public_address;
                         if element.is_some() {
                             if element.unwrap().is_empty() {
-                                error("Address cannot be empty");
+                                log::error!("Address cannot be empty");
                                 continue;
                             }
                             public_address = element.unwrap();
                         } else {
-                            error("No public address provided");
+                            log::error!("No public address provided");
                             continue;
                         };
                         prove_membership(&self.filename, public_address, &self.tree);
@@ -116,7 +132,7 @@ impl ExchangeShell {
                         if element.is_some() {
                             seed = element.unwrap().parse::<u64>().unwrap();
                         } else {
-                            error("No seed provided");
+                            log::error!("No seed provided");
                             continue;
                         };
                         // FIXME: This function call does not save the generated RNG anywhere, but we
@@ -131,12 +147,12 @@ impl ExchangeShell {
                         if element.is_some() {
                             value = element.unwrap().parse::<i64>().unwrap();
                         } else {
-                            error("No value provided");
+                            log::error!("No value provided");
                             break;
                         };
                         let retrieved_bytes = retrieve_public_key_bytes();
                         if retrieved_bytes.is_empty() {
-                            error("Private key field not set. To set the private key call 'createPrivateKey <seed>'");
+                            log::error!("Private key field not set. To set the private key call 'createPrivateKey <seed>'");
                             continue;
                         }
                         let retrieved_key: PublicKey =

@@ -1,4 +1,5 @@
 use comfy_table::{presets::UTF8_FULL, Attribute, Cell, ContentArrangement, Table};
+use flexi_logger::{AdaptiveFormat, Duplicate, FileSpec, Logger, WriteMode};
 use nu_ansi_term::{Color, Style};
 use reedline::{
     default_emacs_keybindings, ColumnarMenu, DefaultCompleter, DefaultHinter, DefaultPrompt,
@@ -10,7 +11,6 @@ use rs_merkle::MerkleTree;
 
 use crate::{
     coin::Coin,
-    credible_logger::{error, info},
     utils::{
         csv_utils::{addresses_and_values_as_vectors, get_address_position, update_csv_value},
         merkle_utils::prove_membership,
@@ -75,7 +75,21 @@ impl PublisherShell {
             .with_validator(Box::new(DefaultValidator))
             .with_edit_mode(edit_mode);
         let prompt = DefaultPrompt::default();
-
+        Logger::try_with_str("info")
+            .expect("Could not create logger object")
+            .duplicate_to_stderr(Duplicate::Warn)
+            .duplicate_to_stdout(Duplicate::All)
+            .log_to_file(
+                FileSpec::default()
+                    .basename("credible")
+                    .suffix("log")
+                    .suppress_timestamp(),
+            )
+            .adaptive_format_for_stderr(AdaptiveFormat::Default)
+            .adaptive_format_for_stdout(AdaptiveFormat::Default)
+            .append()
+            .start()
+            .unwrap();
         loop {
             let sig = line_editor.read_line(&prompt)?;
             match sig {
@@ -85,7 +99,7 @@ impl PublisherShell {
                     // This is where command processing goes, see the reedline example demo for details
                     let args: Vec<&str> = buffer.split(" ").collect();
                     if args[0] == "exit" {
-                        info("Exiting Shell");
+                        log::info!("Exiting Shell");
                         break;
                     }
                     if args[0] == "clear" {
@@ -98,8 +112,8 @@ impl PublisherShell {
                         if let Some(public_address) = element {
                             self.get_coin_info(&public_address, &self.tree);
                         } else {
-                            error("No public address provided for getCoinInfo");
-                            break;
+                            log::error!("No public address provided for getCoinInfo");
+                            continue;
                         };
                     }
                     if args[0] == "updateCoin" {
@@ -109,7 +123,7 @@ impl PublisherShell {
                         if element.is_some() {
                             public_address = element.unwrap();
                         } else {
-                            error("No public address provided");
+                            log::error!("No public address provided");
                             break;
                         };
                         if element2.is_some() {
@@ -121,7 +135,7 @@ impl PublisherShell {
                                 &self.tree,
                             );
                         } else {
-                            error("No new value provided");
+                            log::error!("No new value provided");
                             break;
                         }
                     }
@@ -131,8 +145,8 @@ impl PublisherShell {
                         if element.is_some() {
                             public_address = element.unwrap();
                         } else {
-                            error("No public address provided");
-                            break;
+                            log::error!("No public address provided");
+                            continue;
                         };
                         prove_membership(&self.filename, public_address, &self.tree);
                     }
