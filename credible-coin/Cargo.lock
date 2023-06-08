@@ -330,6 +330,7 @@ dependencies = [
  "num-traits",
  "rand",
  "rand_chacha",
+ "rayon",
  "redis",
  "reedline",
  "rs_merkle",

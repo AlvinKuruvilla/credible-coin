@@ -1,5 +1,5 @@
-use credible_coin::cli::publisher::coin_map::CoinMap;
+use credible_coin::utils::address_generator::generate_n_address_value_pairs;
+
 fn main() {
-    let cm = CoinMap::generate_address_value_map("BigQuery Bitcoin Historical Data - outputs.csv");
-    println!("Map Length: {:?}", cm.inner.keys().len())
+    generate_n_address_value_pairs(1000000);
 }

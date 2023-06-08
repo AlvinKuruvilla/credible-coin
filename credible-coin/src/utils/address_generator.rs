@@ -1,5 +1,6 @@
 use bitcoin::secp256k1::{rand, Secp256k1};
 use bitcoin::{Address, Network, PublicKey};
+use rayon::prelude::{IntoParallelIterator, ParallelIterator};
 
 /// Generate a valid random bitcoin address
 pub fn generate_address() -> String {
@@ -22,13 +23,12 @@ pub fn generate_bitcoin_value<R: rand::Rng>(rng: &mut R, n: u32) -> u32 {
 /// Given a number, n,  generate that many pairs of addresses and values and
 /// save them to a DataFrame so they can be easily be written to a CSV later
 pub fn generate_n_address_value_pairs(n: u32) -> (Vec<String>, Vec<u32>) {
-    let mut addresses = Vec::new();
-    let mut values = Vec::new();
-    // use rayon here hopefully to make this faster: https://github.com/rayon-rs/rayon/issues/699
+    let mut values = Vec::with_capacity(n as usize);
+    let addresses: Vec<String> = (0..n).into_par_iter().map(|_| generate_address()).collect();
     for _ in 0..n {
         let mut rng = rand::thread_rng();
-        addresses.push(generate_address());
         values.push(generate_bitcoin_value(&mut rng, 6));
     }
-    return (addresses, values);
+
+    (addresses, values)
 }
