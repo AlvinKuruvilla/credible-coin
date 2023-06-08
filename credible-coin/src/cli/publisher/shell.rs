@@ -119,36 +119,34 @@ impl PublisherShell {
                     if args[0] == "updateCoin" {
                         let element = args.get(1); // Get the provided coin address and skip getCoinInfo
                         let element2 = args.get(2); // Get the new value to assign to the coin
-                        let public_address;
-                        if element.is_some() {
-                            public_address = element.unwrap();
-                        } else {
-                            log::error!("No public address provided");
-                            break;
-                        };
-                        if element2.is_some() {
-                            let value = element2.unwrap();
-                            // TODO: We should do some math or 'if let Some' magic for the value in case we cannot parse it
-                            self.tree = self.update_coin(
-                                public_address,
-                                value.parse().unwrap(),
-                                &self.tree,
-                            );
-                        } else {
-                            log::error!("No new value provided");
-                            break;
-                        }
-                    }
-                    if args[0] == "proveMembership" {
-                        let element = args.get(1); // Get the provided coin address and skip getCoinInfo
-                        let public_address;
-                        if element.is_some() {
-                            public_address = element.unwrap();
+                        if let Some(public_address) = element {
+                            if let Some(value) = element2 {
+                                // Parse the value as a number
+                                if let Ok(parsed_value) = value.parse::<u32>() {
+                                    // Perform additional operations on the parsed value if needed
+                                    self.tree =
+                                        self.update_coin(public_address, parsed_value, &self.tree);
+                                } else {
+                                    log::error!("Failed to parse value as a number");
+                                    continue;
+                                }
+                            } else {
+                                log::error!("No new value provided");
+                                continue;
+                            }
                         } else {
                             log::error!("No public address provided");
                             continue;
-                        };
-                        prove_membership(&self.filename, public_address, &self.tree);
+                        }
+                    }
+                    if args[0] == "proveMembership" {
+                        if let Some(element) = args.get(1) {
+                            let public_address = element;
+                            prove_membership(&self.filename, public_address, &self.tree);
+                        } else {
+                            log::error!("No public address provided");
+                            continue;
+                        }
                     }
                     if args[0] == "help" || args[0] == "?" {
                         self.cmd_table();
