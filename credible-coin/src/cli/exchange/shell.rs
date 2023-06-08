@@ -109,32 +109,39 @@ impl ExchangeShell {
                         continue;
                     }
                     if args[0] == "proveMembership" {
-                        let element = args.get(1); // Get the provided coin address and skip getCoinInfo
-                        let public_address;
-                        if element.is_some() {
-                            if element.unwrap().is_empty() {
-                                log::error!("Address cannot be empty");
+                        match args.get(1) {
+                            Some(element) => {
+                                let public_address = element;
+                                if public_address.is_empty() {
+                                    log::error!("Empty public address provided");
+                                    continue;
+                                }
+                                prove_membership(&self.filename, public_address, &self.tree);
+                            }
+                            None => {
+                                log::error!("No public address provided");
                                 continue;
                             }
-                            public_address = element.unwrap();
-                        } else {
-                            log::error!("No public address provided");
-                            continue;
-                        };
-                        prove_membership(&self.filename, public_address, &self.tree);
+                        }
                     }
                     if args[0] == "createPrivateKey" {
                         self.create_private_key();
                     }
                     if args[0] == "createRNG" {
-                        let element = args.get(1); // Get the provided seed
-                        let seed;
-                        if element.is_some() {
-                            seed = element.unwrap().parse::<u64>().unwrap();
-                        } else {
-                            log::error!("No seed provided");
-                            continue;
+                        let seed = match args.get(1) {
+                            Some(element) => match element.parse::<u64>() {
+                                Ok(value) => value,
+                                Err(_) => {
+                                    log::error!("Invalid seed provided");
+                                    continue;
+                                }
+                            },
+                            None => {
+                                log::error!("No seed provided");
+                                continue;
+                            }
                         };
+
                         // FIXME: This function call does not save the generated RNG anywhere, but we
                         // should have another function responsible for that
                         // FIXME: We may also need to change the code so that it usues the RNG that we generate
