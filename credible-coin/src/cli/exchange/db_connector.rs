@@ -3,10 +3,10 @@ use redis::Commands;
 /// A connector module responsible for creating and managing all of the information the
 /// exchange needs.
 ///
-/// The database internally, is a simple redis server managing:
+/// The database is a redis server instance managing:
 /// 1. Random Number Generators
 /// 2. Private Keys
-/// 3. Adddress-Value Pairs (TODO)
+/// 3. Address-Value Pairs (TODO)
 ///
 /// The current setup for the Random Number Generator and Private Key force there to be only
 /// 1 record present at a time. If the user calls the function to generate a private key multiple

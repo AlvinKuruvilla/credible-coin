@@ -3,6 +3,7 @@ use eyre::Result;
 
 pub mod asset_database;
 pub mod db_connector;
+pub mod exchange_functions;
 mod shell;
 const VERSION: &str = "0.0.1";
 
