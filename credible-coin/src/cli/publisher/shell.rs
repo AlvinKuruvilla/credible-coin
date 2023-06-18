@@ -1,5 +1,4 @@
-use comfy_table::{presets::UTF8_FULL, Attribute, Cell, ContentArrangement, Table};
-use flexi_logger::{AdaptiveFormat, Duplicate, FileSpec, Logger, WriteMode};
+use flexi_logger::{AdaptiveFormat, Duplicate, FileSpec, Logger};
 use nu_ansi_term::{Color, Style};
 use reedline::{
     default_emacs_keybindings, ColumnarMenu, DefaultCompleter, DefaultHinter, DefaultPrompt,
@@ -9,15 +8,8 @@ use reedline::{
 use rs_merkle::algorithms::Sha256;
 use rs_merkle::MerkleTree;
 
-use crate::{
-    coin::Coin,
-    utils::{
-        csv_utils::{addresses_and_values_as_vectors, get_address_position, update_csv_value},
-        merkle_utils::prove_membership,
-    },
-};
-
-use super::coin_map::CoinMap;
+use crate::cli::publisher::publisher_functions::{cmd_table, get_coin_info, update_coin};
+use crate::utils::merkle_utils::prove_membership;
 
 #[derive(Default)]
 pub struct PublisherShell {
@@ -110,7 +102,7 @@ impl PublisherShell {
                         let element = args.get(1); // Get the provided coin address and skip getCoinInfo
                         println!("Provided public address {:?}", element);
                         if let Some(public_address) = element {
-                            self.get_coin_info(&public_address, &self.tree);
+                            get_coin_info(&self.filename, &public_address, &self.tree);
                         } else {
                             log::error!("No public address provided for getCoinInfo");
                             continue;
@@ -124,8 +116,12 @@ impl PublisherShell {
                                 // Parse the value as a number
                                 if let Ok(parsed_value) = value.parse::<u32>() {
                                     // Perform additional operations on the parsed value if needed
-                                    self.tree =
-                                        self.update_coin(public_address, parsed_value, &self.tree);
+                                    self.tree = update_coin(
+                                        &self.filename,
+                                        public_address,
+                                        parsed_value,
+                                        &self.tree,
+                                    );
                                 } else {
                                     log::error!("Failed to parse value as a number");
                                     continue;
@@ -149,7 +145,7 @@ impl PublisherShell {
                         }
                     }
                     if args[0] == "help" || args[0] == "?" {
-                        self.cmd_table();
+                        cmd_table();
                     }
                 }
                 Signal::CtrlD | Signal::CtrlC => {
@@ -159,160 +155,5 @@ impl PublisherShell {
         }
         println!();
         Ok(())
-    }
-    /// Get all of the info for a coin in the merkle tree given its public address
-    fn get_coin_info(&self, _public_address: &str, tree: &MerkleTree<Sha256>) {
-        //let tree = PublisherShell::shell_tree();
-        let tree_leaves = tree
-            .leaves()
-            .ok_or("Could not get leaves to prove")
-            .unwrap();
-        let map = CoinMap::generate_address_value_map(&self.filename);
-        //TODO: Remove unwrap
-        let value = map.inner.get(_public_address).unwrap();
-        let generated_coin = Coin::new(_public_address.to_owned(), *value);
-        let address_index = get_address_position(&self.filename, _public_address.to_string());
-        // println!("Address Index:{:?}", address_index);
-        // println!("Address Value:{:?}", value);
-        let indices = vec![address_index];
-        let proof = tree.proof(&indices);
-        let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
-        let bytes = generated_coin.serialize_coin();
-        let hashed_bytes = [Coin::hash_bytes(bytes)];
-        println!("Indices:{:?}", indices);
-        println!("Leaf count:{:?}", tree_leaves.len());
-
-        assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
-        println!("Coin Address:{:?}", _public_address);
-        println!("Coin Value:{:?}", value);
-    }
-    /// Update a coin in the merkle tree given its public address and its new value
-    // TODO: _new_value should be an i64 not a u32
-    fn update_coin(
-        &self,
-        _public_address: &str,
-        _new_value: u32,
-        tree: &MerkleTree<Sha256>,
-    ) -> MerkleTree<Sha256> {
-        let tree_leaves = tree
-            .leaves()
-            .ok_or("Could not get leaves to prove")
-            .unwrap();
-        let mut map = CoinMap::generate_address_value_map(&self.filename);
-        // //TODO: Remove unwrap
-        let value = map.inner.get(_public_address).unwrap();
-        let generated_coin = Coin::new(_public_address.to_owned(), *value);
-        let address_index = get_address_position(&&self.filename, _public_address.to_string());
-        let indices = vec![address_index];
-        let proof = tree.proof(&indices);
-        let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
-        let bytes = generated_coin.serialize_coin();
-        let hashed_bytes = [Coin::hash_bytes(bytes)];
-        assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
-
-        //replace value in hashmap
-        let new_gen_coin = Coin::new(_public_address.to_owned(), i64::from(_new_value));
-        map.replace(_public_address.to_string(), i64::from(_new_value));
-        let check = map.inner.get(_public_address).unwrap();
-        assert!(check == &i64::from(_new_value));
-        println!("Coin Address:{:?}", _public_address);
-        println!("New Coin Value:{:?}", _new_value);
-
-        //make new merkle tree
-        update_csv_value(
-            &&self.filename,
-            _public_address.to_owned(),
-            i64::from(_new_value),
-        );
-        let (new_addr_vec, new_val_vec) = addresses_and_values_as_vectors(&self.filename);
-        assert!(new_val_vec.contains(&i64::from(_new_value)));
-        let new_vec_coin = Coin::create_coin_vector(new_addr_vec, new_val_vec);
-        // println!("_______________________________________________________");
-        // for c in new_vec_coin.iter() {
-        //     println!("Bytes= {:?}", c.serialize_coin());
-        // }
-        let mut u8coins: Vec<Vec<u8>> = Vec::new();
-        for i in new_vec_coin {
-            u8coins.push(i.serialize_coin());
-        }
-        // println!("{:?}", u8coins);
-        // std::thread::sleep(std::time::Duration::from_millis(100000));
-        // println!("*************************************************************");
-
-        let mut new_leaves: Vec<[u8; 32]> = Vec::new();
-        for u8s in u8coins {
-            new_leaves.push(Coin::hash_bytes(u8s))
-        }
-        let new_tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
-        //TODO: Remove unwrap
-        let new_address_index = get_address_position(&&self.filename, _public_address.to_string());
-        let new_indices = vec![new_address_index];
-        let new_proof = new_tree.proof(&new_indices);
-        let new_root = new_tree
-            .root()
-            .ok_or("couldn't get the merkle root")
-            .unwrap();
-        println!(
-            "{:?} {:?}",
-            new_gen_coin.coin_address(),
-            new_gen_coin.coin_value()
-        );
-        let new_bytes = new_gen_coin.serialize_coin();
-        let new_hashed_bytes = [Coin::hash_bytes(new_bytes)];
-        assert_ne!(new_tree.root(), tree.root());
-        // assert_ne!(new_hashed_bytes, hashed_bytes);
-
-        assert!(new_proof.verify(new_root, &new_indices, &new_hashed_bytes, new_leaves.len()));
-
-        return new_tree;
-    }
-    /// The table of commands, descriptions, and usage
-    pub fn cmd_table(&self) {
-        let mut table = Table::new();
-        table
-            .load_preset(UTF8_FULL)
-            .set_content_arrangement(ContentArrangement::Dynamic)
-            .set_width(80)
-            .set_header(vec![
-                Cell::new("Command").add_attribute(Attribute::Bold),
-                Cell::new("Description").add_attribute(Attribute::Bold),
-                Cell::new("Usage").add_attribute(Attribute::Bold),
-            ])
-            .add_row(vec![
-                Cell::new("?").add_attribute(Attribute::Bold),
-                Cell::new("Print this command table"),
-                Cell::new("Usage: `?`"),
-            ])
-            .add_row(vec![
-                Cell::new("clear").add_attribute(Attribute::Bold),
-                Cell::new("Clear the screen"),
-                Cell::new("Usage: `clear`"),
-            ])
-            .add_row(vec![
-                Cell::new("exit").add_attribute(Attribute::Bold),
-                Cell::new("Exit the shell"),
-                Cell::new("Usage: `exit`"),
-            ])
-            .add_row(vec![
-                Cell::new("getCoinInfo").add_attribute(Attribute::Bold),
-                Cell::new("Given an address, if the address is present in the CSV return basic information about it"),
-                Cell::new("Usage: `getCoinInfo <ADDRESS>`"),
-            ])
-            .add_row(vec![
-                Cell::new("help").add_attribute(Attribute::Bold),
-                Cell::new("Print this command table"),
-                Cell::new("Usage: `help`"),
-            ])
-            .add_row(vec![
-                Cell::new("proveMembership").add_attribute(Attribute::Bold),
-                Cell::new("Prove that the provided address is/isn't a member of the merkle tree"),
-                Cell::new("Usage: `proveMembership <ADDRESS>`"),
-            ]).add_row(vec![
-                Cell::new("updateCoin").add_attribute(Attribute::Bold),
-                Cell::new("Given an address, if the address is present in the CSV, update its value with the provided value"),
-                Cell::new("Usage: `updateCoin <ADDRESS> <NEW VALUE>`"),
-            ]);
-        // TODO: Once we start integrating sql we will have to change the descriptions
-        println!("{table}")
     }
 }

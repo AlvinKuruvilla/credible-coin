@@ -3,6 +3,7 @@ use eyre::Result;
 
 pub mod coin_map;
 pub mod database;
+pub mod publisher_functions;
 mod shell;
 
 const VERSION: &str = "0.0.1";
