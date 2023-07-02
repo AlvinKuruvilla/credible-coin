@@ -21,12 +21,12 @@ where
         let byte_data = self.as_ptr() as *const u8;
         let byte_len = self.len() * std::mem::size_of::<T>();
         // Safety: Stated above.
-        unsafe {
+        return unsafe {
             let byte_slice = std::slice::from_raw_parts(byte_data, byte_len);
             byte_slice
                 .chunks(std::mem::size_of::<T>())
                 .collect::<Vec<&[u8]>>()
-        }
+        };
     }
 }
 /// Convert a generic slice reference to a "hashable" Vec<&[u8]>
@@ -38,12 +38,12 @@ where
         let byte_data = self.as_ptr() as *const u8;
         let byte_len = self.len() * std::mem::size_of::<T>();
         // Safety: Stated above.
-        unsafe {
+        return unsafe {
             let byte_slice = std::slice::from_raw_parts(byte_data, byte_len);
             byte_slice
                 .chunks(std::mem::size_of::<T>())
                 .collect::<Vec<&[u8]>>()
-        }
+        }; 
     }
 }
 
@@ -53,7 +53,7 @@ where
     T: Num,
 {
     fn to_hashable_vec_slice(&self) -> Vec<&[u8]> {
-        self.as_slice().to_hashable_vec_slice()
+        return self.as_slice().to_hashable_vec_slice()
     }
 }
 /// Convert a generic reference to a vector to a "hashable" Vec<&[u8]>
@@ -62,6 +62,6 @@ where
     T: Num,
 {
     fn to_hashable_vec_slice(&self) -> Vec<&[u8]> {
-        self.as_slice().to_hashable_vec_slice()
+        return self.as_slice().to_hashable_vec_slice();
     }
 }

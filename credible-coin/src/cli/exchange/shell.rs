@@ -173,6 +173,6 @@ impl ExchangeShell {
                 }
             }
         }
-        Ok(())
+        return Ok(());
     }
 }

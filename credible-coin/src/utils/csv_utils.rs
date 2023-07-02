@@ -15,9 +15,9 @@ pub fn make_value_vector(filename: &str) -> Vec<i64> {
     let mut rdr = csv::Reader::from_path(filename).unwrap();
     let records: Vec<CSVRecord> = rdr
         .deserialize()
-        .map(|result| result.expect("Error parsing CSV record"))
+        .map(|result| return result.expect("Error parsing CSV record"))
         .collect();
-    return records.iter().map(|record| record.value.clone()).collect();
+    return records.iter().map(|record| return record.value).collect();
 }
 /// Given a filename as input return the specified
 /// column as a `Vec<String>`
@@ -49,7 +49,7 @@ pub fn get_address_position(filename: &str, public_address: String) -> usize {
     // TODO: Remove unwrap()
     let index = address_vec
         .iter()
-        .position(|r| r == &public_address)
+        .position(|r| return r == &public_address)
         .unwrap();
     return index;
 }

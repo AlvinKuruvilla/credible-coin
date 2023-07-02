@@ -24,11 +24,14 @@ pub fn generate_bitcoin_value<R: rand::Rng>(rng: &mut R, n: u32) -> u32 {
 /// save them to a DataFrame so they can be easily be written to a CSV later
 pub fn generate_n_address_value_pairs(n: u32) -> (Vec<String>, Vec<u32>) {
     let mut values = Vec::with_capacity(n as usize);
-    let addresses: Vec<String> = (0..n).into_par_iter().map(|_| generate_address()).collect();
+    let addresses: Vec<String> = (0..n)
+        .into_par_iter()
+        .map(|_| return generate_address())
+        .collect();
     for _ in 0..n {
         let mut rng = rand::thread_rng();
         values.push(generate_bitcoin_value(&mut rng, 6));
     }
 
-    (addresses, values)
+    return (addresses, values);
 }

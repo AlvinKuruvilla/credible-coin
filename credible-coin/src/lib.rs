@@ -1,3 +1,5 @@
+#![deny(clippy::implicit_return)]
+#![allow(clippy::needless_return)]
 //!
 //! CredibleCoin is a zero-knowledge proof system to asses cryptocurrency exchange solvency.
 //! Currently the plan is to implement this system for Bitcoin, however, this crate should be built so

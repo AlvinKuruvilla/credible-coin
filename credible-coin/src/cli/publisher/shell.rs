@@ -154,6 +154,6 @@ impl PublisherShell {
             }
         }
         println!();
-        Ok(())
+        return Ok(());
     }
 }
