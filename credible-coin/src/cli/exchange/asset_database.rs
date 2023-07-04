@@ -41,7 +41,10 @@ impl LoadCmd {
         let coin_tree = load_exchange_db(merkle_leaves.clone());
         // I think the clone is unavoidable, hopefully it doesn't bite us
         let mut exchange_shell = ExchangeShell::new(coin_tree, self.filename.clone());
-        exchange_shell.start();
+        match exchange_shell.start() {
+            Ok(_) => {}
+            Err(err) => log::error!("{}", err),
+        }
     }
 }
 pub fn max_rows_in_csv(filepath: &str) -> usize {
@@ -68,7 +71,7 @@ pub fn create_exchange_database(
     let max_rows = max_rows_in_csv(&publisher_filename);
     if row_count > max_rows {
         panic!(
-            "Provided row count {} is greaetr than max row count of {} in publisher csv file",
+            "Provided row count {} is greater than max row count of {} in publisher csv file",
             row_count, max_rows
         )
     }

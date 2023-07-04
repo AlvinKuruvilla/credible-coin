@@ -2,12 +2,12 @@ use crate::cli::exchange::db_connector::retrieve_public_key_bytes;
 use crate::cli::exchange::exchange_functions::{
     cmd_table, create_new_tree_from_file, create_private_key, create_rng,
 };
+use crate::cli::{arg_sanitizer, convert_to_string_vec, ArgsList, CliError};
 use crate::utils::{
     address_generator::generate_address_with_provided_public_key, csv_utils::append_record,
     merkle_utils::prove_membership,
 };
 use bitcoin::PublicKey;
-use eyre::eyre;
 use flexi_logger::{AdaptiveFormat, Duplicate, FileSpec, Logger};
 use nu_ansi_term::Color;
 use reedline::{
@@ -35,6 +35,7 @@ pub fn shell_commands() -> Vec<String> {
         "?".into(),
     ];
 }
+
 /// The user is automatically brought into the exchange shell once they
 /// provide a valid CSV file of their coin addresses and values and it
 /// gets created into an in-memory merkle tree.
@@ -42,7 +43,7 @@ impl ExchangeShell {
     pub fn new(tree: MerkleTree<Sha256>, filename: String) -> Self {
         return Self { tree, filename };
     }
-    pub fn start(&mut self) -> std::io::Result<()> {
+    pub fn start(&mut self) -> anyhow::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
         let commands = shell_commands();
         let completer: Box<DefaultCompleter> =
@@ -78,7 +79,6 @@ impl ExchangeShell {
         //TODO: Eventually swap WriteMode::Default with WriteMode::Async
         Logger::try_with_str("info")
             .expect("Could not create logger object")
-            .duplicate_to_stderr(Duplicate::Warn)
             .duplicate_to_stdout(Duplicate::All)
             .log_to_file(
                 FileSpec::default()
@@ -96,6 +96,7 @@ impl ExchangeShell {
             match sig {
                 reedline::Signal::Success(buffer) => {
                     let args: Vec<&str> = buffer.split(" ").collect();
+                    let args: Vec<String> = convert_to_string_vec(args);
                     if args[0] == "exit" {
                         log::info!("Exiting Shell");
                         break;
@@ -105,38 +106,27 @@ impl ExchangeShell {
                         continue;
                     }
                     if args[0] == "proveMembership" {
-                        match args.get(1) {
-                            Some(element) => {
-                                let public_address = element;
-                                if public_address.is_empty() {
-                                    log::error!("Empty public address provided");
-                                    continue;
-                                }
-                                prove_membership(&self.filename, public_address, &self.tree);
-                            }
-                            None => {
-                                log::error!("No public address provided");
-                                continue;
-                            }
-                        }
+                        arg_sanitizer::sanitize_args!(args, 1, "No public address provided");
+                        // It should be safe to unwrap here because of all of the previous checking
+                        let public_address = args.get(1).unwrap();
+                        println!("Public address{:?}", public_address);
+                        prove_membership(&self.filename, public_address, &self.tree);
                     }
                     if args[0] == "createPrivateKey" {
                         create_private_key();
                     }
                     if args[0] == "createRNG" {
-                        let seed = match args.get(1) {
-                            Some(element) => match element.parse::<u64>() {
-                                Ok(value) => value,
-                                Err(_) => {
-                                    log::error!("Invalid seed provided");
-                                    continue;
-                                }
-                            },
-                            None => {
-                                log::error!("No seed provided");
+                        arg_sanitizer::sanitize_args!(args, 1, "No seed provided");
+                        // It is safe to do unwrap the get() here because, sanitize_args! ensures that the value is not empty,
+                        // but we still need a match case for parsing the value to a string
+                        let seed = match args.get(1).unwrap().parse::<u64>() {
+                            Ok(value) => value,
+                            Err(_) => {
+                                log::error!("Invalid seed provided");
                                 continue;
                             }
                         };
+
                         // FIXME: This function call does not save the generated RNG anywhere, but we
                         // should have another function responsible for that
                         // FIXME: We may also need to change the code so that it uses the RNG that we generate
@@ -144,15 +134,27 @@ impl ExchangeShell {
                         create_rng(seed);
                     }
                     if args[0] == "addCoinToDB" {
-                        let element = args.get(1); // Get the provided seed
-                        let value;
-                        if element.is_some() {
-                            value = element.unwrap().parse::<i64>().unwrap();
-                        } else {
-                            log::error!("No value provided");
-                            break;
+                        arg_sanitizer::sanitize_args!(args, 1, "No value provided");
+                        // It is safe to do unwrap the get() here because, sanitize_args! ensures that the value is not empty,
+                        // but we still need a match case for parsing the value to a string
+                        let value = match args.get(1).unwrap().parse::<u64>() {
+                            Ok(value) => value,
+                            Err(_) => {
+                                log::error!("Invalid value provided");
+                                continue;
+                            }
                         };
-                        let retrieved_bytes = retrieve_public_key_bytes();
+                        let mut retrieved_bytes: Vec<u8> = Vec::default();
+                        match retrieve_public_key_bytes() {
+                            Ok(key_bytes) => {
+                                retrieved_bytes = key_bytes;
+                            }
+                            Err(err) => {
+                                log::error!("{:?}", err);
+                                continue;
+                            }
+                        };
+
                         if retrieved_bytes.is_empty() {
                             log::error!("Private key field not set. To set the private key call 'createPrivateKey <seed>'");
                             continue;

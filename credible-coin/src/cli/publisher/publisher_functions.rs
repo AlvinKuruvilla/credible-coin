@@ -159,6 +159,5 @@ pub fn cmd_table() {
                 Cell::new("Given an address, if the address is present in the CSV, update its value with the provided value"),
                 Cell::new("Usage: `updateCoin <ADDRESS> <NEW VALUE>`"),
             ]);
-    // TODO: Once we start integrating sql we will have to change the descriptions
     println!("{table}")
 }

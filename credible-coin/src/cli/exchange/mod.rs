@@ -1,5 +1,5 @@
+use anyhow::Result;
 use clap::{Parser, Subcommand};
-use eyre::Result;
 
 pub mod asset_database;
 pub mod db_connector;

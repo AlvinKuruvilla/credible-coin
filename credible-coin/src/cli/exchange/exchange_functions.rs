@@ -14,6 +14,7 @@ pub fn create_private_key() -> PublicKey {
     let s = Secp256k1::new();
     let key = PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
     println!("{:?}", key.to_bytes());
+    //TODO: Handle the result
     insert_key_or_update(key.to_bytes());
     return key;
 }
