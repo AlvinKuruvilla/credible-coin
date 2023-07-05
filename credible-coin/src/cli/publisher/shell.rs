@@ -118,12 +118,18 @@ impl PublisherShell {
                         if let Some(value) = args.get(2) {
                             if let Ok(parsed_value) = value.parse::<u32>() {
                                 // Perform additional operations on the parsed value if needed
-                                self.tree = update_coin(
+                                self.tree = match update_coin(
                                     &self.filename,
                                     public_address,
                                     parsed_value,
                                     &self.tree,
-                                );
+                                ) {
+                                    Ok(updated_tree) => updated_tree,
+                                    Err(err) => {
+                                        log::error!("Failed to update coin {}", err);
+                                        continue;
+                                    }
+                                }
                             } else {
                                 log::error!("Failed to parse value as a number");
                                 continue;
