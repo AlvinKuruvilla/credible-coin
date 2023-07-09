@@ -52,7 +52,6 @@ pub fn update_coin(
         .ok_or("Could not get leaves to prove")
         .unwrap();
     let mut map = CoinMap::generate_address_value_map(filename);
-    //TODO: Remove unwrap
     let value = match map.inner.get(_public_address) {
         Some(v) => v,
         None => {

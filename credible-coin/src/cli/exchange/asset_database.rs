@@ -1,3 +1,5 @@
+use std::collections::HashSet;
+
 use clap::Parser;
 use csv::Writer;
 use rs_merkle::{algorithms::Sha256, MerkleTree};
@@ -38,7 +40,7 @@ impl LoadCmd {
             panic!("Exchange file: {} not found", self.filename)
         }
         let merkle_leaves = load_merkle_leaves(&self.filename);
-        let coin_tree = load_exchange_db(merkle_leaves.clone());
+        let coin_tree = load_exchange_db(merkle_leaves);
         // I think the clone is unavoidable, hopefully it doesn't bite us
         let mut exchange_shell = ExchangeShell::new(coin_tree, self.filename.clone());
         match exchange_shell.start() {
@@ -68,25 +70,26 @@ pub fn create_exchange_database(
     if std::path::Path::new(&exchange_filename).exists() {
         panic!("Exchange file: {} already exists", exchange_filename)
     }
-    let max_rows = max_rows_in_csv(&publisher_filename);
+    let max_rows = max_rows_in_csv(publisher_filename);
     if row_count > max_rows {
         panic!(
             "Provided row count {} is greater than max row count of {} in publisher csv file",
             row_count, max_rows
         )
     }
-    let mut selected_addresses: Vec<String> = Vec::new();
-    for _ in 0..row_count {
-        selected_addresses.push(generate_address());
+    let mut selected_addresses: HashSet<String> = HashSet::new();
+    // This should ensure that we do not have any repeated addresses making the file shorter
+    while selected_addresses.len() != max_rows {
+        selected_addresses.insert(generate_address());
     }
 
     let selected_values: Vec<i64> = make_value_vector(publisher_filename)[0..row_count].to_vec();
     assert_eq!(selected_addresses.len(), selected_values.len());
-    std::fs::File::create(&exchange_filename).unwrap();
+    std::fs::File::create(exchange_filename).unwrap();
     let mut writer: Writer<std::fs::File> = Writer::from_path(exchange_filename).unwrap();
-    writer.write_record(&["addresses", "value"]);
+    let _ = writer.write_record(["addresses", "value"]);
     for (index, address) in selected_addresses.iter().enumerate() {
-        writer.write_record(&[address, &selected_values[index].to_string()]);
+        let _ = writer.write_record([address, &selected_values[index].to_string()]);
     }
     writer.flush().unwrap();
 }

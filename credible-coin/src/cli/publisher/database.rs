@@ -57,11 +57,11 @@ pub fn create_db(filename: &str, row_count: u32) {
     std::fs::File::create(filename).unwrap();
     let mut writer = Writer::from_path(filename).unwrap();
     assert_eq!(addresses.len(), values.len());
-    writer.write_record(&["addresses", "value"]).unwrap();
+    writer.write_record(["addresses", "value"]).unwrap();
 
     for (index, address) in addresses.iter().enumerate() {
         writer
-            .write_record(&[address, &values[index].to_string()])
+            .write_record([address, &values[index].to_string()])
             .unwrap();
     }
     writer.flush().unwrap();
