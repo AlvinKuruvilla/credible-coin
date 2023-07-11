@@ -79,7 +79,7 @@ pub fn create_exchange_database(
     }
     let mut selected_addresses: HashSet<String> = HashSet::new();
     // This should ensure that we do not have any repeated addresses making the file shorter
-    while selected_addresses.len() != max_rows {
+    while selected_addresses.len() != row_count {
         selected_addresses.insert(generate_address());
     }
 
