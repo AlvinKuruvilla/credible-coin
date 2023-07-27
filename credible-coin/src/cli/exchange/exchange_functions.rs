@@ -14,15 +14,18 @@ pub fn create_private_key() -> PublicKey {
     let s = Secp256k1::new();
     let key = PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
     println!("{:?}", key.to_bytes());
-    insert_key_or_update(key.to_bytes());
+    match insert_key_or_update(key.to_bytes()) {
+        Ok(_) => {}
+        Err(err) => log::error!("{:?}", err),
+    };
     return key;
 }
 /// Create a Random Number Generator (RNG) from a provided
 /// seed value
-/// FIXME: This function call does not save the generated RNG anywhere, but we
-/// should have another function responsible for that
-/// FIXME: We may also need to change the code so that it usues the RNG that we generate
-/// and give to it rather than making a thread_rng every time when generating the private key
+// FIXME: This function call does not save the generated RNG anywhere, but we
+// should have another function responsible for that
+// FIXME: We may also need to change the code so that it uses the RNG that we generate
+// and give to it rather than making a thread_rng every time when generating the private key
 pub fn create_rng(seed: u64) -> ChaCha8Rng {
     return rand_chacha::ChaCha8Rng::seed_from_u64(seed);
 }

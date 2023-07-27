@@ -36,8 +36,13 @@ pub fn prove_membership(filename: &str, _public_address: &str, tree: &MerkleTree
         .ok_or("Could not get leaves to prove")
         .unwrap();
     let map = CoinMap::generate_address_value_map(filename);
-    //TODO: Remove unwrap
-    let value = map.inner.get(_public_address).unwrap();
+    let value = match map.inner.get(_public_address) {
+        Some(v) => v,
+        None => {
+            log::error!("Could not find public address {:?}", _public_address);
+            return;
+        }
+    };
     let generated_coin = Coin::new(_public_address.to_owned(), *value);
     let address_index = get_address_position(filename, _public_address.to_string());
     let indices = vec![address_index];

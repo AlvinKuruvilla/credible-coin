@@ -1,5 +1,5 @@
+use anyhow::Result;
 use clap::{Parser, Subcommand};
-use eyre::Result;
 
 pub mod coin_map;
 pub mod database;

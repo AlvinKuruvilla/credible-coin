@@ -1,3 +1,4 @@
+use anyhow::{anyhow, Result};
 use comfy_table::{presets::UTF8_FULL, Attribute, Cell, ContentArrangement, Table};
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 
@@ -14,11 +15,16 @@ pub fn get_coin_info(filename: &str, public_address: &str, tree: &MerkleTree<Sha
         .leaves()
         .ok_or("Could not get leaves to prove")
         .unwrap();
-    let map = CoinMap::generate_address_value_map(&filename);
-    //TODO: Remove unwrap
-    let value = map.inner.get(public_address).unwrap();
+    let map = CoinMap::generate_address_value_map(filename);
+    let value = match map.inner.get(public_address) {
+        Some(v) => v,
+        None => {
+            log::error!("Could not find public address {:?}", public_address);
+            return;
+        }
+    };
     let generated_coin = Coin::new(public_address.to_owned(), *value);
-    let address_index = get_address_position(&filename, public_address.to_string());
+    let address_index = get_address_position(filename, public_address.to_string());
     // println!("Address Index:{:?}", address_index);
     // println!("Address Value:{:?}", value);
     let indices = vec![address_index];
@@ -40,16 +46,20 @@ pub fn update_coin(
     _public_address: &str,
     _new_value: u32,
     tree: &MerkleTree<Sha256>,
-) -> MerkleTree<Sha256> {
+) -> Result<MerkleTree<Sha256>> {
     let tree_leaves = tree
         .leaves()
         .ok_or("Could not get leaves to prove")
         .unwrap();
-    let mut map = CoinMap::generate_address_value_map(&filename);
-    // //TODO: Remove unwrap
-    let value = map.inner.get(_public_address).unwrap();
+    let mut map = CoinMap::generate_address_value_map(filename);
+    let value = match map.inner.get(_public_address) {
+        Some(v) => v,
+        None => {
+            return Err(anyhow!("Public address not found"));
+        }
+    };
     let generated_coin = Coin::new(_public_address.to_owned(), *value);
-    let address_index = get_address_position(&&filename, _public_address.to_string());
+    let address_index = get_address_position(filename, _public_address.to_string());
     let indices = vec![address_index];
     let proof = tree.proof(&indices);
     let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
@@ -60,18 +70,19 @@ pub fn update_coin(
     //replace value in hashmap
     let new_gen_coin = Coin::new(_public_address.to_owned(), i64::from(_new_value));
     map.replace(_public_address.to_string(), i64::from(_new_value));
-    let check = map.inner.get(_public_address).unwrap();
+    let check = match map.inner.get(_public_address) {
+        Some(v) => v,
+        None => {
+            return Err(anyhow!("Public address not found"));
+        }
+    };
     assert!(check == &i64::from(_new_value));
     println!("Coin Address:{:?}", _public_address);
     println!("New Coin Value:{:?}", _new_value);
 
     //make new merkle tree
-    update_csv_value(
-        &&filename,
-        _public_address.to_owned(),
-        i64::from(_new_value),
-    );
-    let (new_addr_vec, new_val_vec) = addresses_and_values_as_vectors(&filename);
+    update_csv_value(filename, _public_address.to_owned(), i64::from(_new_value));
+    let (new_addr_vec, new_val_vec) = addresses_and_values_as_vectors(filename);
     assert!(new_val_vec.contains(&i64::from(_new_value)));
     let new_vec_coin = Coin::create_coin_vector(new_addr_vec, new_val_vec);
     // println!("_______________________________________________________");
@@ -111,7 +122,7 @@ pub fn update_coin(
 
     assert!(new_proof.verify(new_root, &new_indices, &new_hashed_bytes, new_leaves.len()));
 
-    return new_tree;
+    return Ok(new_tree);
 }
 /// The table of commands, descriptions, and usage
 pub fn cmd_table() {
@@ -159,6 +170,5 @@ pub fn cmd_table() {
                 Cell::new("Given an address, if the address is present in the CSV, update its value with the provided value"),
                 Cell::new("Usage: `updateCoin <ADDRESS> <NEW VALUE>`"),
             ]);
-    // TODO: Once we start integrating sql we will have to change the descriptions
     println!("{table}")
 }

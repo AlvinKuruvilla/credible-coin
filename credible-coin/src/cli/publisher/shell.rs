@@ -9,6 +9,7 @@ use rs_merkle::algorithms::Sha256;
 use rs_merkle::MerkleTree;
 
 use crate::cli::publisher::publisher_functions::{cmd_table, get_coin_info, update_coin};
+use crate::cli::{arg_sanitizer, convert_to_string_vec, ArgsList, CliError};
 use crate::utils::merkle_utils::prove_membership;
 
 #[derive(Default)]
@@ -67,9 +68,9 @@ impl PublisherShell {
             .with_validator(Box::new(DefaultValidator))
             .with_edit_mode(edit_mode);
         let prompt = DefaultPrompt::default();
+        //TODO: Eventually swap WriteMode::Default with WriteMode::Async
         Logger::try_with_str("info")
             .expect("Could not create logger object")
-            .duplicate_to_stderr(Duplicate::Warn)
             .duplicate_to_stdout(Duplicate::All)
             .log_to_file(
                 FileSpec::default()
@@ -82,6 +83,7 @@ impl PublisherShell {
             .append()
             .start()
             .unwrap();
+
         loop {
             let sig = line_editor.read_line(&prompt)?;
             match sig {
@@ -89,7 +91,8 @@ impl PublisherShell {
                     // println!("We processed: {buffer}");
 
                     // This is where command processing goes, see the reedline example demo for details
-                    let args: Vec<&str> = buffer.split(" ").collect();
+                    let args: Vec<&str> = buffer.split(' ').collect();
+                    let args: Vec<String> = convert_to_string_vec(args);
                     if args[0] == "exit" {
                         log::info!("Exiting Shell");
                         break;
@@ -99,50 +102,49 @@ impl PublisherShell {
                         continue;
                     }
                     if args[0] == "getCoinInfo" {
-                        let element = args.get(1); // Get the provided coin address and skip getCoinInfo
-                        println!("Provided public address {:?}", element);
-                        if let Some(public_address) = element {
-                            get_coin_info(&self.filename, &public_address, &self.tree);
-                        } else {
-                            log::error!("No public address provided for getCoinInfo");
-                            continue;
-                        };
+                        arg_sanitizer::sanitize_args!(args, 1, "No public address provided");
+                        // It should be safe to unwrap here because of all of the previous checking
+                        let public_address = args.get(1).unwrap();
+                        get_coin_info(&self.filename, public_address, &self.tree);
                     }
                     if args[0] == "updateCoin" {
-                        let element = args.get(1); // Get the provided coin address and skip getCoinInfo
-                        let element2 = args.get(2); // Get the new value to assign to the coin
-                        if let Some(public_address) = element {
-                            if let Some(value) = element2 {
-                                // Parse the value as a number
-                                if let Ok(parsed_value) = value.parse::<u32>() {
-                                    // Perform additional operations on the parsed value if needed
-                                    self.tree = update_coin(
-                                        &self.filename,
-                                        public_address,
-                                        parsed_value,
-                                        &self.tree,
-                                    );
-                                } else {
-                                    log::error!("Failed to parse value as a number");
-                                    continue;
+                        arg_sanitizer::sanitize_args!(args, 2, "Invalid argument provided");
+                        let public_address = args.get(1).unwrap();
+                        if !public_address.chars().all(char::is_alphanumeric) {
+                            log::error!("Invalid public address provided");
+                            continue;
+                        }
+
+                        if let Some(value) = args.get(2) {
+                            if let Ok(parsed_value) = value.parse::<u32>() {
+                                // Perform additional operations on the parsed value if needed
+                                self.tree = match update_coin(
+                                    &self.filename,
+                                    public_address,
+                                    parsed_value,
+                                    &self.tree,
+                                ) {
+                                    Ok(updated_tree) => updated_tree,
+                                    Err(err) => {
+                                        log::error!("Failed to update coin {}", err);
+                                        continue;
+                                    }
                                 }
                             } else {
-                                log::error!("No new value provided");
+                                log::error!("Failed to parse value as a number");
                                 continue;
                             }
                         } else {
-                            log::error!("No public address provided");
+                            log::error!("No new value provided");
                             continue;
                         }
                     }
+
                     if args[0] == "proveMembership" {
-                        if let Some(element) = args.get(1) {
-                            let public_address = element;
-                            prove_membership(&self.filename, public_address, &self.tree);
-                        } else {
-                            log::error!("No public address provided");
-                            continue;
-                        }
+                        arg_sanitizer::sanitize_args!(args, 1, "No public address provided");
+                        // It should be safe to unwrap here because of all of the previous checking
+                        let public_address = args.get(1).unwrap();
+                        prove_membership(&self.filename, public_address, &self.tree);
                     }
                     if args[0] == "help" || args[0] == "?" {
                         cmd_table();
