@@ -11,8 +11,8 @@ pub trait AbstractAccumulator {
     /// Prove that a [`coin::Coin`] is a member of a particular [`MembershipProof`]. For example,
     /// we have 2 concrete implementors of the [`MembershipProof`] trait
     /// 1. [`rs_merkle::MerkleProof`]
-    /// 2. [`BinaryAccumulatorProof`]
-    /// By providing a Generic parameter `M` on the function signature we specify that we will return a type `M` which has this trait as its bound (so either  [`MerkleProof`] or [`BinaryAccumulatorProof`])
+    /// 2. `BinaryAccumulatorProof`
+    /// By providing a Generic parameter `M` on the function signature we specify that we will return a type `M` which has this trait as its bound (so either  [`rs_merkle::MerkleProof`] or `BinaryAccumulatorProof`)
     fn prove_member<M: MembershipProof>(element: coin::Coin) -> M;
     /// Verify the proof of any type implementing [`MembershipProof`]
     fn verify<M: MembershipProof>(element_proof: M);
