@@ -27,7 +27,7 @@ pub struct ExchangeCLI {
 }
 impl ExchangeCLI {
     pub fn run(self) -> Result<()> {
-        return self.cmd.run();
+        self.cmd.run()
     }
 }
 #[derive(Subcommand, Debug)]
@@ -49,6 +49,6 @@ impl ExchangeCmd {
                 cmd.run();
             }
         }
-        return Ok(());
+        Ok(())
     }
 }

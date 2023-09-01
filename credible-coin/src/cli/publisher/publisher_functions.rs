@@ -16,12 +16,11 @@ pub fn get_coin_info(filename: &str, public_address: &str, tree: &MerkleTree<Sha
         .ok_or("Could not get leaves to prove")
         .unwrap();
     let map = CoinMap::generate_address_value_map(filename);
-    let value = match map.inner.get(public_address) {
-        Some(v) => v,
-        None => {
-            log::error!("Could not find public address {:?}", public_address);
-            return;
-        }
+    let value = if let Some(v) = map.inner.get(public_address) {
+        v
+    } else {
+        log::error!("Could not find public address {:?}", public_address);
+        return;
     };
     let generated_coin = Coin::new(public_address.to_owned(), *value);
     let address_index = get_address_position(filename, public_address.to_string());
@@ -99,11 +98,11 @@ pub fn update_coin(
 
     let mut new_leaves: Vec<[u8; 32]> = Vec::new();
     for u8s in u8coins {
-        new_leaves.push(Coin::hash_bytes(u8s))
+        new_leaves.push(Coin::hash_bytes(u8s));
     }
     let new_tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
     //TODO: Remove unwrap
-    let new_address_index = get_address_position(&&filename, _public_address.to_string());
+    let new_address_index = get_address_position(filename, _public_address.to_string());
     let new_indices = vec![new_address_index];
     let new_proof = new_tree.proof(&new_indices);
     let new_root = new_tree
@@ -122,7 +121,7 @@ pub fn update_coin(
 
     assert!(new_proof.verify(new_root, &new_indices, &new_hashed_bytes, new_leaves.len()));
 
-    return Ok(new_tree);
+    Ok(new_tree)
 }
 /// The table of commands, descriptions, and usage
 pub fn cmd_table() {
@@ -170,5 +169,5 @@ pub fn cmd_table() {
                 Cell::new("Given an address, if the address is present in the CSV, update its value with the provided value"),
                 Cell::new("Usage: `updateCoin <ADDRESS> <NEW VALUE>`"),
             ]);
-    println!("{table}")
+    println!("{table}");
 }

@@ -12,18 +12,18 @@ pub struct Coin {
 impl Coin {
     /// Construct a new coin from a given address string and value
     pub fn new(coin_address: String, value: i64) -> Self {
-        return Self {
+        Self {
             coin_address,
             value,
-        };
+        }
     }
     /// Get the value for the coin
     pub fn coin_value(&self) -> i64 {
-        return self.value;
+        self.value
     }
     /// Get the address for the coin
     pub fn coin_address(&self) -> String {
-        return self.coin_address.clone();
+        self.coin_address.clone()
     }
     /// Given a vector of Strings and i64 values construct a `Vec<Coin>` using each (String, i64) pair
     pub fn create_coin_vector(addresses: Vec<String>, values: Vec<i64>) -> Vec<Coin> {
@@ -31,26 +31,25 @@ impl Coin {
         let mut coins: Vec<Coin> = Vec::new();
         for (a, v) in addresses.iter().zip(values.iter()) {
             println!("Address= {}, Value= {}", a, v);
-            coins.push(Coin::new(a.to_string(), *v))
+            coins.push(Coin::new(a.to_string(), *v));
         }
         println!();
         println!("{:?}", coins.len());
-        return coins;
+        coins
     }
 
     /// Serialize a coin into bytes
     ///
     /// The serialization algorithm just takes the address String and concatenates it to
-    /// the coin value string and uses bincode::serialize on it
+    /// the coin value string and uses `bincode::serialize` on it
     pub fn serialize_coin(&self) -> Vec<u8> {
         let res = format!("{}{}", self.coin_address(), &self.coin_value().to_string());
-        return bincode::serialize(&res).unwrap();
+        bincode::serialize(&res).unwrap()
     }
     /// Take the given vector of u8's iterate each element and turn into bytes, hash it,
     /// and then collect into a new vector
     pub fn hash_bytes(bytevector: Vec<u8>) -> [u8; 32] {
-        let leaves: [u8; 32] = Sha256::hash(&bytevector);
-        return leaves;
+        Sha256::hash(&bytevector)
     }
 }
 #[cfg(test)]

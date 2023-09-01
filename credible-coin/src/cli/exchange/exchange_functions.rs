@@ -18,7 +18,7 @@ pub fn create_private_key() -> PublicKey {
         Ok(_) => {}
         Err(err) => log::error!("{:?}", err),
     };
-    return key;
+    key
 }
 /// Create a Random Number Generator (RNG) from a provided
 /// seed value
@@ -27,7 +27,7 @@ pub fn create_private_key() -> PublicKey {
 // FIXME: We may also need to change the code so that it uses the RNG that we generate
 // and give to it rather than making a thread_rng every time when generating the private key
 pub fn create_rng(seed: u64) -> ChaCha8Rng {
-    return rand_chacha::ChaCha8Rng::seed_from_u64(seed);
+    rand_chacha::ChaCha8Rng::seed_from_u64(seed)
 }
 /// Read in the csv file at the provided path and
 /// construct a new Merkle Tree from it
@@ -40,10 +40,9 @@ pub fn create_new_tree_from_file(filename: &str) -> MerkleTree<Sha256> {
     }
     let mut new_leaves: Vec<[u8; 32]> = Vec::new();
     for u8s in u8coins {
-        new_leaves.push(Coin::hash_bytes(u8s))
+        new_leaves.push(Coin::hash_bytes(u8s));
     }
-    let new_tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
-    return new_tree;
+    MerkleTree::<Sha256>::from_leaves(&new_leaves)
 }
 
 /// The table of commands, descriptions, and usage
@@ -92,5 +91,5 @@ pub fn cmd_table() {
                 Cell::new("Prove that the provided address is/isn't a member of the merkle tree"),
                 Cell::new("Usage: `proveMembership <ADDRESS>`"),
             ]);
-    println!("{table}")
+    println!("{table}");
 }

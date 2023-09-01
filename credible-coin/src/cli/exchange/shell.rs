@@ -24,7 +24,7 @@ pub struct ExchangeShell {
     filename: String,
 }
 pub fn shell_commands() -> Vec<String> {
-    return vec![
+    vec![
         "exit".into(),
         "createPrivateKey".into(),
         "proveMembership".into(),
@@ -33,7 +33,7 @@ pub fn shell_commands() -> Vec<String> {
         "clear".into(),
         "help".into(),
         "?".into(),
-    ];
+    ]
 }
 
 /// The user is automatically brought into the exchange shell once they
@@ -41,7 +41,7 @@ pub fn shell_commands() -> Vec<String> {
 /// gets created into an in-memory merkle tree.
 impl ExchangeShell {
     pub fn new(tree: MerkleTree<Sha256>, filename: String) -> Self {
-        return Self { tree, filename };
+        Self { tree, filename }
     }
     pub fn start(&mut self) -> anyhow::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
@@ -95,7 +95,7 @@ impl ExchangeShell {
             let sig = line_editor.read_line(&prompt)?;
             match sig {
                 reedline::Signal::Success(buffer) => {
-                    let args: Vec<&str> = buffer.split(" ").collect();
+                    let args: Vec<&str> = buffer.split(' ').collect();
                     let args: Vec<String> = convert_to_string_vec(args);
                     if args[0] == "exit" {
                         log::info!("Exiting Shell");
@@ -119,12 +119,11 @@ impl ExchangeShell {
                         arg_sanitizer::sanitize_args!(args, 1, "No seed provided");
                         // It is safe to do unwrap the get() here because, sanitize_args! ensures that the value is not empty,
                         // but we still need a match case for parsing the value to a string
-                        let seed = match args.get(1).unwrap().parse::<u64>() {
-                            Ok(value) => value,
-                            Err(_) => {
-                                log::error!("Invalid seed provided");
-                                continue;
-                            }
+                        let seed = if let Ok(value) = args.get(1).unwrap().parse::<u64>() {
+                            value
+                        } else {
+                            log::error!("Invalid seed provided");
+                            continue;
                         };
 
                         // FIXME: This function call does not save the generated RNG anywhere, but we
@@ -137,12 +136,11 @@ impl ExchangeShell {
                         arg_sanitizer::sanitize_args!(args, 1, "No value provided");
                         // It is safe to do unwrap the get() here because, sanitize_args! ensures that the value is not empty,
                         // but we still need a match case for parsing the value to a string
-                        let value = match args.get(1).unwrap().parse::<u64>() {
-                            Ok(value) => value,
-                            Err(_) => {
-                                log::error!("Invalid value provided");
-                                continue;
-                            }
+                        let value = if let Ok(value) = args.get(1).unwrap().parse::<u64>() {
+                            value
+                        } else {
+                            log::error!("Invalid value provided");
+                            continue;
                         };
                         let mut retrieved_bytes: Vec<u8> = Vec::default();
                         match retrieve_public_key_bytes() {
@@ -175,6 +173,6 @@ impl ExchangeShell {
                 }
             }
         }
-        return Ok(());
+        Ok(())
     }
 }

@@ -15,9 +15,9 @@ pub fn make_value_vector(filename: &str) -> Vec<i64> {
     let mut rdr = csv::Reader::from_path(filename).unwrap();
     let records: Vec<CSVRecord> = rdr
         .deserialize()
-        .map(|result| return result.expect("Error parsing CSV record"))
+        .map(|result| result.expect("Error parsing CSV record"))
         .collect();
-    return records.iter().map(|record| return record.value).collect();
+    records.iter().map(|record| record.value).collect()
 }
 /// Given a filename as input return the specified
 /// column as a `Vec<String>`
@@ -35,13 +35,13 @@ pub fn get_dataset_column_by_name(file_name: &str, name: &str) -> Vec<String> {
             "value" | "index" =>  panic!("If you want to get the index or value column call the make_index_vector or make_value_vector function respectively"),
             _ => panic!("Unrecognized column name: {:?}", name)}
     }
-    return col;
+    col
 }
 /// Retrieve the address and value columns in the dataframe as vectors
 pub fn addresses_and_values_as_vectors(file_name: &str) -> (Vec<String>, Vec<i64>) {
     let address_vec = get_dataset_column_by_name(file_name, "addresses");
     let value_vec = make_value_vector(file_name);
-    return (address_vec, value_vec);
+    (address_vec, value_vec)
 }
 /// Given a filename, and a public address in that file, find its position within the address vector
 pub fn get_address_position(filename: &str, public_address: String) -> usize {
@@ -49,9 +49,9 @@ pub fn get_address_position(filename: &str, public_address: String) -> usize {
     // TODO: Remove unwrap()
     let index = address_vec
         .iter()
-        .position(|r| return r == &public_address)
+        .position(|r| r == &public_address)
         .unwrap();
-    return index;
+    index
 }
 /// Update the value for the given address in a provided dataset file
 /// with the provided value
@@ -69,7 +69,6 @@ pub fn update_csv_value(filename: &str, address: String, value: i64) {
     }
     std::fs::remove_file(filename).unwrap();
     std::fs::rename("temp.csv", filename).unwrap();
-    return;
 }
 pub fn get_exchange_addresses_and_values_from_file(file_name: &str) -> (Vec<String>, Vec<i64>) {
     let mut rdr: Reader<std::fs::File> = csv::Reader::from_path(file_name).unwrap();
@@ -80,7 +79,7 @@ pub fn get_exchange_addresses_and_values_from_file(file_name: &str) -> (Vec<Stri
         address_col.push(record.addresses);
         val_col.push(record.value);
     }
-    return (address_col, val_col);
+    (address_col, val_col)
 }
 /// Given a file, and an address and value, write it as a record
 /// to the end of the file
@@ -99,9 +98,9 @@ pub fn append_record(file: &str, address: String, value: u64) {
         .open(file)
         .unwrap();
     let mut writer = Writer::from_writer(file_handle);
-    match writer.write_record(&[address, value.to_string()]) {
-        Ok(_) => (),
-        Err(_) => log::error!("Failed to write record"),
+    if writer.write_record(&[address, value.to_string()]).is_ok() {
+    } else {
+        log::error!("Failed to write record");
     }
     writer.flush();
 }

@@ -18,7 +18,7 @@ pub struct PublisherShell {
     filename: String,
 }
 pub fn shell_commands() -> Vec<String> {
-    return vec![
+    vec![
         "exit".into(),
         "getCoinInfo".into(),
         "updateCoin".into(),
@@ -26,14 +26,14 @@ pub fn shell_commands() -> Vec<String> {
         "clear".into(),
         "help".into(),
         "?".into(),
-    ];
+    ]
 }
 /// The user is automatically brought into the publisher shell once they
 /// provide a valid CSV file of their coin addresses and values and it
 /// gets created into an in-memory merkle tree.
 impl PublisherShell {
     pub fn new(tree: MerkleTree<Sha256>, filename: String) -> Self {
-        return Self { tree, filename };
+        Self { tree, filename }
     }
     pub fn start(&mut self) -> std::io::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
@@ -156,6 +156,6 @@ impl PublisherShell {
             }
         }
         println!();
-        return Ok(());
+        Ok(())
     }
 }

@@ -24,9 +24,9 @@ pub fn load_merkle_leaves(file_name: &str) -> Vec<[u8; 32]> {
     // std::thread::sleep(std::time::Duration::from_millis(100000));
     let mut leaves_vec: Vec<[u8; 32]> = Vec::new();
     for coin in u8coins {
-        leaves_vec.push(Coin::hash_bytes(coin))
+        leaves_vec.push(Coin::hash_bytes(coin));
     }
-    return leaves_vec;
+    leaves_vec
 }
 
 /// Prove that a coin is a member of the merkle tree given its public address
@@ -36,12 +36,11 @@ pub fn prove_membership(filename: &str, _public_address: &str, tree: &MerkleTree
         .ok_or("Could not get leaves to prove")
         .unwrap();
     let map = CoinMap::generate_address_value_map(filename);
-    let value = match map.inner.get(_public_address) {
-        Some(v) => v,
-        None => {
-            log::error!("Could not find public address {:?}", _public_address);
-            return;
-        }
+    let value = if let Some(v) = map.inner.get(_public_address) {
+        v
+    } else {
+        log::error!("Could not find public address {:?}", _public_address);
+        return;
     };
     let generated_coin = Coin::new(_public_address.to_owned(), *value);
     let address_index = get_address_position(filename, _public_address.to_string());

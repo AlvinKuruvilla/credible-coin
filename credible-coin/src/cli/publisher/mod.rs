@@ -28,7 +28,7 @@ pub struct PublisherCLI {
 }
 impl PublisherCLI {
     pub fn run(self) -> Result<()> {
-        return self.cmd.run();
+        self.cmd.run()
     }
 }
 #[derive(Subcommand, Debug)]
@@ -50,6 +50,6 @@ impl PublisherCmd {
                 cmd.run();
             }
         }
-        return Ok(());
+        Ok(())
     }
 }

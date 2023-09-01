@@ -56,7 +56,7 @@ pub fn max_rows_in_csv(filepath: &str) -> usize {
         let _: CSVRecord = result.unwrap();
         row_count += 1;
     }
-    return row_count;
+    row_count
 }
 
 pub fn create_exchange_database(
@@ -96,6 +96,5 @@ pub fn create_exchange_database(
 
 // Loads a merkle tree from the coin leaves
 pub fn load_exchange_db(coin_leaves: Vec<[u8; 32]>) -> MerkleTree<Sha256> {
-    let loaded_merkle_tree = MerkleTree::<Sha256>::from_leaves(&coin_leaves);
-    return loaded_merkle_tree;
+    MerkleTree::<Sha256>::from_leaves(&coin_leaves)
 }

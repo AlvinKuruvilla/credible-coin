@@ -26,7 +26,7 @@ pub fn insert_key_or_update(key_bytes: Vec<u8>) -> Result<()> {
         .context("Failed to establish connection to Redis")?;
     conn.set("private_key", key_bytes)
         .context("Failed to set private key")?;
-    return Ok(());
+    Ok(())
 }
 pub fn retrieve_public_key_bytes() -> Result<Vec<u8>> {
     let client =
@@ -37,7 +37,7 @@ pub fn retrieve_public_key_bytes() -> Result<Vec<u8>> {
     let key_bytes: Vec<u8> = conn
         .get("private_key")
         .context("Failed to retrieve key from Redis")?;
-    return Ok(key_bytes);
+    Ok(key_bytes)
 }
 
 mod tests {

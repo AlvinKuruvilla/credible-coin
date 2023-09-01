@@ -41,7 +41,7 @@ impl LoadCmd {
 
         print!("Provided filename: {:?}", self.filename);
         let mut publisher_shell = PublisherShell::new(coin_tree, self.filename);
-        publisher_shell.start();
+        let _ = publisher_shell.start();
     }
 }
 /// Creates csv file from random addresses and values
@@ -69,6 +69,5 @@ pub fn create_db(filename: &str, row_count: u32) {
 
 // Loads a merkle tree from the coin leaves
 pub fn load_db(coin_leaves: Vec<[u8; 32]>) -> MerkleTree<Sha256> {
-    let loaded_merkle_tree = MerkleTree::<Sha256>::from_leaves(&coin_leaves);
-    return loaded_merkle_tree;
+    MerkleTree::<Sha256>::from_leaves(&coin_leaves)
 }

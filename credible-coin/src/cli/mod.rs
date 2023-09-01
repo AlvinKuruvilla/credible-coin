@@ -18,13 +18,14 @@ use thiserror::Error;
 
 pub mod exchange;
 pub mod publisher;
-/// ArgsList abstracts away the responsibility of input sanitization away from the caller and exposes matchable errors instead.
-/// AgsList (on creation):
+/// ``ArgsList`` abstracts away the responsibility of input sanitization away from the caller and exposes matchable errors instead.
+/// ``AgsList`` (on creation):
 ///
 /// 1. Checks the number of arguments passed in (aside from the command itself)
 /// 2. Checks for empty strings.
 /// In any error case we should return a matchable error type, so the shell can do error handling
 pub struct ArgsList {
+    #[allow(dead_code)]
     args: Vec<String>,
 }
 #[derive(Error, Debug)]
@@ -36,13 +37,13 @@ pub enum CliError {
 }
 
 fn check_empty_argument(args: &[String]) -> Result<()> {
-    if let Some(index) = args.iter().position(|arg| return arg.is_empty()) {
+    if let Some(index) = args.iter().position(|arg| arg.is_empty()) {
         return Err(anyhow!(CliError::EmptyArgument {
             arg_position: index
         }));
     }
 
-    return Ok(());
+    Ok(())
 }
 impl ArgsList {
     pub fn new(args_list: Vec<String>, arg_count: usize) -> Result<Self> {
@@ -55,11 +56,11 @@ impl ArgsList {
             }
         );
         check_empty_argument(&args_list)?;
-        return Ok(Self { args: args_list });
+        Ok(Self { args: args_list })
     }
 }
 fn convert_to_string_vec(elements: Vec<&str>) -> Vec<String> {
-    return elements.iter().map(|&s| return s.to_owned()).collect();
+    return elements.iter().map(|&s| s.to_owned()).collect();
 }
 
 pub mod arg_sanitizer {
