@@ -39,5 +39,8 @@ harness = false
 [[bench]]
 name = "address"
 harness = false
+[[bench]]
+name = "db_benches"
+harness = false
 [profile.release]
 debug = true
