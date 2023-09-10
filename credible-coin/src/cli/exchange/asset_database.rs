@@ -1,4 +1,4 @@
-use std::collections::HashSet;
+use std::{collections::HashSet, sync::Mutex};
 
 use clap::Parser;
 use csv::Writer;
@@ -78,11 +78,20 @@ pub fn create_exchange_database(
         )
     }
     let mut selected_addresses: HashSet<String> = HashSet::new();
+    // NOTE: The only point of this guard is when running cargo test on
+    // repeated_create_exchange_db().
+    // Since cargo bench runs in parallel I think, we need to lock when
+    // creating the files
+    // The guard is also dropped at the end of the function scope
+    // so we don't need to explicitly call drop
+    let mutex = Mutex::new(());
+    let _guard = mutex.lock().unwrap();
+
     // This should ensure that we do not have any repeated addresses making the file shorter
     while selected_addresses.len() != row_count {
         selected_addresses.insert(generate_address());
     }
-
+    assert_eq!(selected_addresses.len(), row_count);
     let selected_values: Vec<i64> = make_value_vector(publisher_filename)[0..row_count].to_vec();
     assert_eq!(selected_addresses.len(), selected_values.len());
     std::fs::File::create(exchange_filename).unwrap();
