@@ -17,6 +17,16 @@ mod tests {
             .expect("Can't find the file"));
         fs::remove_file("test.csv").expect("Could not delete file");
     }
+    #[test]
+    pub fn repeat_publisher_db_create_test() {
+        for _ in 0..1000 {
+            create_db("pub_test.csv",20);
+            Path::new("pub_test.csv")
+                .try_exists()
+                .expect("Can't find the file");
+            fs::remove_file("pub_test.csv").expect("Could not delete file");
+        }
+    }
 
     //tests load_merkle_leaves and load_DB for both the publisher and the exchange, since they should have the exact same code flow
     #[test]

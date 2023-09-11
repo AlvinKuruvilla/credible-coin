@@ -78,11 +78,16 @@ pub fn create_exchange_database(
         )
     }
     let mut selected_addresses: HashSet<String> = HashSet::new();
-    // NOTE: The only point of this guard is when running cargo test on
-    // repeated_create_exchange_db().
-    // Since cargo bench runs in parallel I think, we need to lock when
-    // creating the files
-    // The guard is also dropped at the end of the function scope
+    // NOTE: The only point of this guard is to protect against
+    // potential race conditions if this function executes in parallel
+    // 
+    // For example:
+    //
+    // If we are running benchmarks where we repeatedly create and delete
+    // the generated file and the benchmarks are parallelized, 
+    // the file creation and deletion can race
+    //
+    // The guard is also implicitly dropped at the end of the function scope
     // so we don't need to explicitly call drop
     let mutex = Mutex::new(());
     let _guard = mutex.lock().unwrap();

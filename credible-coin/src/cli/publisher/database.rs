@@ -2,6 +2,7 @@ use clap::Parser;
 use csv::Writer;
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 use std::path::Path;
+use std::sync::Mutex;
 
 use crate::cli::publisher::shell::PublisherShell;
 use crate::utils::address_generator::generate_n_address_value_pairs;
@@ -52,6 +53,21 @@ pub fn create_db(filename: &str, row_count: u32) {
             .expect("file already exists"),
         "file already exists"
     );
+    // NOTE: The only point of this guard is to protect against
+    // potential race conditions if this function executes in parallel
+    // 
+    // For example:
+    //
+    // If we are running benchmarks where we repeatedly create and delete
+    // the generated file and the benchmarks are parallelized, 
+    // the file creation and deletion can race
+    //
+    // The guard is also implicitly dropped at the end of the function scope
+    // so we don't need to explicitly call drop
+
+    let mutex = Mutex::new(());
+    let _guard = mutex.lock().unwrap();
+
     let (addresses, values) = generate_n_address_value_pairs(row_count);
     // Create the file but don't save the handle
     std::fs::File::create(filename).unwrap();

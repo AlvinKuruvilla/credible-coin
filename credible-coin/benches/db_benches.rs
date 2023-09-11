@@ -1,6 +1,6 @@
 use std::{fs, path::Path};
 
-use credible_coin::cli::exchange::asset_database::create_exchange_database;
+use credible_coin::cli::{exchange::asset_database::create_exchange_database, publisher::database::create_db};
 use criterion::{criterion_group, criterion_main, Criterion};
 pub fn bench_repeated_exchange_db_create(c: &mut Criterion) {
     c.bench_function("repeat_exchange_db_create", |b| {
@@ -15,6 +15,19 @@ pub fn bench_repeated_exchange_db_create(c: &mut Criterion) {
                     .try_exists()
                     .expect("Can't find the file");
                 fs::remove_file("test.csv").expect("Could not delete file");
+            }
+        })
+    });
+}
+pub fn bench_repeated_publisher_db_create(c: &mut Criterion) {
+    c.bench_function("repeat_publisher_db_create", |b| {
+        b.iter(|| {
+            for _ in 0..1000 {
+                create_db("pub_test.csv",20);
+                Path::new("test.csv")
+                    .try_exists()
+                    .expect("Can't find the file");
+                fs::remove_file("pub_test.csv").expect("Could not delete file");
             }
         })
     });
