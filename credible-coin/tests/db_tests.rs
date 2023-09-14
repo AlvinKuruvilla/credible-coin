@@ -2,7 +2,7 @@
 mod tests {
     use credible_coin::cli::exchange::asset_database::create_exchange_database;
     use credible_coin::cli::publisher::database::{create_db, load_db};
-    use credible_coin::utils::merkle_utils::load_merkle_leaves;
+    use credible_coin::utils::merkle_utils::load_merkle_leaves_from_csv;
     use rs_merkle::{algorithms::Sha256, MerkleProof};
     use std::fs;
     use std::path::Path;
@@ -20,7 +20,7 @@ mod tests {
     #[test]
     pub fn repeat_publisher_db_create_test() {
         for _ in 0..1000 {
-            create_db("pub_test.csv",20);
+            create_db("pub_test.csv", 20);
             Path::new("pub_test.csv")
                 .try_exists()
                 .expect("Can't find the file");
@@ -32,7 +32,7 @@ mod tests {
     #[test]
     pub fn load_db_test() {
         let merkle_coin_leaves =
-            load_merkle_leaves("BigQuery Bitcoin Historical Data - outputs.csv");
+            load_merkle_leaves_from_csv("BigQuery Bitcoin Historical Data - outputs.csv");
         let merkle_with_coins = load_db(merkle_coin_leaves.clone());
 
         let indices_to_prove = vec![3, 4];

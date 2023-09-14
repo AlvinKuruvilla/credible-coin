@@ -6,7 +6,7 @@ use std::sync::Mutex;
 
 use crate::cli::publisher::shell::PublisherShell;
 use crate::utils::address_generator::generate_n_address_value_pairs;
-use crate::utils::merkle_utils::load_merkle_leaves;
+use crate::utils::merkle_utils::load_merkle_leaves_from_csv;
 
 #[derive(Parser, Debug)]
 #[command(infer_subcommands = true)]
@@ -37,7 +37,7 @@ impl LoadCmd {
         // 2. Try to read as dataframe and handle errors
         // 3. Try to get the data from the addresses and values columns and handle errors
         // 4. Turn into merkle tree and handle errors
-        let merkle_leaves = load_merkle_leaves(&self.filename);
+        let merkle_leaves = load_merkle_leaves_from_csv(&self.filename);
         let coin_tree = load_db(merkle_leaves.clone());
 
         print!("Provided filename: {:?}", self.filename);
@@ -55,11 +55,11 @@ pub fn create_db(filename: &str, row_count: u32) {
     );
     // NOTE: The only point of this guard is to protect against
     // potential race conditions if this function executes in parallel
-    // 
+    //
     // For example:
     //
     // If we are running benchmarks where we repeatedly create and delete
-    // the generated file and the benchmarks are parallelized, 
+    // the generated file and the benchmarks are parallelized,
     // the file creation and deletion can race
     //
     // The guard is also implicitly dropped at the end of the function scope

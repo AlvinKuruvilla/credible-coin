@@ -7,7 +7,7 @@ use rs_merkle::{algorithms::Sha256, MerkleTree};
 use crate::utils::{
     address_generator::generate_address,
     csv_utils::{make_value_vector, CSVRecord},
-    merkle_utils::load_merkle_leaves,
+    merkle_utils::load_merkle_leaves_from_csv,
 };
 
 use super::shell::ExchangeShell;
@@ -39,7 +39,7 @@ impl LoadCmd {
         if !std::path::Path::new(&self.filename).exists() {
             panic!("Exchange file: {} not found", self.filename)
         }
-        let merkle_leaves = load_merkle_leaves(&self.filename);
+        let merkle_leaves = load_merkle_leaves_from_csv(&self.filename);
         let coin_tree = load_exchange_db(merkle_leaves);
         // I think the clone is unavoidable, hopefully it doesn't bite us
         let mut exchange_shell = ExchangeShell::new(coin_tree, self.filename.clone());
@@ -80,11 +80,11 @@ pub fn create_exchange_database(
     let mut selected_addresses: HashSet<String> = HashSet::new();
     // NOTE: The only point of this guard is to protect against
     // potential race conditions if this function executes in parallel
-    // 
+    //
     // For example:
     //
     // If we are running benchmarks where we repeatedly create and delete
-    // the generated file and the benchmarks are parallelized, 
+    // the generated file and the benchmarks are parallelized,
     // the file creation and deletion can race
     //
     // The guard is also implicitly dropped at the end of the function scope

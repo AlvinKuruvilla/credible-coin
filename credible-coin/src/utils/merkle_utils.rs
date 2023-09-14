@@ -1,13 +1,14 @@
-use rs_merkle::{algorithms::Sha256, MerkleTree};
+use rs_merkle::{algorithms::Sha256, Hasher, MerkleTree};
 
 use crate::{
-    cli::publisher::coin_map::CoinMap, coin::Coin, utils::csv_utils::get_address_position,
+    cli::publisher::coin_map::CoinMap, coin::Coin,
+    utils::csv_utils::addresses_and_values_as_vectors, utils::csv_utils::get_address_position,
 };
 
 use super::csv_utils::addresses_and_values_as_vectors;
 
 /// Creates leaves from coin vectors
-pub fn load_merkle_leaves(file_name: &str) -> Vec<[u8; 32]> {
+pub fn load_merkle_leaves_from_csv(file_name: &str) -> Vec<[u8; 32]> {
     let (v1, v2) = addresses_and_values_as_vectors(file_name);
     let vec_coin = Coin::create_coin_vector(v1, v2);
 
