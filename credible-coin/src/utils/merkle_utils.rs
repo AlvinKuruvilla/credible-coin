@@ -46,6 +46,9 @@ impl MerkleTreeFile {
         };
     }
     pub fn build_tree(hashed_leaves: Vec<String>) -> MerkleTree<Sha256> {
+        //TODO: Is double hashing what we want to do?
+        // The only reason we do is so that the crate will be satisfied
+        // by our 256 bit numbers
         let leaves: Vec<[u8; 32]> = hashed_leaves
             .iter()
             .map(|x| Sha256::hash(x.as_bytes()))
