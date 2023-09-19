@@ -80,5 +80,7 @@
 pub mod accumulator;
 pub mod cli;
 pub mod coin;
+pub mod credible_config;
+pub mod emp;
 pub mod exchange;
 pub mod utils;
