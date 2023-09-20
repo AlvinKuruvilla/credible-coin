@@ -1,6 +1,10 @@
 use credible_coin::{
-    credible_config::get_emp_path,
-    emp::cpp_gen::{copy_to_directory, CppFileGenerator},
+    credible_config::get_emp_copy_path,
+    emp::{
+        cpp_gen::{copy_to_directory, CppFileGenerator},
+        executor::{execute_compiled_binary, execute_make_install},
+    },
+    handle_output,
     utils::{get_project_root, merkle_utils::MerkleTreeFile},
 };
 use rs_merkle::{algorithms::Sha256, Hasher};
@@ -18,15 +22,11 @@ fn main() {
     if let Err(err) = generator.generate("gen") {
         eprintln!("Error generating C++ file: {:?}", err);
     }
-    let a = copy_to_directory("gen.cpp", &get_emp_path()).unwrap();
-    // KEEP: Example of how we can hopefully ask for sudo permissions
-    // while the program is running
-    // https://users.rust-lang.org/t/how-to-execute-a-root-command-on-linux/50066/9
-    //
-    // TODO: Check if this works in the shell environment as well
-    // assert!(::std::process::Command::new("sudo")
-    //     .arg("/usr/bin/id")
-    //     .status()
-    //     .unwrap()
-    //     .success());
+    let a = copy_to_directory("gen.cpp", &get_emp_copy_path()).unwrap();
+    // NOTE: If the command has 2 words, aside from sudo if "sudo_execute()" is used, the second word will
+    // MUST be in the arguments array like for "make install".
+    let output = execute_make_install();
+    handle_output!(output);
+    let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
+    handle_output!(output);
 }

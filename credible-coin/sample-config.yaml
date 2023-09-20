@@ -1,10 +1,15 @@
+# emp_path:
 # Here provide the path to emp_zk or emp_complete's test directory
-# so that we can copy over the generated c++ file to that directory
+# to copy over the generated c++ file to that directory
 # and it can work properly when we run "make install". Make sure to 
 # include the full path so if it is in the bool directory in emp be
 # sure to specify that
 
+# emp_root_path:
+# The path to the root of the emp project directory (where the main CMakeLists is)
+
 # NOTE: Make sure to copy this file and make a new configuration
 # file in the same directory as this sample (it must be named credible_config.yaml)
-# The credible_config.yaml should also be added to the .gitignore file (if not yet added)
+# The credible_config.yaml should also be added to .gitignore (if not already)
 emp_path: "/path/to/emp/test/folder"
+emp_root_path: "/path/to/emp/test/folder"
