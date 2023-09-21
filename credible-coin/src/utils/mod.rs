@@ -28,7 +28,8 @@ pub fn nth_line_from_file(filename: &str, n: usize) -> io::Result<Option<String>
 }
 /// Get the project root (relative to closest Cargo.lock file)
 /// ```rust
-/// match project_root::get_project_root() {
+/// use credible_coin::utils::get_project_root;
+/// match get_project_root() {
 ///     Ok(p) => println!("Current project root is {:?}", p),
 ///     Err(e) => println!("Error obtaining project root {:?}", e)
 /// };
