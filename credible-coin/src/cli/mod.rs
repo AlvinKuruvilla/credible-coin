@@ -65,7 +65,6 @@ fn convert_to_string_vec(elements: Vec<&str>) -> Vec<String> {
 
 pub mod arg_sanitizer {
     //! Contains the `sanitize_args` macro
-    use crate::cli::{ArgsList, CliError};
     macro_rules! sanitize_args {
         ($args:expr, $arg_count:expr, $empty_error:expr) => {
             match ArgsList::new($args[1..].to_vec(), $arg_count) {

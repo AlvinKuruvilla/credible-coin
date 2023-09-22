@@ -1,3 +1,4 @@
+use crate::cli::exchange::asset_database::get_extension_from_filename;
 use crate::cli::exchange::db_connector::retrieve_public_key_bytes;
 use crate::cli::exchange::exchange_functions::{
     cmd_table, create_new_tree_from_file, create_private_key, create_rng,
@@ -20,7 +21,7 @@ use rs_merkle::MerkleTree;
 
 #[derive(Default)]
 pub struct ExchangeShell {
-    tree: MerkleTree<Sha256>,
+    tree: Option<MerkleTree<Sha256>>,
     filename: String,
 }
 pub fn shell_commands() -> Vec<String> {
@@ -40,7 +41,7 @@ pub fn shell_commands() -> Vec<String> {
 /// provide a valid CSV file of their coin addresses and values and it
 /// gets created into an in-memory merkle tree.
 impl ExchangeShell {
-    pub fn new(tree: MerkleTree<Sha256>, filename: String) -> Self {
+    pub fn new(tree: Option<MerkleTree<Sha256>>, filename: String) -> Self {
         Self { tree, filename }
     }
     pub fn start(&mut self) -> anyhow::Result<()> {
@@ -110,7 +111,16 @@ impl ExchangeShell {
                         // It should be safe to unwrap here because of all of the previous checking
                         let public_address = args.get(1).unwrap();
                         println!("Public address{:?}", public_address);
-                        prove_membership(&self.filename, public_address, &self.tree);
+                        if get_extension_from_filename(&self.filename).unwrap() == "csv" {
+                            prove_membership(
+                                &self.filename,
+                                public_address,
+                                &self.tree.clone().unwrap(),
+                            );
+                        }
+                        if get_extension_from_filename(&self.filename).unwrap() == "txt" {
+                            todo!()
+                        }
                     }
                     if args[0] == "createPrivateKey" {
                         create_private_key();
@@ -161,8 +171,8 @@ impl ExchangeShell {
                             PublicKey::from_slice(&retrieved_bytes).unwrap();
                         let address = generate_address_with_provided_public_key(retrieved_key);
                         append_record(&self.filename, address, value);
-                        // FIXME: Test that the new tree is correct
-                        self.tree = create_new_tree_from_file(&self.filename);
+                        self.tree = Some(create_new_tree_from_file(&self.filename));
+                        // TODO: how do we do a similar thing in emp's case????
                     }
                     if args[0] == "help" || args[0] == "?" {
                         cmd_table();

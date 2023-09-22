@@ -1,4 +1,4 @@
-use std::{collections::HashSet, sync::Mutex};
+use std::{collections::HashSet, ffi::OsStr, path::Path, sync::Mutex};
 
 use clap::Parser;
 use csv::Writer;
@@ -11,6 +11,10 @@ use crate::utils::{
 };
 
 use super::shell::ExchangeShell;
+
+pub(crate) fn get_extension_from_filename(filename: &str) -> Option<&str> {
+    Path::new(filename).extension().and_then(OsStr::to_str)
+}
 
 #[derive(Parser, Debug)]
 #[command(infer_subcommands = true)]
@@ -39,13 +43,30 @@ impl LoadCmd {
         if !std::path::Path::new(&self.filename).exists() {
             panic!("Exchange file: {} not found", self.filename)
         }
-        let merkle_leaves = load_merkle_leaves_from_csv(&self.filename);
-        let coin_tree = load_exchange_db(merkle_leaves);
-        // I think the clone is unavoidable, hopefully it doesn't bite us
-        let mut exchange_shell = ExchangeShell::new(coin_tree, self.filename.clone());
-        match exchange_shell.start() {
-            Ok(_) => {}
-            Err(err) => log::error!("{}", err),
+        if get_extension_from_filename(&self.filename).unwrap() != "csv"
+            || get_extension_from_filename(&self.filename).unwrap() != "txt"
+        {
+            panic!(
+                "Unrecognized extension: {} ",
+                get_extension_from_filename(&self.filename).unwrap()
+            )
+        }
+        if get_extension_from_filename(&self.filename).unwrap() == "csv" {
+            let merkle_leaves = load_merkle_leaves_from_csv(&self.filename);
+            let coin_tree = load_exchange_db(merkle_leaves);
+            // I think the clone is unavoidable, hopefully it doesn't bite us
+            let mut exchange_shell = ExchangeShell::new(Some(coin_tree), self.filename.clone());
+            match exchange_shell.start() {
+                Ok(_) => {}
+                Err(err) => log::error!("{}", err),
+            }
+        }
+        if get_extension_from_filename(&self.filename).unwrap() == "txt" {
+            let mut exchange_shell = ExchangeShell::new(None, self.filename.clone());
+            match exchange_shell.start() {
+                Ok(_) => {}
+                Err(err) => log::error!("{}", err),
+            }
         }
     }
 }
