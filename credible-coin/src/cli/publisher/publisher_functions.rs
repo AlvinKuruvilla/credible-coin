@@ -165,6 +165,10 @@ pub fn cmd_table() {
                 Cell::new("Prove that the provided address is/isn't a member of the merkle tree"),
                 Cell::new("Usage: `proveMembership <ADDRESS>`"),
             ]).add_row(vec![
+                Cell::new("showFile").add_attribute(Attribute::Bold),
+                Cell::new("Preview the file loaded into the shell"),
+                Cell::new("Usage: `showFile`"),
+            ]).add_row(vec![
                 Cell::new("updateCoin").add_attribute(Attribute::Bold),
                 Cell::new("Given an address, if the address is present in the CSV, update its value with the provided value"),
                 Cell::new("Usage: `updateCoin <ADDRESS> <NEW VALUE>`"),

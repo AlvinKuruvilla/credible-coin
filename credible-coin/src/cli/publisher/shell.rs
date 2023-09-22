@@ -10,6 +10,7 @@ use rs_merkle::MerkleTree;
 
 use crate::cli::publisher::publisher_functions::{cmd_table, get_coin_info, update_coin};
 use crate::cli::{arg_sanitizer, convert_to_string_vec, ArgsList, CliError};
+use crate::render_file_preview;
 use crate::utils::merkle_utils::prove_membership;
 
 #[derive(Default)]
@@ -19,12 +20,13 @@ pub struct PublisherShell {
 }
 pub fn shell_commands() -> Vec<String> {
     vec![
+        "clear".into(),
         "exit".into(),
         "getCoinInfo".into(),
-        "updateCoin".into(),
-        "proveMembership".into(),
-        "clear".into(),
         "help".into(),
+        "proveMembership".into(),
+        "showFile".into(),
+        "updateCoin".into(),
         "?".into(),
     ]
 }
@@ -145,6 +147,9 @@ impl PublisherShell {
                         // It should be safe to unwrap here because of all of the previous checking
                         let public_address = args.get(1).unwrap();
                         prove_membership(&self.filename, public_address, &self.tree);
+                    }
+                    if args[0] == "showFile" {
+                        render_file_preview!(&self.filename);
                     }
                     if args[0] == "help" || args[0] == "?" {
                         cmd_table();

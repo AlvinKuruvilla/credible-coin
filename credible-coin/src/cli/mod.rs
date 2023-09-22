@@ -18,6 +18,8 @@ use thiserror::Error;
 
 pub mod exchange;
 pub mod publisher;
+#[macro_use]
+pub mod renderer;
 /// ``ArgsList`` abstracts away the responsibility of input sanitization away from the caller and exposes matchable errors instead.
 /// ``AgsList`` (on creation):
 ///

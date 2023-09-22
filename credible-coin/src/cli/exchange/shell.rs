@@ -4,6 +4,7 @@ use crate::cli::exchange::exchange_functions::{
     cmd_table, create_new_tree_from_file, create_private_key, create_rng,
 };
 use crate::cli::{arg_sanitizer, convert_to_string_vec, ArgsList, CliError};
+use crate::render_file_preview;
 use crate::utils::{
     address_generator::generate_address_with_provided_public_key, csv_utils::append_record,
     merkle_utils::prove_membership,
@@ -32,6 +33,7 @@ pub fn shell_commands() -> Vec<String> {
         "addCoinToDB".into(),
         "createRNG".into(),
         "clear".into(),
+        "showFile".into(),
         "help".into(),
         "?".into(),
     ]
@@ -173,6 +175,9 @@ impl ExchangeShell {
                         append_record(&self.filename, address, value);
                         self.tree = Some(create_new_tree_from_file(&self.filename));
                         // TODO: how do we do a similar thing in emp's case????
+                    }
+                    if args[0] == "showFile" {
+                        render_file_preview!(&self.filename);
                     }
                     if args[0] == "help" || args[0] == "?" {
                         cmd_table();

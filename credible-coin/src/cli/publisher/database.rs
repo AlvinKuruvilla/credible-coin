@@ -39,8 +39,6 @@ impl LoadCmd {
         // 4. Turn into merkle tree and handle errors
         let merkle_leaves = load_merkle_leaves_from_csv(&self.filename);
         let coin_tree = load_db(merkle_leaves.clone());
-
-        print!("Provided filename: {:?}", self.filename);
         let mut publisher_shell = PublisherShell::new(coin_tree, self.filename);
         let _ = publisher_shell.start();
     }

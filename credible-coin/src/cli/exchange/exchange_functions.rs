@@ -90,6 +90,10 @@ pub fn cmd_table() {
                 Cell::new("proveMembership").add_attribute(Attribute::Bold),
                 Cell::new("Prove that the provided address is/isn't a member of the merkle tree"),
                 Cell::new("Usage: `proveMembership <ADDRESS>`"),
+            ]).add_row(vec![
+                Cell::new("showFile").add_attribute(Attribute::Bold),
+                Cell::new("Preview the file loaded into the shell"),
+                Cell::new("Usage: `showFile`"),
             ]);
     println!("{table}");
 }
