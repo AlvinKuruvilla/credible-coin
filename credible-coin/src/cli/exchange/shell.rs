@@ -9,7 +9,7 @@ use crate::emp::cpp_gen::{copy_to_directory, CppFileGenerator};
 use crate::emp::executor::{execute_compiled_binary, execute_make_install};
 use crate::utils::get_project_root;
 use crate::utils::{
-    address_generator::generate_address_with_provided_public_key, csv_utils::append_record,
+    csv_utils::append_record, file_generators::generate_address_with_provided_public_key,
     merkle_utils::prove_membership,
 };
 use crate::{handle_output, render_file_preview};

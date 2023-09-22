@@ -5,8 +5,8 @@ use csv::Writer;
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 
 use crate::utils::{
-    address_generator::generate_address,
     csv_utils::{make_value_vector, CSVRecord},
+    file_generators::generate_address,
     merkle_utils::load_merkle_leaves_from_csv,
 };
 

@@ -5,7 +5,7 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use crate::cli::publisher::shell::PublisherShell;
-use crate::utils::address_generator::generate_n_address_value_pairs;
+use crate::utils::file_generators::generate_n_address_value_pairs;
 use crate::utils::merkle_utils::load_merkle_leaves_from_csv;
 
 #[derive(Parser, Debug)]
