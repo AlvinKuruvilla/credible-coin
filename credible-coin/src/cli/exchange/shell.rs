@@ -4,11 +4,15 @@ use crate::cli::exchange::exchange_functions::{
     cmd_table, create_new_tree_from_file, create_private_key, create_rng,
 };
 use crate::cli::{arg_sanitizer, convert_to_string_vec, ArgsList, CliError};
-use crate::render_file_preview;
+use crate::credible_config::get_emp_copy_path;
+use crate::emp::cpp_gen::{copy_to_directory, CppFileGenerator};
+use crate::emp::executor::{execute_compiled_binary, execute_make_install};
+use crate::utils::get_project_root;
 use crate::utils::{
     address_generator::generate_address_with_provided_public_key, csv_utils::append_record,
     merkle_utils::prove_membership,
 };
+use crate::{handle_output, render_file_preview};
 use bitcoin::PublicKey;
 use flexi_logger::{AdaptiveFormat, Duplicate, FileSpec, Logger};
 use nu_ansi_term::Color;
@@ -121,7 +125,20 @@ impl ExchangeShell {
                             );
                         }
                         if get_extension_from_filename(&self.filename).unwrap() == "txt" {
-                            todo!()
+                            //TODO: I think running like this a lot breaks my run script for some reason
+                            // so we need to be careful
+                            // FIXME: Use the arguments
+                            let generator = CppFileGenerator::new(&get_project_root().unwrap());
+                            if let Err(err) = generator.generate("gen") {
+                                eprintln!("Error generating C++ file: {:?}", err);
+                            }
+                            let a = copy_to_directory("gen.cpp", &get_emp_copy_path()).unwrap();
+                            let output = execute_make_install();
+                            handle_output!(output);
+                            let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
+                            handle_output!(output);
+
+                            // todo!()
                         }
                     }
                     if args[0] == "createPrivateKey" {
