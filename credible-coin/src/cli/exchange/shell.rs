@@ -128,6 +128,8 @@ impl ExchangeShell {
                             //TODO: I think running like this a lot breaks my run script for some reason
                             // so we need to be careful
                             // FIXME: Use the arguments
+                            let mutex = std::sync::Mutex::new(());
+                            let _guard = mutex.lock().unwrap();
                             let generator = CppFileGenerator::new(&get_project_root().unwrap());
                             if let Err(err) = generator.generate("gen") {
                                 eprintln!("Error generating C++ file: {:?}", err);
