@@ -19,7 +19,7 @@ if requested_rows > max_rows:
     print(f"Wanted '{requested_rows}' rows but the max is '{max_rows}'.")
     print("Help: perhaps generate a larger csv of exchange secrets")
     sys.exit(1)
-addresses = df[["source_address"]]
+addresses = df[["source_address"]].head(requested_rows)
 # Generate a random integer between -100 and 100 for each entry in addresses
 random_deltas = np.random.randint(-100, 101, size=len(addresses))
 addresses["delta"] = random_deltas
