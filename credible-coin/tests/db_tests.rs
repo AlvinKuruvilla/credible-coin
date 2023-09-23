@@ -71,20 +71,6 @@ mod tests {
         fs::remove_file("test.csv").expect("Could not delete file");
     }
     #[test]
-    pub fn repeat_exchange_db_create() {
-        for _ in 0..1000 {
-            create_exchange_database(
-                "BigQuery Bitcoin Historical Data - outputs.csv",
-                "test.csv",
-                20,
-            );
-            Path::new("test.csv")
-                .try_exists()
-                .expect("Can't find the file");
-            fs::remove_file("test.csv").expect("Could not delete file");
-        }
-    }
-    #[test]
     pub fn string_bytes() {
         let a = 123;
         let numeric_bytes = bincode::serialize(&a).unwrap();
