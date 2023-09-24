@@ -5,7 +5,9 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CSVRecord {
+    #[serde(alias = "source_address")]
     addresses: String,
+    #[serde(alias = "delta")]
     value: i64,
 }
 
