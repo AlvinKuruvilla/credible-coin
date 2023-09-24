@@ -4,7 +4,7 @@ import pandas as pd
 import numpy as np
 
 if len(sys.argv) != 3:
-    print("Usage: python3 delta_generator.py <file_path> <row_count>")
+    print("Usage: python3 delta_generator.py <exchange_secrets_file_path> <row_count>")
     sys.exit(1)
 path = sys.argv[1]
 requested_rows = int(sys.argv[2])
@@ -23,4 +23,8 @@ addresses = df[["source_address"]].head(requested_rows)
 # Generate a random integer between -100 and 100 for each entry in addresses
 random_deltas = np.random.randint(-100, 101, size=len(addresses))
 addresses["delta"] = random_deltas
-addresses.to_csv("scripts/generated/public_ledger.csv", index=False)
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# This will ensure that no matter from what relative location we run the script from
+# we will always save to the folder in the same directory as the script
+output_path = os.path.join(script_dir, "generated/public_ledger.csv")
+addresses.to_csv(output_path, index=False)

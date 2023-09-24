@@ -19,5 +19,10 @@ for entry in os.listdir(path):
         dfs.append(df)
 combined_df = pd.concat(dfs, ignore_index=True)
 
-satoshi_valuees = combined_df[["source_address", "satoshi"]]
-satoshi_valuees.to_csv("scripts/generated/exchange_secret.csv", index=False)
+satoshi_values = combined_df[["source_address", "satoshi"]]
+script_dir = os.path.dirname(os.path.abspath(__file__))
+# This will ensure that no matter from what relative location we run the script from
+# we will always save to the folder in the same directory as the script
+output_path = os.path.join(script_dir, "generated/exchange_secret.csv")
+
+satoshi_values.to_csv(output_path, index=False)
