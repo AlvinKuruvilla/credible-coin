@@ -121,11 +121,12 @@ impl ExchangeShell {
                             prove_membership(
                                 &self.filename,
                                 public_address,
+                                None,
                                 &self.tree.clone().unwrap(),
                             );
                         }
                         if get_extension_from_filename(&self.filename).unwrap() == "txt" {
-                            //TODO: I think running like this a lot breaks my run script for some reason
+                            // NOTE: I think running like this a lot breaks my run script for some reason
                             // so we need to be careful
                             // FIXME: Use the arguments
                             let mutex = std::sync::Mutex::new(());

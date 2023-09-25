@@ -23,7 +23,7 @@ pub fn get_coin_info(filename: &str, public_address: &str, tree: &MerkleTree<Sha
         return;
     };
     let generated_coin = Coin::new(public_address.to_owned(), *value);
-    let address_index = get_address_position(filename, public_address.to_string());
+    let address_index = get_address_position(filename, public_address.to_string(), None);
     // println!("Address Index:{:?}", address_index);
     // println!("Address Value:{:?}", value);
     let indices = vec![address_index];
@@ -58,7 +58,7 @@ pub fn update_coin(
         }
     };
     let generated_coin = Coin::new(_public_address.to_owned(), *value);
-    let address_index = get_address_position(filename, _public_address.to_string());
+    let address_index = get_address_position(filename, _public_address.to_string(), None);
     let indices = vec![address_index];
     let proof = tree.proof(&indices);
     let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
@@ -102,7 +102,7 @@ pub fn update_coin(
     }
     let new_tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
     //TODO: Remove unwrap
-    let new_address_index = get_address_position(filename, _public_address.to_string());
+    let new_address_index = get_address_position(filename, _public_address.to_string(), None);
     let new_indices = vec![new_address_index];
     let new_proof = new_tree.proof(&new_indices);
     let new_root = new_tree

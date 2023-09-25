@@ -10,6 +10,19 @@ pub struct CSVRecord {
     #[serde(alias = "delta")]
     value: i64,
 }
+fn find_matching_indices<T: PartialEq, U: PartialEq>(
+    first_vector: &Vec<T>,
+    val1: &T,
+    second_vector: &Vec<U>,
+    val2: &U,
+) -> Option<usize> {
+    first_vector
+        .iter()
+        .enumerate()
+        .filter(|&(i, x)| x == val1 && i < second_vector.len() && second_vector[i] == *val2)
+        .map(|(i, _)| i)
+        .next()
+}
 
 /// Given a filename as input return the value
 /// column as a `Vec<i64>`
@@ -21,39 +34,40 @@ pub fn make_value_vector(filename: &str) -> Vec<i64> {
         .collect();
     records.iter().map(|record| record.value).collect()
 }
-/// Given a filename as input return the specified
-/// column as a `Vec<String>`
+/// Given a filename as input return the
+/// address column as a `Vec<String>`
 /// __The current implementation forces the returned Vec to be a `Vec<String>`. If
 /// you need the value column call the `make_value_vector` function__
-pub fn get_dataset_column_by_name(file_name: &str, name: &str) -> Vec<String> {
+pub fn make_address_vector(file_name: &str) -> Vec<String> {
     //TODO: Remove unwrap and handle errors with match construct
     let mut rdr: Reader<std::fs::File> = csv::Reader::from_path(file_name).unwrap();
-    let mut col = Vec::new();
-    for result in rdr.deserialize() {
-        let record: CSVRecord = result.unwrap();
-
-        match name {
-            "addresses" => col.push(record.addresses),
-            "value" | "index" =>  panic!("If you want to get the index or value column call the make_index_vector or make_value_vector function respectively"),
-            _ => panic!("Unrecognized column name: {:?}", name)}
-    }
-    col
+    let records: Vec<CSVRecord> = rdr
+        .deserialize()
+        .map(|result| result.expect("Error parsing CSV record"))
+        .collect();
+    records
+        .iter()
+        .map(|record| record.addresses.clone())
+        .collect()
 }
 /// Retrieve the address and value columns in the dataframe as vectors
 pub fn addresses_and_values_as_vectors(file_name: &str) -> (Vec<String>, Vec<i64>) {
-    let address_vec = get_dataset_column_by_name(file_name, "addresses");
+    let address_vec = make_address_vector(file_name);
     let value_vec = make_value_vector(file_name);
     (address_vec, value_vec)
 }
 /// Given a filename, and a public address in that file, find its position within the address vector
-pub fn get_address_position(filename: &str, public_address: String) -> usize {
-    let address_vec = get_dataset_column_by_name(filename, "addresses");
-    // TODO: Remove unwrap()
-    let index = address_vec
-        .iter()
-        .position(|r| r == &public_address)
-        .unwrap();
-    index
+pub fn get_address_position(filename: &str, public_address: String, value: Option<i64>) -> usize {
+    let address_vec = make_address_vector(filename);
+    if value.is_none() {
+        // TODO: Remove unwrap()
+        return address_vec
+            .iter()
+            .position(|r| r == &public_address)
+            .unwrap();
+    }
+    let values = make_value_vector(filename);
+    find_matching_indices(&address_vec, &public_address, &values, &value.unwrap()).unwrap()
 }
 /// Update the value for the given address in a provided dataset file
 /// with the provided value

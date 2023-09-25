@@ -4,7 +4,7 @@
 //! reflected in a cryptocurrency-system with a blockchain ledger
 use rs_merkle::{algorithms::Sha256, Hasher};
 use serde::{Deserialize, Serialize};
-#[derive(Debug, Clone, Deserialize, Serialize)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default)]
 pub struct Coin {
     coin_address: String,
     value: i64,

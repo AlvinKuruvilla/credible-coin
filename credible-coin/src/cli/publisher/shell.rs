@@ -143,10 +143,27 @@ impl PublisherShell {
                     }
 
                     if args[0] == "proveMembership" {
-                        arg_sanitizer::sanitize_args!(args, 1, "No public address provided");
+                        arg_sanitizer::sanitize_args!(args, 2, "Invalid arguments provided");
                         // It should be safe to unwrap here because of all of the previous checking
                         let public_address = args.get(1).unwrap();
-                        prove_membership(&self.filename, public_address, &self.tree);
+                        let delta_value_result = args.get(2).and_then(|s| s.parse::<i64>().ok());
+
+                        match delta_value_result {
+                            Some(delta_value) => {
+                                prove_membership(
+                                    &self.filename,
+                                    public_address,
+                                    Some(delta_value),
+                                    &self.tree,
+                                );
+                            }
+                            None => {
+                                log::error!(
+                                    "Error: Could not parse the value {:?}.",
+                                    args.get(2).unwrap()
+                                );
+                            }
+                        }
                     }
                     if args[0] == "showFile" {
                         render_file_preview!(&self.filename);
