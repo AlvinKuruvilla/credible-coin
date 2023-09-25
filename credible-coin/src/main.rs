@@ -5,19 +5,10 @@ use credible_coin::{
         executor::{execute_compiled_binary, execute_make_install},
     },
     handle_output,
-    utils::{get_project_root, merkle_utils::MerkleTreeFile},
+    utils::get_project_root,
 };
-use rs_merkle::{algorithms::Sha256, Hasher};
 
 fn main() {
-    // generate_n_address_value_pairs(1000000);
-    let merkle_file = MerkleTreeFile::new("dump.txt");
-    let leaf_values = merkle_file.leaves;
-
-    let leaves: Vec<[u8; 32]> = leaf_values
-        .iter()
-        .map(|x| Sha256::hash(x.as_bytes()))
-        .collect();
     let generator = CppFileGenerator::new(&get_project_root().unwrap());
     if let Err(err) = generator.generate("gen") {
         eprintln!("Error generating C++ file: {:?}", err);

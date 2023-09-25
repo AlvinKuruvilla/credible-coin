@@ -13,19 +13,6 @@ pub mod file_generators;
 pub mod hashable;
 pub mod merkle_utils;
 
-/// Read the nth line from the file if it exists
-pub fn nth_line_from_file(filename: &str, n: usize) -> io::Result<Option<String>> {
-    let file = File::open(filename)?;
-    let reader = BufReader::new(file);
-
-    let line = reader.lines().nth(n);
-
-    match line {
-        Some(Ok(line_content)) => Ok(Some(line_content)),
-        Some(Err(e)) => Err(e),
-        None => Ok(None),
-    }
-}
 /// Get the project root (relative to closest Cargo.lock file)
 /// ```rust
 /// use credible_coin::utils::get_project_root;
