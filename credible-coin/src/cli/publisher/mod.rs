@@ -1,8 +1,8 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
-pub mod coin_map;
 pub mod database;
+pub mod entry_map;
 pub mod publisher_functions;
 mod shell;
 

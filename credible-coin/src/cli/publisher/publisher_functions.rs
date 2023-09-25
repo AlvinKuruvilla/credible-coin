@@ -3,8 +3,8 @@ use comfy_table::{presets::UTF8_FULL, Attribute, Cell, ContentArrangement, Table
 use rs_merkle::{algorithms::Sha256, MerkleTree};
 
 use crate::{
-    cli::publisher::coin_map::CoinMap,
-    coin::Coin,
+    cli::publisher::entry_map::EntryMap,
+    merkle_tree_entry::MerkleTreeEntry,
     utils::csv_utils::{addresses_and_values_as_vectors, get_address_position, update_csv_value},
 };
 
@@ -15,28 +15,28 @@ pub fn get_coin_info(filename: &str, public_address: &str, tree: &MerkleTree<Sha
         .leaves()
         .ok_or("Could not get leaves to prove")
         .unwrap();
-    let map = CoinMap::generate_address_value_map(filename);
+    let map = EntryMap::generate_address_value_map(filename);
     let value = if let Some(v) = map.inner.get(public_address) {
         v
     } else {
         log::error!("Could not find public address {:?}", public_address);
         return;
     };
-    let generated_coin = Coin::new(public_address.to_owned(), *value);
+    let generated_entry = MerkleTreeEntry::new(public_address.to_owned(), *value);
     let address_index = get_address_position(filename, public_address.to_string(), None);
     // println!("Address Index:{:?}", address_index);
     // println!("Address Value:{:?}", value);
     let indices = vec![address_index];
     let proof = tree.proof(&indices);
     let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
-    let bytes = generated_coin.serialize_coin();
-    let hashed_bytes = [Coin::hash_bytes(bytes)];
+    let bytes = generated_entry.serialize_entry();
+    let hashed_bytes = [MerkleTreeEntry::hash_bytes(bytes)];
     println!("Indices:{:?}", indices);
     println!("Leaf count:{:?}", tree_leaves.len());
 
     assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
-    println!("Coin Address:{:?}", public_address);
-    println!("Coin Value:{:?}", value);
+    println!("Address:{:?}", public_address);
+    println!("Value:{:?}", value);
 }
 /// Update a coin in the merkle tree given its public address and its new value
 // TODO: _new_value should be an i64 not a u32
@@ -50,24 +50,24 @@ pub fn update_coin(
         .leaves()
         .ok_or("Could not get leaves to prove")
         .unwrap();
-    let mut map = CoinMap::generate_address_value_map(filename);
+    let mut map = EntryMap::generate_address_value_map(filename);
     let value = match map.inner.get(_public_address) {
         Some(v) => v,
         None => {
             return Err(anyhow!("Public address not found"));
         }
     };
-    let generated_coin = Coin::new(_public_address.to_owned(), *value);
+    let generated_entry = MerkleTreeEntry::new(_public_address.to_owned(), *value);
     let address_index = get_address_position(filename, _public_address.to_string(), None);
     let indices = vec![address_index];
     let proof = tree.proof(&indices);
     let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
-    let bytes = generated_coin.serialize_coin();
-    let hashed_bytes = [Coin::hash_bytes(bytes)];
+    let bytes = generated_entry.serialize_entry();
+    let hashed_bytes = [MerkleTreeEntry::hash_bytes(bytes)];
     assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
 
     //replace value in hashmap
-    let new_gen_coin = Coin::new(_public_address.to_owned(), i64::from(_new_value));
+    let new_gen_coin = MerkleTreeEntry::new(_public_address.to_owned(), i64::from(_new_value));
     map.replace(_public_address.to_string(), i64::from(_new_value));
     let check = match map.inner.get(_public_address) {
         Some(v) => v,
@@ -76,21 +76,21 @@ pub fn update_coin(
         }
     };
     assert!(check == &i64::from(_new_value));
-    println!("Coin Address:{:?}", _public_address);
-    println!("New Coin Value:{:?}", _new_value);
+    println!("Address:{:?}", _public_address);
+    println!("New Value:{:?}", _new_value);
 
     //make new merkle tree
     update_csv_value(filename, _public_address.to_owned(), i64::from(_new_value));
     let (new_addr_vec, new_val_vec) = addresses_and_values_as_vectors(filename);
     assert!(new_val_vec.contains(&i64::from(_new_value)));
-    let new_vec_coin = Coin::create_coin_vector(new_addr_vec, new_val_vec);
+    let new_vec_coin = MerkleTreeEntry::create_entries_vector(new_addr_vec, new_val_vec);
     // println!("_______________________________________________________");
     // for c in new_vec_coin.iter() {
     //     println!("Bytes= {:?}", c.serialize_coin());
     // }
     let mut u8coins: Vec<Vec<u8>> = Vec::new();
     for i in new_vec_coin {
-        u8coins.push(i.serialize_coin());
+        u8coins.push(i.serialize_entry());
     }
     // println!("{:?}", u8coins);
     // std::thread::sleep(std::time::Duration::from_millis(100000));
@@ -98,7 +98,7 @@ pub fn update_coin(
 
     let mut new_leaves: Vec<[u8; 32]> = Vec::new();
     for u8s in u8coins {
-        new_leaves.push(Coin::hash_bytes(u8s));
+        new_leaves.push(MerkleTreeEntry::hash_bytes(u8s));
     }
     let new_tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
     //TODO: Remove unwrap
@@ -111,11 +111,11 @@ pub fn update_coin(
         .unwrap();
     println!(
         "{:?} {:?}",
-        new_gen_coin.coin_address(),
-        new_gen_coin.coin_value()
+        new_gen_coin.entry_address(),
+        new_gen_coin.entry_value()
     );
-    let new_bytes = new_gen_coin.serialize_coin();
-    let new_hashed_bytes = [Coin::hash_bytes(new_bytes)];
+    let new_bytes = new_gen_coin.serialize_entry();
+    let new_hashed_bytes = [MerkleTreeEntry::hash_bytes(new_bytes)];
     assert_ne!(new_tree.root(), tree.root());
     // assert_ne!(new_hashed_bytes, hashed_bytes);
 
@@ -163,7 +163,7 @@ pub fn cmd_table() {
             .add_row(vec![
                 Cell::new("proveMembership").add_attribute(Attribute::Bold),
                 Cell::new("Prove that the provided address is/isn't a member of the merkle tree"),
-                Cell::new("Usage: `proveMembership <ADDRESS>`"),
+                Cell::new("Usage: `proveMembership <ADDRESS> <VALUE>`"),
             ]).add_row(vec![
                 Cell::new("showFile").add_attribute(Attribute::Bold),
                 Cell::new("Preview the file loaded into the shell"),

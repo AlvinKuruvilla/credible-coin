@@ -6,7 +6,7 @@ use rs_merkle::{algorithms::Sha256, MerkleTree};
 use secp256k1::Secp256k1;
 
 use crate::{
-    cli::exchange::db_connector::insert_key_or_update, coin::Coin,
+    cli::exchange::db_connector::insert_key_or_update, merkle_tree_entry::MerkleTreeEntry,
     utils::csv_utils::addresses_and_values_as_vectors,
 };
 /// Create a SECP256K1 Private Key
@@ -33,14 +33,14 @@ pub fn create_rng(seed: u64) -> ChaCha8Rng {
 /// construct a new Merkle Tree from it
 pub fn create_new_tree_from_file(filename: &str) -> MerkleTree<Sha256> {
     let (new_addr_vec, new_val_vec) = addresses_and_values_as_vectors(filename);
-    let new_vec_coin = Coin::create_coin_vector(new_addr_vec, new_val_vec);
-    let mut u8coins: Vec<Vec<u8>> = Vec::new();
+    let new_vec_coin = MerkleTreeEntry::create_entries_vector(new_addr_vec, new_val_vec);
+    let mut serialized_entries: Vec<Vec<u8>> = Vec::new();
     for i in new_vec_coin {
-        u8coins.push(i.serialize_coin());
+        serialized_entries.push(i.serialize_entry());
     }
     let mut new_leaves: Vec<[u8; 32]> = Vec::new();
-    for u8s in u8coins {
-        new_leaves.push(Coin::hash_bytes(u8s));
+    for u8s in serialized_entries {
+        new_leaves.push(MerkleTreeEntry::hash_bytes(u8s));
     }
     MerkleTree::<Sha256>::from_leaves(&new_leaves)
 }

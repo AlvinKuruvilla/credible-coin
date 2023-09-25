@@ -1,9 +1,8 @@
 use std::env;
 use std::ffi::OsString;
 use std::fs::read_dir;
-use std::fs::File;
 use std::io::ErrorKind;
-use std::io::{self, BufRead, BufReader};
+use std::io::{self};
 use std::path::PathBuf;
 
 pub mod csv_utils;

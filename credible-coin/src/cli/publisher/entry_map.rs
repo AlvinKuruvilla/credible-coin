@@ -1,15 +1,15 @@
 use indexmap::IndexMap;
 
-/// A ``CoinMap`` is a mapping of address to value pairs. It is safe to keep these mappings in plain-text
+/// A ``EntryMap`` is a mapping of address to value pairs. It is safe to keep these mappings in plain-text
 /// because this map is only used by the publisher. Internally, this just uses a IndexMap<String,i64>
 #[derive(Default)]
-pub struct CoinMap {
+pub struct EntryMap {
     /// The `inner` type _must_ be an `IndexMap` so that insertion order can be maintained.
     /// This ensures that if a Merkle Tree is made from the map, we shouldn't get
     /// proof verification crashes from misordered keys
     pub inner: IndexMap<String, i64>,
 }
-impl CoinMap {
+impl EntryMap {
     pub fn new() -> Self {
         Self::default()
     }
@@ -32,7 +32,7 @@ impl CoinMap {
             crate::utils::csv_utils::addresses_and_values_as_vectors(filename);
         println!("Address Length: {:?}", addresses.len());
         println!("Values Length: {:?}", values.len());
-        CoinMap::from_vectors(addresses, values)
+        EntryMap::from_vectors(addresses, values)
     }
 
     pub fn replace(&mut self, address_key: String, new_val: i64) {
@@ -48,10 +48,11 @@ impl CoinMap {
     }
 }
 mod tests {
+    use crate::merkle_tree_entry::MerkleTreeEntry;
 
     #[test]
     pub fn byte_hash_changes_after_value_update() {
-        let mut cm = crate::cli::publisher::coin_map::CoinMap::generate_address_value_map(
+        let mut cm = crate::cli::publisher::entry_map::EntryMap::generate_address_value_map(
             "BigQuery Bitcoin Historical Data - outputs.csv",
         );
         let old_value = cm
@@ -59,12 +60,12 @@ mod tests {
             .get("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k")
             .unwrap();
         assert_eq!(old_value.to_owned(), 22222);
-        let old_coin = crate::coin::Coin::new(
+        let old_entry = MerkleTreeEntry::new(
             "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(),
             *old_value,
         );
-        let old_bytes = old_coin.serialize_coin();
-        let old_hash = crate::coin::Coin::hash_bytes(old_bytes);
+        let old_bytes = old_entry.serialize_entry();
+        let old_hash = MerkleTreeEntry::hash_bytes(old_bytes);
 
         cm.replace(
             "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(),
@@ -75,13 +76,13 @@ mod tests {
             .get("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k")
             .unwrap();
         assert_eq!(retrieved_value.to_owned(), 12345);
-        let coin = crate::coin::Coin::new(
+        let entry = MerkleTreeEntry::new(
             "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(),
             *retrieved_value,
         );
-        assert_ne!(coin.serialize_coin(), old_coin.serialize_coin());
-        let bytes = coin.serialize_coin();
-        let new_hash = crate::coin::Coin::hash_bytes(bytes);
+        assert_ne!(entry.serialize_entry(), old_entry.serialize_entry());
+        let bytes = entry.serialize_entry();
+        let new_hash = MerkleTreeEntry::hash_bytes(bytes);
         assert_ne!(old_hash, new_hash);
     }
     #[test]

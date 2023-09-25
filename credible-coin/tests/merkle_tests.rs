@@ -1,6 +1,6 @@
 #[cfg(test)]
 mod tests {
-    use credible_coin::{coin::Coin, utils::hashable::ToHashable};
+    use credible_coin::{merkle_tree_entry::MerkleTreeEntry, utils::hashable::ToHashable};
     use rs_merkle::{algorithms::Sha256, Hasher, MerkleProof, MerkleTree};
     #[test]
     pub fn sanity() {
@@ -261,9 +261,15 @@ mod tests {
     #[test]
     pub fn two_layer_update_test() {
         let leaves = [
-            Coin::hash_bytes(Coin::new("1234".to_owned(), 123).serialize_coin()),
-            Coin::hash_bytes(Coin::new("567".to_owned(), 567).serialize_coin()),
-            Coin::hash_bytes(Coin::new("893".to_owned(), 111).serialize_coin()),
+            MerkleTreeEntry::hash_bytes(
+                MerkleTreeEntry::new("1234".to_owned(), 123).serialize_entry(),
+            ),
+            MerkleTreeEntry::hash_bytes(
+                MerkleTreeEntry::new("567".to_owned(), 567).serialize_entry(),
+            ),
+            MerkleTreeEntry::hash_bytes(
+                MerkleTreeEntry::new("893".to_owned(), 111).serialize_entry(),
+            ),
         ];
         let merkle_tree = MerkleTree::<Sha256>::from_leaves(&leaves);
 
@@ -279,9 +285,15 @@ mod tests {
         assert!(proof.verify(root, &indices_to_prove, leaves_to_prove, leaves.len()));
 
         let new_leaves = [
-            Coin::hash_bytes(Coin::new("901".to_owned(), 999).serialize_coin()),
-            Coin::hash_bytes(Coin::new("567".to_owned(), 567).serialize_coin()),
-            Coin::hash_bytes(Coin::new("893".to_owned(), 111).serialize_coin()),
+            MerkleTreeEntry::hash_bytes(
+                MerkleTreeEntry::new("901".to_owned(), 999).serialize_entry(),
+            ),
+            MerkleTreeEntry::hash_bytes(
+                MerkleTreeEntry::new("567".to_owned(), 567).serialize_entry(),
+            ),
+            MerkleTreeEntry::hash_bytes(
+                MerkleTreeEntry::new("893".to_owned(), 111).serialize_entry(),
+            ),
         ];
         let tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
 

@@ -79,9 +79,8 @@
 
 pub mod accumulator;
 pub mod cli;
-pub mod coin;
 pub mod credible_config;
-pub mod delta_entry;
 pub mod emp;
 pub mod exchange;
+pub mod merkle_tree_entry;
 pub mod utils;

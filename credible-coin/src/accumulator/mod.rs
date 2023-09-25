@@ -3,7 +3,8 @@
 //! This crate implements 2 types of accumulators:
 //! 1. Merkle Trees
 //! 2. Binary Accumulators
-use crate::coin;
+
+use crate::merkle_tree_entry::MerkleTreeEntry;
 /// A blanket trait type representing a "proof of membership". A membership proof is an interactive proof for a statement of the form x in L, where L is some formal language.
 pub trait MembershipProof {}
 /// Common Functionality an accumulator should have
@@ -13,9 +14,9 @@ pub trait AbstractAccumulator {
     /// 1. [`rs_merkle::MerkleProof`]
     /// 2. `BinaryAccumulatorProof`
     /// By providing a Generic parameter `M` on the function signature we specify that we will return a type `M` which has this trait as its bound (so either  [`rs_merkle::MerkleProof`] or `BinaryAccumulatorProof`)
-    fn prove_member<M: MembershipProof>(element: coin::Coin) -> M;
+    fn prove_member<M: MembershipProof>(element: MerkleTreeEntry) -> M;
     /// Verify the proof of any type implementing [`MembershipProof`]
     fn verify<M: MembershipProof>(element_proof: M);
-    /// Search for an return a particular [`coin::Coin`] and return it
-    fn search(coin: coin::Coin) -> coin::Coin;
+    /// Search for an return a particular [`MerkleTreeEntry`] and return it
+    fn search(entry: MerkleTreeEntry) -> MerkleTreeEntry;
 }
