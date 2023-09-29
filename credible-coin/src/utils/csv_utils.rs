@@ -7,7 +7,7 @@ use serde::{Deserialize, Serialize};
 pub struct CSVRecord {
     #[serde(alias = "source_address")]
     addresses: String,
-    #[serde(alias = "delta")]
+    #[serde(alias = "delta", alias = "satoshi")]
     value: i64,
 }
 fn find_matching_indices<T: PartialEq, U: PartialEq>(
@@ -56,7 +56,7 @@ pub fn addresses_and_values_as_vectors(file_name: &str) -> (Vec<String>, Vec<i64
     let value_vec = make_value_vector(file_name);
     (address_vec, value_vec)
 }
-/// Given a filename, and a public address in that file, find its position within the address vector
+/// Given a filename, a public address, and optional unique in that file, find its position within the address vector
 pub fn get_address_position(filename: &str, public_address: String, value: Option<i64>) -> usize {
     let address_vec = make_address_vector(filename);
     if value.is_none() {
