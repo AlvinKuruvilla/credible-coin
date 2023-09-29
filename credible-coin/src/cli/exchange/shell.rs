@@ -1,4 +1,3 @@
-use crate::cli::exchange::asset_database::get_extension_from_filename;
 use crate::cli::exchange::db_connector::retrieve_public_key_bytes;
 use crate::cli::exchange::exchange_functions::{
     cmd_table, create_new_tree_from_file, create_private_key, create_rng,
@@ -7,10 +6,10 @@ use crate::cli::{arg_sanitizer, convert_to_string_vec, ArgsList, CliError};
 use crate::credible_config::get_emp_copy_path;
 use crate::emp::cpp_gen::{copy_to_directory, CppFileGenerator};
 use crate::emp::executor::{execute_compiled_binary, execute_make_install};
+use crate::utils::csv_utils::get_address_position;
 use crate::utils::get_project_root;
 use crate::utils::{
     csv_utils::append_record, file_generators::generate_address_with_provided_public_key,
-    merkle_utils::prove_membership,
 };
 use crate::{handle_output, render_file_preview};
 use bitcoin::PublicKey;
@@ -23,6 +22,7 @@ use reedline::{
 };
 use rs_merkle::algorithms::Sha256;
 use rs_merkle::MerkleTree;
+use std::collections::HashMap;
 
 #[derive(Default)]
 pub struct ExchangeShell {
@@ -117,32 +117,28 @@ impl ExchangeShell {
                         // It should be safe to unwrap here because of all of the previous checking
                         let public_address = args.get(1).unwrap();
                         println!("Public address{:?}", public_address);
-                        if get_extension_from_filename(&self.filename).unwrap() == "csv" {
-                            prove_membership(
-                                &self.filename,
-                                public_address,
-                                None,
-                                &self.tree.clone().unwrap(),
-                            );
+                        // NOTE: I think running like this a lot breaks my run script for some reason
+                        // so we need to be careful
+                        // FIXME: Use the arguments
+                        let mutex = std::sync::Mutex::new(());
+                        let _guard = mutex.lock().unwrap();
+                        let mut sub_map = HashMap::new();
+                        // TODO: The value needs to be the address position
+                        let pos =
+                            get_address_position(&self.filename, public_address.to_string(), None);
+                        sub_map.insert("actual_leaf_index".to_string(), pos.to_string());
+                        let generator =
+                            CppFileGenerator::new(&get_project_root().unwrap(), sub_map);
+                        if let Err(err) = generator.generate("gen") {
+                            eprintln!("Error generating C++ file: {:?}", err);
                         }
-                        if get_extension_from_filename(&self.filename).unwrap() == "txt" {
-                            // NOTE: I think running like this a lot breaks my run script for some reason
-                            // so we need to be careful
-                            // FIXME: Use the arguments
-                            let mutex = std::sync::Mutex::new(());
-                            let _guard = mutex.lock().unwrap();
-                            let generator = CppFileGenerator::new(&get_project_root().unwrap());
-                            if let Err(err) = generator.generate("gen") {
-                                eprintln!("Error generating C++ file: {:?}", err);
-                            }
-                            let a = copy_to_directory("gen.cpp", &get_emp_copy_path()).unwrap();
-                            let output = execute_make_install();
-                            handle_output!(output);
-                            let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
-                            handle_output!(output);
+                        let a = copy_to_directory("gen.cpp", &get_emp_copy_path()).unwrap();
+                        let output = execute_make_install();
+                        handle_output!(output);
+                        let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
+                        handle_output!(output);
 
-                            // todo!()
-                        }
+                        // todo!()
                     }
                     if args[0] == "createPrivateKey" {
                         create_private_key();
