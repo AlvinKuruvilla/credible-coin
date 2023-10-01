@@ -2,6 +2,7 @@ import sys
 import hashlib
 import binascii
 import os
+import random
 import pandas as pd
 import ecdsa
 import base58
@@ -38,6 +39,10 @@ def generate_bitcoin_address():
     return bitcoinAddress.decode("utf8")
 
 
+def generate_value():
+    return random.getrandbits(32)
+
+
 def next_power_of_2(n):
     """
     Returns the next power of 2 that is greater than or equal to n.
@@ -71,44 +76,69 @@ def is_power_of_two(n):
 
 def pad_fake_data(length):
     rows = []
-    for _ in range(length):
-        rows.append([generate_bitcoin_address(), 0])
+    address_set = set()
+
+    while len(address_set) < length:
+        address = generate_bitcoin_address()
+        if address not in address_set:
+            address_set.add(address)
+    value_set = make_value_set(length)
+
+    for addr, value in zip(list(address_set), list(value_set)):
+        rows.append([addr, value])
     return rows
 
 
-if len(sys.argv) != 2:
-    print("Usage: python3 dataset_processor.py <dir_path>")
-    sys.exit(1)
-path = sys.argv[1]
-dfs = []
+def make_value_set(length):
+    value_set = set()
+    while len(value_set) < length:
+        val = generate_value()
+        if val not in value_set and val not in value_set:
+            value_set.add(val)
+    return list(value_set)
 
-if not os.path.exists(path) or not os.path.isdir(path):
-    print(f"The provided path '{path}' either doesn't exist or is not a directory.")
-    sys.exit(1)
 
-for entry in os.listdir(path):
-    full_path = os.path.join(path, entry)
-    if os.path.isfile(full_path):
-        df = pd.read_csv(full_path, sep="\t", header=0)
-        dfs.append(df)
-combined_df = pd.concat(dfs, ignore_index=True)
-current_row_count = combined_df.shape[0]
-needed_row_count = next_power_of_2(current_row_count)
-extra_rows = pad_fake_data(needed_row_count - current_row_count)
-cols = ["source_address", "satoshi"]
-small_df = pd.DataFrame(extra_rows, columns=cols)
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        print("Usage: python3 dataset_processor.py <dir_path>")
+        sys.exit(1)
+    path = sys.argv[1]
+    dfs = []
 
-satoshi_values = combined_df[["source_address", "satoshi"]]
-script_dir = os.path.dirname(os.path.abspath(__file__))
-# # This will ensure that no matter from what relative location we run the script from
-# # we will always save to the folder in the same directory as the script
-output_path = os.path.join(script_dir, "generated/exchange_secret.csv")
-df = pd.concat([satoshi_values, small_df])
-assert is_power_of_two(df.shape[0]), "Result df does not have power of two rows"
-df.to_csv(output_path, index=False)
-with open(os.path.join(script_dir, "generated/out.txt"), "w", encoding="utf-8") as f:
-    data = list(df["satoshi"])
-    for element in data:
-        f.write("%s\n" % str(element))
-# TODO: the generated out.txt above should be copied to the emp-folder by
-# reading the YAML configuration file
+    if not os.path.exists(path) or not os.path.isdir(path):
+        print(f"The provided path '{path}' either doesn't exist or is not a directory.")
+        sys.exit(1)
+
+    for entry in os.listdir(path):
+        full_path = os.path.join(path, entry)
+        if os.path.isfile(full_path):
+            df = pd.read_csv(full_path, sep="\t", header=0)
+            dfs.append(df)
+    combined_df = pd.concat(dfs, ignore_index=True)
+    combined_addresses = combined_df["source_address"].tolist()
+    combined_values = make_value_set(len(combined_addresses))
+    assert len(combined_values) == len(combined_addresses)
+    temp_df = df = pd.DataFrame(
+        {"source_address": combined_addresses, "satoshi": combined_values}
+    )
+    current_row_count = combined_df.shape[0]
+    needed_row_count = next_power_of_2(current_row_count)
+    extra_rows = pad_fake_data(needed_row_count - current_row_count)
+    cols = ["source_address", "satoshi"]
+    small_df = pd.DataFrame(extra_rows, columns=cols)
+
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # # This will ensure that no matter from what relative location we run the script from
+    # # we will always save to the folder in the same directory as the script
+    output_path = os.path.join(script_dir, "generated/exchange_secret.csv")
+    df = pd.concat([temp_df, small_df])
+    assert is_power_of_two(df.shape[0]), "Result df does not have power of two rows"
+    df.to_csv(output_path, index=False)
+    with open(
+        os.path.join(script_dir, "generated/out.txt"), "w", encoding="utf-8"
+    ) as f:
+        data = list(df["satoshi"])
+        for element in data:
+            f.write("%s\n" % str(element))
+    # TODO: the generated out.txt above should be copied to the emp-folder by
+    # reading the YAML configuration file
