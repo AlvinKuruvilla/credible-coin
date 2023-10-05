@@ -100,7 +100,7 @@ def make_value_set(length):
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
-        print("Usage: python3 dataset_processor.py <dir_path>")
+        print("Usage: python3 exchg_secrets.py <dir_path>")
         sys.exit(1)
     path = sys.argv[1]
     dfs = []
@@ -115,13 +115,13 @@ if __name__ == "__main__":
             df = pd.read_csv(full_path, sep="\t", header=0)
             dfs.append(df)
     combined_df = pd.concat(dfs, ignore_index=True)
-    combined_addresses = combined_df["source_address"].tolist()
+    combined_addresses = combined_df["source_address"].unique().tolist()
     combined_values = make_value_set(len(combined_addresses))
     assert len(combined_values) == len(combined_addresses)
     temp_df = df = pd.DataFrame(
         {"source_address": combined_addresses, "satoshi": combined_values}
     )
-    current_row_count = combined_df.shape[0]
+    current_row_count = len(combined_addresses)
     needed_row_count = next_power_of_2(current_row_count)
     extra_rows = pad_fake_data(needed_row_count - current_row_count)
     cols = ["source_address", "satoshi"]
