@@ -37,7 +37,7 @@ impl PublisherShell {
     pub fn new(tree: MerkleTree<Sha256>, filename: String) -> Self {
         Self { tree, filename }
     }
-    pub fn start(&mut self) -> std::io::Result<()> {
+    pub fn start(&mut self) -> anyhow::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
         let commands = shell_commands();
         let completer: Box<DefaultCompleter> =
@@ -150,12 +150,18 @@ impl PublisherShell {
 
                         match delta_value_result {
                             Some(delta_value) => {
-                                prove_membership(
+                                match prove_membership(
                                     &self.filename,
                                     public_address,
                                     Some(delta_value),
                                     &self.tree,
-                                );
+                                ) {
+                                    Ok(_) => {}
+                                    Err(e) => {
+                                        log::error!("{:?}", e);
+                                        continue;
+                                    }
+                                }
                             }
                             None => {
                                 log::error!(
