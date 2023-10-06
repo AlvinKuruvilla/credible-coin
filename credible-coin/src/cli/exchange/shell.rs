@@ -124,9 +124,21 @@ impl ExchangeShell {
                         let _guard = mutex.lock().unwrap();
                         let mut sub_map = HashMap::new();
                         // TODO: The value needs to be the address position
-                        let pos =
-                            get_address_position(&self.filename, public_address.to_string(), None);
-                        sub_map.insert("actual_leaf_index".to_string(), pos.to_string());
+                        match get_address_position(&self.filename, public_address.to_string(), None)
+                        {
+                            Ok(pos) => {
+                                log::info!("Address position {:?}", pos);
+                                sub_map.insert("actual_leaf_index".to_string(), pos.to_string());
+                            }
+                            Err(e) => {
+                                log::error!(
+                                    "Error getting index for address {}: {:?}",
+                                    public_address,
+                                    e
+                                );
+                                continue;
+                            }
+                        }
                         let generator =
                             CppFileGenerator::new(&get_project_root().unwrap(), sub_map);
                         if let Err(err) = generator.generate("gen") {
@@ -137,8 +149,6 @@ impl ExchangeShell {
                         handle_output!(output);
                         let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
                         handle_output!(output);
-
-                        // todo!()
                     }
                     if args[0] == "createPrivateKey" {
                         create_private_key();

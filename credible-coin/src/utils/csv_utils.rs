@@ -2,6 +2,7 @@ use std::fs::OpenOptions;
 
 use csv::{Reader, Writer};
 use serde::{Deserialize, Serialize};
+use thiserror::Error;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CSVRecord {
@@ -10,18 +11,33 @@ pub struct CSVRecord {
     #[serde(alias = "delta", alias = "satoshi")]
     value: i64,
 }
-fn find_matching_indices<T: PartialEq, U: PartialEq>(
+#[derive(Error, Debug)]
+pub enum AddressPositionError {
+    #[error("no matching index found for value: {0}")]
+    NoMatchingIndexForValue(i64),
+    #[error("no matching address found: {0}")]
+    NoMatchingAddress(String),
+    #[error("no matching indices found for {address} with value: {value}")]
+    NoMatchingIndices { address: String, value: String },
+    // Add other error variants as needed.
+}
+
+fn find_matching_indices<T: PartialEq + ToString, U: PartialEq + ToString>(
     first_vector: &Vec<T>,
     val1: &T,
     second_vector: &Vec<U>,
     val2: &U,
-) -> Option<usize> {
+) -> Result<usize, AddressPositionError> {
     first_vector
         .iter()
         .enumerate()
         .filter(|&(i, x)| x == val1 && i < second_vector.len() && second_vector[i] == *val2)
         .map(|(i, _)| i)
         .next()
+        .ok_or_else(|| AddressPositionError::NoMatchingIndices {
+            address: val1.to_string(),
+            value: val2.to_string(),
+        })
 }
 
 /// Given a filename as input return the value
@@ -57,17 +73,24 @@ pub fn addresses_and_values_as_vectors(file_name: &str) -> (Vec<String>, Vec<i64
     (address_vec, value_vec)
 }
 /// Given a filename, a public address, and optional unique in that file, find its position within the address vector
-pub fn get_address_position(filename: &str, public_address: String, value: Option<i64>) -> usize {
-    let address_vec = make_address_vector(filename);
-    if value.is_none() {
-        // TODO: Remove unwrap()
-        return address_vec
+pub fn get_address_position(
+    filename: &str,
+    public_address: String,
+    value: Option<i64>,
+) -> Result<usize, AddressPositionError> {
+    let address_vec = make_address_vector(filename); // This function should properly handle errors and possibly return Result
+
+    if let Some(val) = value {
+        let values = make_value_vector(filename); // This function should properly handle errors and possibly return Result
+
+        find_matching_indices(&address_vec, &public_address, &values, &val)
+            .map_err(|_| AddressPositionError::NoMatchingIndexForValue(val))
+    } else {
+        address_vec
             .iter()
             .position(|r| r == &public_address)
-            .unwrap();
+            .ok_or_else(|| AddressPositionError::NoMatchingAddress(public_address))
     }
-    let values = make_value_vector(filename);
-    find_matching_indices(&address_vec, &public_address, &values, &value.unwrap()).unwrap()
 }
 /// Update the value for the given address in a provided dataset file
 /// with the provided value

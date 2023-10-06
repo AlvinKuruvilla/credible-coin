@@ -4,6 +4,7 @@ use crate::{
     cli::publisher::entry_map::EntryMap, merkle_tree_entry::MerkleTreeEntry,
     utils::csv_utils::addresses_and_values_as_vectors, utils::csv_utils::get_address_position,
 };
+use anyhow::{anyhow, Result};
 
 /// Creates leaves from coin vectors
 pub fn load_merkle_leaves_from_csv(file_name: &str) -> Vec<[u8; 32]> {
@@ -33,39 +34,51 @@ pub fn prove_membership(
     _public_address: &str,
     value: Option<i64>,
     tree: &MerkleTree<Sha256>,
-) {
-    // FIXME: We should make this logic generic so we don't need to
-    // rewrite the code for a specific dataset
+) -> Result<()> {
     let tree_leaves = tree
         .leaves()
-        .ok_or("Could not get leaves to prove")
-        .unwrap();
+        .ok_or_else(|| anyhow!("Could not get leaves to prove"))?;
     let map = EntryMap::generate_address_value_map(filename);
-    let mut address_index = 0;
-    let mut generated_entry = MerkleTreeEntry::default();
-    let map_value = if let Some(v) = map.inner.get(_public_address) {
-        // dbg!("Using public address {:?}", _public_address);
-        v
+
+    let map_value = map
+        .inner
+        .get(_public_address)
+        .ok_or_else(|| anyhow!("Could not find public address {:?}", _public_address))?;
+
+    let (generated_entry, address_index) = if let Some(value) = value {
+        let index = get_address_position(filename, _public_address.to_string(), Some(value))
+            .map_err(|e| {
+                anyhow!(
+                    "Could not get address position with provided value: {:?}",
+                    e
+                )
+            })?;
+        (
+            MerkleTreeEntry::new(_public_address.to_owned(), value),
+            index,
+        )
     } else {
-        log::error!("Could not find public address {:?}", _public_address);
-        return;
+        let index: usize =
+            get_address_position(filename, _public_address.to_string(), Some(*map_value))
+                .map_err(|e| anyhow!("Could not get address position with map value: {:?}", e))?;
+        (
+            MerkleTreeEntry::new(_public_address.to_owned(), *map_value),
+            index,
+        )
     };
-    // dbg!("Using value {:?}", *map_value);
-    if value.is_none() {
-        generated_entry = MerkleTreeEntry::new(_public_address.to_owned(), *map_value);
-        address_index =
-            get_address_position(filename, _public_address.to_string(), Some(*map_value));
-    } else {
-        address_index = get_address_position(filename, _public_address.to_string(), value);
-        generated_entry = MerkleTreeEntry::new(_public_address.to_owned(), value.unwrap());
-    }
-    // dbg!("Address Position {:?}", address_index);
+
     let indices = vec![address_index];
     let proof = tree.proof(&indices);
-    let root = tree.root().ok_or("couldn't get the merkle root").unwrap();
+    let root = tree
+        .root()
+        .ok_or_else(|| anyhow!("Couldn't get the merkle root"))?;
     let bytes = generated_entry.serialize_entry();
     let hashed_bytes = [MerkleTreeEntry::hash_bytes(bytes)];
 
-    assert!(proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()));
+    if !proof.verify(root, &indices, &hashed_bytes, tree_leaves.len()) {
+        return Err(anyhow!("Verification failed"));
+    }
+
     log::info!("Address {:?} found in merkle tree", _public_address);
+    Ok(())
 }
