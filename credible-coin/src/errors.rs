@@ -1,5 +1,7 @@
+use serde::ser::StdError;
+use std::fmt;
+use std::io;
 use thiserror::Error;
-
 #[derive(Error, Debug)]
 pub enum DBConnectorError {
     #[error("Redis error: {0}")]
@@ -53,4 +55,31 @@ pub enum CommandError {
     SetDirError(std::io::Error),
     CommandError(std::io::Error),
     ResetDirError(std::io::Error),
+}
+impl fmt::Display for CommandError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            CommandError::SetDirError(e) => write!(f, "Set Directory Error: {}", e),
+            CommandError::CommandError(e) => write!(f, "Command Error: {}", e),
+            CommandError::ResetDirError(e) => write!(f, "Reset Directory Error: {}", e),
+        }
+    }
+}
+
+impl StdError for CommandError {
+    fn source(&self) -> Option<&(dyn StdError + 'static)> {
+        match self {
+            CommandError::SetDirError(e) => Some(e),
+            CommandError::CommandError(e) => Some(e),
+            CommandError::ResetDirError(e) => Some(e),
+        }
+    }
+}
+
+impl From<io::Error> for CommandError {
+    fn from(error: io::Error) -> Self {
+        // You need to decide which variant to use here.
+        // For the example, I'm defaulting to CommandError::CommandError.
+        CommandError::CommandError(error)
+    }
 }

@@ -95,7 +95,7 @@ pub fn execute_compiled_binary(binary_path: String) -> Result<Output, CommandErr
 macro_rules! handle_output {
     ($output:expr) => {
         match $output {
-            Ok(out) => {
+            std::result::Result::Ok(out) => {
                 if out.status.success() {
                     // Print the standard output if the command succeeded
                     println!("{}", String::from_utf8_lossy(&out.stdout));

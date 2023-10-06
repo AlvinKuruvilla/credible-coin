@@ -122,7 +122,7 @@ impl ExchangeShell {
                         // FIXME: Use the arguments
                         let mutex = std::sync::Mutex::new(());
                         let _guard = mutex.lock().unwrap();
-                        let mut sub_map = HashMap::new();
+                        let mut sub_map: HashMap<String, String> = HashMap::new();
                         // TODO: The value needs to be the address position
                         match get_address_position(&self.filename, public_address.to_string(), None)
                         {
