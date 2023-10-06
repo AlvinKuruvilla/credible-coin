@@ -1,15 +1,9 @@
+use crate::credible_config::get_emp_root_path;
+use crate::errors::CommandError;
 use std::env;
+use std::io::{self, Write};
 use std::process::{Command, Output};
 
-use crate::credible_config::get_emp_root_path;
-
-/// Errors that can occur while executing a command in another directory.
-#[derive(Debug)]
-pub enum CommandError {
-    SetDirError(std::io::Error),
-    CommandError(std::io::Error),
-    ResetDirError(std::io::Error),
-}
 /// Change the current directory to the specified one, execute the command with sudo, and revert back to the original directory.
 ///
 /// # Arguments
@@ -116,4 +110,30 @@ macro_rules! handle_output {
             }
         }
     };
+}
+pub fn retrieve_membership_string(
+    output: Result<Output, CommandError>,
+) -> Result<String, CommandError> {
+    match output {
+        Ok(success_output) => {
+            // stdout is assumed to be of type Vec<u8>.
+            let stdout = String::from_utf8_lossy(&success_output.stdout);
+            let membership_string = match stdout
+                .to_string()
+                .lines()
+                .filter(|line| line.contains("leaf"))
+                .next()
+            {
+                Some(line) => Ok(line.to_string()), // Return the line if "leaf" is found.
+                None => unimplemented!(),
+            };
+            membership_string
+        }
+        Err(err) => {
+            // Write the error to stderr.
+            // Adjust this part according to the actual definition of CommandError.
+            let _ = writeln!(io::stderr(), "Command Error: {:?}", err);
+            Err(err)
+        }
+    }
 }

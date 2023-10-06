@@ -81,6 +81,7 @@ pub mod accumulator;
 pub mod cli;
 pub mod credible_config;
 pub mod emp;
+pub mod errors;
 pub mod exchange;
 pub mod merkle_tree_entry;
 pub mod utils;

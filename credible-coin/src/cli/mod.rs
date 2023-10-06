@@ -14,7 +14,8 @@
 //! utilizing our CLI/shell to make a more informed decision about the safety and security of
 //! their assets  (See the module docs for more details)
 use anyhow::{anyhow, ensure, Result};
-use thiserror::Error;
+
+use crate::errors::CliError;
 
 pub mod exchange;
 pub mod publisher;
@@ -29,13 +30,6 @@ pub mod renderer;
 pub struct ArgsList {
     #[allow(dead_code)]
     args: Vec<String>,
-}
-#[derive(Error, Debug)]
-pub enum CliError {
-    #[error("Unexpected: `{expected:?}` arguments found `{actual:?}` arguments")]
-    UnexpectedNumberOfArguments { expected: usize, actual: usize },
-    #[error("Empty argument provided at position {arg_position:?}")]
-    EmptyArgument { arg_position: usize },
 }
 
 fn check_empty_argument(args: &[String]) -> Result<()> {

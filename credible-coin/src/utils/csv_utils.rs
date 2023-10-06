@@ -2,7 +2,8 @@ use std::fs::OpenOptions;
 
 use csv::{Reader, Writer};
 use serde::{Deserialize, Serialize};
-use thiserror::Error;
+
+use crate::errors::AddressPositionError;
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CSVRecord {
@@ -10,16 +11,6 @@ pub struct CSVRecord {
     addresses: String,
     #[serde(alias = "delta", alias = "satoshi")]
     value: i64,
-}
-#[derive(Error, Debug)]
-pub enum AddressPositionError {
-    #[error("no matching index found for value: {0}")]
-    NoMatchingIndexForValue(i64),
-    #[error("no matching address found: {0}")]
-    NoMatchingAddress(String),
-    #[error("no matching indices found for {address} with value: {value}")]
-    NoMatchingIndices { address: String, value: String },
-    // Add other error variants as needed.
 }
 
 fn find_matching_indices<T: PartialEq + ToString, U: PartialEq + ToString>(

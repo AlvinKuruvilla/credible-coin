@@ -1,11 +1,6 @@
 use anyhow::{Context, Result};
 use redis::Commands;
-use thiserror::Error;
-#[derive(Error, Debug)]
-pub enum DBConnectorError {
-    #[error("Redis error: {0}")]
-    RedisConnectorError(#[from] redis::RedisError),
-}
+
 /// A connector module responsible for creating and managing all of the information the
 /// exchange needs.
 ///

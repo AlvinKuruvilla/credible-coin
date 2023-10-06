@@ -2,31 +2,9 @@ use std::collections::HashMap;
 use std::fs::{self};
 use std::path::Path;
 
+use crate::errors::{CppGenError, FileError};
+
 use super::template_engine::TemplateEngine;
-
-/// Errors that can occur while generating C++ files.
-#[derive(Debug)]
-pub enum CppGenError {
-    IoError(std::io::Error),
-}
-
-impl From<std::io::Error> for CppGenError {
-    fn from(err: std::io::Error) -> Self {
-        CppGenError::IoError(err)
-    }
-}
-/// Errors that can occur while copying a file.
-#[derive(Debug)]
-pub enum FileError {
-    IoError(std::io::Error),
-    FileNotFound,
-}
-
-impl From<std::io::Error> for FileError {
-    fn from(err: std::io::Error) -> Self {
-        FileError::IoError(err)
-    }
-}
 
 /// C++ file generator.
 pub struct CppFileGenerator {
