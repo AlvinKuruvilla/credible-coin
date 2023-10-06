@@ -74,71 +74,68 @@ def is_power_of_two(n):
     return n > 0 and (n & (n - 1)) == 0
 
 
-def pad_fake_data(length):
-    rows = []
+def generate_unique_addresses(length):
     address_set = set()
-
     while len(address_set) < length:
         address = generate_bitcoin_address()
-        if address not in address_set:
-            address_set.add(address)
-    value_set = make_value_set(length)
-
-    for addr, value in zip(list(address_set), list(value_set)):
-        rows.append([addr, value])
-    return rows
+        address_set.add(address)
+    return list(address_set)
 
 
-def make_value_set(length):
+def generate_unique_values(length):
     value_set = set()
     while len(value_set) < length:
-        val = generate_value()
-        if val not in value_set and val not in value_set:
-            value_set.add(val)
+        value = generate_value()
+        value_set.add(value)
     return list(value_set)
 
 
-if __name__ == "__main__":
-    if len(sys.argv) != 2:
-        print("Usage: python3 exchg_secrets.py <dir_path>")
-        sys.exit(1)
-    path = sys.argv[1]
+def main(directory):
     dfs = []
 
-    if not os.path.exists(path) or not os.path.isdir(path):
-        print(f"The provided path '{path}' either doesn't exist or is not a directory.")
-        sys.exit(1)
+    if not os.path.exists(directory) or not os.path.isdir(directory):
+        sys.exit(f"Error: The path {directory} does not exist or is not a directory.")
 
-    for entry in os.listdir(path):
-        full_path = os.path.join(path, entry)
+    for entry in os.listdir(directory):
+        full_path = os.path.join(directory, entry)
         if os.path.isfile(full_path):
             df = pd.read_csv(full_path, sep="\t", header=0)
             dfs.append(df)
-    combined_df = pd.concat(dfs, ignore_index=True)
-    combined_addresses = combined_df["source_address"].unique().tolist()
-    combined_values = make_value_set(len(combined_addresses))
-    assert len(combined_values) == len(combined_addresses)
-    temp_df = df = pd.DataFrame(
-        {"source_address": combined_addresses, "satoshi": combined_values}
-    )
-    current_row_count = len(combined_addresses)
-    needed_row_count = next_power_of_2(current_row_count)
-    extra_rows = pad_fake_data(needed_row_count - current_row_count)
-    cols = ["source_address", "satoshi"]
-    small_df = pd.DataFrame(extra_rows, columns=cols)
 
+    combined_df = pd.concat(dfs, ignore_index=True)
+    unique_addresses = combined_df["source_address"].unique()
+    unique_values = generate_unique_values(len(unique_addresses))
+
+    temp_df = pd.DataFrame(
+        {"source_address": unique_addresses, "satoshi": unique_values}
+    )
+    current_row_count = len(unique_addresses)
+    needed_row_count = next_power_of_2(current_row_count)
+
+    extra_addresses = generate_unique_addresses(needed_row_count - current_row_count)
+    extra_values = generate_unique_values(needed_row_count - current_row_count)
+
+    extra_rows = list(zip(extra_addresses, extra_values))
+    small_df = pd.DataFrame(extra_rows, columns=["source_address", "satoshi"])
+
+    final_df = pd.concat([temp_df, small_df], ignore_index=True)
+    assert is_power_of_two(
+        final_df.shape[0]
+    ), "Resulting DataFrame does not have a number of rows that is a power of two."
     script_dir = os.path.dirname(os.path.abspath(__file__))
     # # This will ensure that no matter from what relative location we run the script from
     # # we will always save to the folder in the same directory as the script
     output_path = os.path.join(script_dir, "generated/exchange_secret.csv")
-    df = pd.concat([temp_df, small_df])
-    assert is_power_of_two(df.shape[0]), "Result df does not have power of two rows"
-    df.to_csv(output_path, index=False)
+    final_df.to_csv(output_path, index=False)
     with open(
         os.path.join(script_dir, "generated/out.txt"), "w", encoding="utf-8"
     ) as f:
-        data = list(df["satoshi"])
-        for element in data:
+        for element in final_df["satoshi"]:
             f.write("%s\n" % str(element))
-    # TODO: the generated out.txt above should be copied to the emp-folder by
-    # reading the YAML configuration file
+
+
+if __name__ == "__main__":
+    if len(sys.argv) != 2:
+        sys.exit("Usage: python3 exchg_secrets.py <directory_path>")
+
+    main(sys.argv[1])
