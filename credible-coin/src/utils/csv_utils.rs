@@ -3,7 +3,7 @@ use std::fs::OpenOptions;
 use csv::{Reader, Writer};
 use serde::{Deserialize, Serialize};
 
-use crate::errors::AddressPositionError;
+use crate::{errors::AddressPositionError, merkle_tree_entry::MerkleTreeEntry};
 
 #[derive(Debug, Deserialize, Serialize)]
 pub struct CSVRecord {
@@ -133,4 +133,16 @@ pub fn append_record(file: &str, address: String, value: u64) {
         log::error!("Failed to write record");
     }
     writer.flush();
+}
+pub fn into_merkle_tree_entries(set: (Vec<String>, Vec<i64>)) -> Vec<MerkleTreeEntry> {
+    let (vec1, vec2) = set;
+    let mut ret = Vec::new();
+    // Using the zip function to iterate over both vectors simultaneously
+    for (item_from_vec1, item_from_vec2) in vec1.iter().zip(vec2.iter()) {
+        ret.push(MerkleTreeEntry::new(
+            item_from_vec1.clone(),
+            *item_from_vec2,
+        ));
+    }
+    ret
 }
