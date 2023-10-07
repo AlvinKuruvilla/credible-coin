@@ -98,7 +98,7 @@ macro_rules! handle_output {
             std::result::Result::Ok(out) => {
                 if out.status.success() {
                     // Print the standard output if the command succeeded
-                    println!("{}", String::from_utf8_lossy(&out.stdout));
+                    // println!("{}", String::from_utf8_lossy(&out.stdout));
                 } else {
                     // Print the standard error if the command failed
                     eprintln!("Command Error: {}", String::from_utf8_lossy(&out.stderr));
@@ -125,7 +125,7 @@ pub fn retrieve_membership_string(
                 .next()
             {
                 Some(line) => Ok(line.to_string()), // Return the line if "leaf" is found.
-                None => unimplemented!(),
+                None => Ok("".to_owned()),
             };
             membership_string
         }

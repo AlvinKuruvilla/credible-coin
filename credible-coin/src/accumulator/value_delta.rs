@@ -28,6 +28,7 @@ impl AbstractAccumulator for DeltaAccumulator {
         let output = execute_make_install();
         handle_output!(output);
         let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
+        // println!("{:?}", output);
         let s = retrieve_membership_string(output)?;
         if s == "leaf does have path to root" {
             Ok(MembershipProof { is_member: true })
@@ -53,7 +54,7 @@ impl AbstractAccumulator for DeltaAccumulator {
         exchange_entries: Vec<MerkleTreeEntry>,
     ) -> Result<i64> {
         let mut delta: i64 = 0;
-        for ledger_entry in ledger.iter() {
+        for ledger_entry in kdam::tqdm!(ledger.iter()) {
             match self.search(ledger_entry.clone()) {
                 Ok(_) => {
                     for exchange_entry in exchange_entries.iter() {
