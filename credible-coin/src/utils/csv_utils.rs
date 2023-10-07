@@ -1,6 +1,7 @@
 use std::fs::OpenOptions;
 
 use csv::{Reader, Writer};
+use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
 use crate::{errors::AddressPositionError, merkle_tree_entry::MerkleTreeEntry};
@@ -13,18 +14,17 @@ pub struct CSVRecord {
     value: i64,
 }
 
-fn find_matching_indices<T: PartialEq + ToString, U: PartialEq + ToString>(
-    first_vector: &Vec<T>,
+fn find_matching_indices<T: PartialEq + ToString + Sync, U: PartialEq + ToString + Sync>(
+    first_vector: &[T],
     val1: &T,
-    second_vector: &Vec<U>,
+    second_vector: &[U],
     val2: &U,
 ) -> Result<usize, AddressPositionError> {
     first_vector
-        .iter()
+        .par_iter()
         .enumerate()
-        .filter(|&(i, x)| x == val1 && i < second_vector.len() && second_vector[i] == *val2)
+        .find_first(|&(i, x)| x == val1 && i < second_vector.len() && second_vector[i] == *val2)
         .map(|(i, _)| i)
-        .next()
         .ok_or_else(|| AddressPositionError::NoMatchingIndices {
             address: val1.to_string(),
             value: val2.to_string(),
@@ -39,7 +39,7 @@ pub fn make_value_vector(filename: &str) -> Vec<i64> {
         .deserialize()
         .map(|result| result.expect("Error parsing CSV record"))
         .collect();
-    records.iter().map(|record| record.value).collect()
+    records.par_iter().map(|record| record.value).collect()
 }
 /// Given a filename as input return the
 /// address column as a `Vec<String>`
@@ -53,7 +53,7 @@ pub fn make_address_vector(file_name: &str) -> Vec<String> {
         .map(|result| result.expect("Error parsing CSV record"))
         .collect();
     records
-        .iter()
+        .par_iter()
         .map(|record| record.addresses.clone())
         .collect()
 }
@@ -78,8 +78,8 @@ pub fn get_address_position(
             .map_err(|_| AddressPositionError::NoMatchingIndexForValue(val))
     } else {
         address_vec
-            .iter()
-            .position(|r| r == &public_address)
+            .par_iter()
+            .position_first(|r| r == &public_address)
             .ok_or_else(|| AddressPositionError::NoMatchingAddress(public_address))
     }
 }

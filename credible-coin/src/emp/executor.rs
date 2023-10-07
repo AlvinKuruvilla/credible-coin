@@ -32,7 +32,10 @@ pub fn sudo_execute(dir: &str, command: &str, args: &[&str]) -> Result<Output, C
 
     // Change to the desired directory.
     env::set_current_dir(dir).map_err(CommandError::SetDirError)?;
-
+    // println!(
+    //     "Command executed is: {:?}",
+    //     Command::new("sudo").arg(command).args(args).get_args()
+    // );
     // Execute the command with sudo.
     let out = Command::new("sudo")
         .arg(command)
@@ -86,7 +89,8 @@ pub fn execute(dir: &str, command: &str, args: &[&str]) -> Result<(), CommandErr
     Ok(())
 }
 pub fn execute_make_install() -> Result<Output, CommandError> {
-    sudo_execute(&get_emp_root_path(), "make", &["install"])
+    let num_jobs = num_cpus::get().to_string();
+    sudo_execute(&get_emp_root_path(), "make", &["install", "-j", &num_jobs])
 }
 pub fn execute_compiled_binary(binary_path: String) -> Result<Output, CommandError> {
     sudo_execute(&get_emp_root_path(), "./run", &[&binary_path])
