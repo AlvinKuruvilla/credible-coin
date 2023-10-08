@@ -41,11 +41,6 @@ impl EntryMap {
             .entry(address_key)
             .and_modify(|old_value| *old_value = new_val);
     }
-    pub fn dbg_print(&self) {
-        for (key, value) in &self.inner {
-            println!("{}: {}", key, value);
-        }
-    }
 }
 mod tests {
     use crate::merkle_tree_entry::MerkleTreeEntry;

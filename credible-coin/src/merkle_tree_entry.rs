@@ -7,7 +7,7 @@
 
 use rs_merkle::{algorithms::Sha256, Hasher};
 use serde::{Deserialize, Serialize};
-#[derive(Debug, Clone, Deserialize, Serialize, Default)]
+#[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
 pub struct MerkleTreeEntry {
     coin_address: String,
     value: i64,
@@ -21,10 +21,12 @@ impl MerkleTreeEntry {
         }
     }
     /// Get the value for the MerkleTreeEntry
+    #[inline]
     pub fn entry_value(&self) -> i64 {
         self.value
     }
     /// Get the address for the MerkleTreeEntry
+    #[inline]
     pub fn entry_address(&self) -> String {
         self.coin_address.clone()
     }

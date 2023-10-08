@@ -1,4 +1,4 @@
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 use super::{AbstractAccumulator, MembershipProof};
 use crate::{
@@ -16,7 +16,7 @@ pub struct DeltaAccumulator {
     pub exchange_secrets_path: String,
 }
 impl AbstractAccumulator for DeltaAccumulator {
-    fn prove_member(&self, element: MerkleTreeEntry) -> Result<MembershipProof> {
+    fn prove_member(&self, element: &MerkleTreeEntry) -> Result<MembershipProof> {
         let pos = self.search(element)?;
         let mut sub_map: HashMap<String, String> = HashMap::new();
         sub_map.insert("actual_leaf_index".to_string(), pos.to_string());
@@ -41,7 +41,7 @@ impl AbstractAccumulator for DeltaAccumulator {
         todo!()
     }
 
-    fn search(&self, entry: MerkleTreeEntry) -> Result<usize> {
+    fn search(&self, entry: &MerkleTreeEntry) -> Result<usize> {
         Ok(get_address_position(
             &self.exchange_secrets_path,
             entry.entry_address(),
@@ -54,19 +54,17 @@ impl AbstractAccumulator for DeltaAccumulator {
         exchange_entries: Vec<MerkleTreeEntry>,
     ) -> Result<i64> {
         let mut delta: i64 = 0;
-        for ledger_entry in kdam::tqdm!(ledger.iter()) {
-            match self.search(ledger_entry.clone()) {
-                Ok(_) => {
-                    for exchange_entry in exchange_entries.iter() {
-                        match self.prove_member(exchange_entry.clone()) {
-                            Ok(_) => delta += exchange_entry.entry_value(),
-                            Err(_) => continue,
-                        }
+
+        for ledger_entry in ledger.iter() {
+            if self.search(ledger_entry).is_ok() {
+                for exchange_entry in exchange_entries.iter() {
+                    if self.prove_member(exchange_entry).is_ok() {
+                        delta += exchange_entry.entry_value();
                     }
                 }
-                Err(_) => continue,
             }
         }
+
         Ok(delta)
     }
 }

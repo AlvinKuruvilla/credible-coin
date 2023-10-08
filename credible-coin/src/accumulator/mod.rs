@@ -20,11 +20,11 @@ pub trait AbstractAccumulator {
     /// 1. [`rs_merkle::MerkleProof`]
     /// 2. `BinaryAccumulatorProof`
     /// By providing a Generic parameter `M` on the function signature we specify that we will return a type `M` which has this trait as its bound (so either  [`rs_merkle::MerkleProof`] or `BinaryAccumulatorProof`)
-    fn prove_member(&self, element: MerkleTreeEntry) -> Result<MembershipProof>;
+    fn prove_member(&self, element: &MerkleTreeEntry) -> Result<MembershipProof>;
     /// Verify the proof of any type implementing [`MembershipProof`]
     fn verify(&self, element_proof: MembershipProof);
     /// Search for a particular [`MerkleTreeEntry`] and return it's position in the file
-    fn search(&self, entry: MerkleTreeEntry) -> anyhow::Result<usize>;
+    fn search(&self, entry: &MerkleTreeEntry) -> anyhow::Result<usize>;
     /// Aggregate the final delta using the public ledger's entries and the entries from the exchange's secret set
     /// This function follows a 2-step process to perform the delta aggregation:
     /// 1. Search for each ledger address against the exchange's secret set, keeping only the addresses

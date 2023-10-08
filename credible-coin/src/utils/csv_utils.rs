@@ -20,17 +20,16 @@ fn find_matching_indices<T: PartialEq + ToString + Sync, U: PartialEq + ToString
     second_vector: &[U],
     val2: &U,
 ) -> Result<usize, AddressPositionError> {
+    assert_eq!(first_vector.len(), second_vector.len());
     first_vector
         .par_iter()
-        .enumerate()
-        .find_first(|&(i, x)| x == val1 && i < second_vector.len() && second_vector[i] == *val2)
-        .map(|(i, _)| i)
+        .zip(second_vector.par_iter())
+        .position_first(|(x, y)| x == val1 && y == val2)
         .ok_or_else(|| AddressPositionError::NoMatchingIndices {
             address: val1.to_string(),
             value: val2.to_string(),
         })
 }
-
 /// Given a filename as input return the value
 /// column as a `Vec<i64>`
 pub fn make_value_vector(filename: &str) -> Vec<i64> {
