@@ -27,33 +27,20 @@ pub fn sudo_execute(dir: &str, command: &str, args: &[&str]) -> Result<Output, C
     //     .unwrap()
     //     .success());
 
-    // Store the current directory.
-    let current_dir = env::current_dir().map_err(CommandError::SetDirError)?;
+    let output = Command::new("sudo")
+    .current_dir(dir) // Set the current directory directly on the Command
+    .arg(command)
+    .args(args)
+    .output()?;
 
-    // Change to the desired directory.
-    env::set_current_dir(dir).map_err(CommandError::SetDirError)?;
-    // println!(
-    //     "Command executed is: {:?}",
-    //     Command::new("sudo").arg(command).args(args).get_args()
-    // );
-    // Execute the command with sudo.
-    let out = Command::new("sudo")
-        .arg(command)
-        .args(args)
-        .output()
-        .map_err(CommandError::CommandError)?;
-
-    if !out.status.success() {
+    if !output.status.success() {
         eprintln!(
             "Command exited with non-zero status: {:?}",
-            out.status.code()
+            output.status.code()
         );
     }
 
-    // Revert back to the original directory.
-    env::set_current_dir(current_dir).map_err(CommandError::ResetDirError)?;
-
-    Ok(out)
+    Ok(output)
 }
 /// Change the current directory to the specified one, execute the command, and revert back to the original directory.
 ///
