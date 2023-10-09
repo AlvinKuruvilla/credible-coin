@@ -76,6 +76,9 @@ pub fn execute(dir: &str, command: &str, args: &[&str]) -> Result<(), CommandErr
     Ok(())
 }
 pub fn execute_make_install() -> Result<Output, CommandError> {
+    // Ccache should already be being used because I exported the environment
+    // variable and saw the performance difference
+    // See: https://stackoverflow.com/a/37828605
     let num_jobs = num_cpus::get().to_string();
     sudo_execute(&get_emp_root_path(), "make", &["install", "-j", &num_jobs])
 }
