@@ -18,16 +18,14 @@ impl TemplateEngine {
         }
         output
     }
-    pub fn write_to_file(
+    pub fn write_to_file<P: AsRef<Path>>(
         finalized_template: &str,
         file_name: &str,
-        directory: String,
+        directory: P,
     ) -> io::Result<()> {
-        let path = Path::new(&directory).join(format!("{}.cpp", file_name));
+        let path = directory.as_ref().join(format!("{}.cpp", file_name));
         let mut file = File::create(&path)?;
-        for line in finalized_template.lines() {
-            writeln!(file, "{}", line)?;
-        }
+        file.write_all(finalized_template.as_bytes())?;
         Ok(())
     }
 }
