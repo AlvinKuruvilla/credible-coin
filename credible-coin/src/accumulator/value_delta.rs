@@ -1,5 +1,3 @@
-use std::collections::HashMap;
-
 use super::{AbstractAccumulator, MembershipProof};
 use crate::{
     credible_config::get_emp_copy_path,
@@ -13,6 +11,7 @@ use crate::{
 };
 use anyhow::Result;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use std::collections::HashMap;
 pub struct DeltaAccumulator {
     pub exchange_secrets_path: String,
 }
@@ -39,7 +38,7 @@ impl AbstractAccumulator for DeltaAccumulator {
     }
 
     fn verify(&self, element_proof: MembershipProof) {
-        todo!()
+        panic!("This function should not be called");
     }
     fn search(&self, entry: &MerkleTreeEntry) -> Result<usize> {
         Ok(get_address_position(
