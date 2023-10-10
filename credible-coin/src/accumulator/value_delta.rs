@@ -1,4 +1,4 @@
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 
 use super::{AbstractAccumulator, MembershipProof};
 use crate::{
@@ -12,6 +12,7 @@ use crate::{
     utils::{csv_utils::get_address_position, get_project_root},
 };
 use anyhow::Result;
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 pub struct DeltaAccumulator {
     pub exchange_secrets_path: String,
 }
@@ -40,7 +41,6 @@ impl AbstractAccumulator for DeltaAccumulator {
     fn verify(&self, element_proof: MembershipProof) {
         todo!()
     }
-
     fn search(&self, entry: &MerkleTreeEntry) -> Result<usize> {
         Ok(get_address_position(
             &self.exchange_secrets_path,
@@ -53,18 +53,36 @@ impl AbstractAccumulator for DeltaAccumulator {
         ledger: Vec<MerkleTreeEntry>,
         exchange_entries: Vec<MerkleTreeEntry>,
     ) -> Result<i64> {
-        let mut delta: i64 = 0;
+        // Create a HashMap to cache the results of prove_member for each exchange_entry
+        let membership_proof_cache: HashMap<_, _> = exchange_entries
+            .iter()
+            .map(|entry| (entry.clone(), self.prove_member(entry)))
+            .collect();
 
-        for ledger_entry in ledger.iter() {
+        let delta = std::sync::Arc::new(std::sync::Mutex::new(0));
+
+        ledger.par_iter().for_each(|ledger_entry| {
             if self.search(ledger_entry).is_ok() {
-                for exchange_entry in exchange_entries.iter() {
-                    if self.prove_member(exchange_entry).is_ok() {
-                        delta += exchange_entry.entry_value();
+                exchange_entries.par_iter().for_each(|exchange_entry| {
+                    if let Some(prove_member_result) = membership_proof_cache.get(exchange_entry) {
+                        if prove_member_result.is_ok() {
+                            let mut delta_lock = delta.lock().unwrap();
+                            *delta_lock += exchange_entry.entry_value();
+                        }
+                    } else {
+                        unreachable!()
                     }
-                }
+                });
             }
-        }
+        });
 
-        Ok(delta)
+        Ok(*delta.clone().lock().unwrap())
+    }
+}
+impl DeltaAccumulator {
+    pub fn new(exchange_path: String) -> Self {
+        return Self {
+            exchange_secrets_path: exchange_path,
+        };
     }
 }
