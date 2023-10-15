@@ -99,7 +99,7 @@ def main(directory):
     for entry in os.listdir(directory):
         full_path = os.path.join(directory, entry)
         if os.path.isfile(full_path):
-            df = pd.read_csv(full_path, sep="\t", header=0)
+            df = pd.read_csv(full_path, header=0)
             dfs.append(df)
 
     combined_df = pd.concat(dfs, ignore_index=True)
