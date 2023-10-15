@@ -1,7 +1,9 @@
 use std::fs::OpenOptions;
 
 use csv::{Reader, Writer};
-use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
+use rayon::prelude::{
+    IndexedParallelIterator, IntoParallelRefIterator, ParallelBridge, ParallelIterator,
+};
 use serde::{Deserialize, Serialize};
 
 use crate::{errors::AddressPositionError, merkle_tree_entry::MerkleTreeEntry};
@@ -45,16 +47,20 @@ pub fn make_value_vector(filename: &str) -> Vec<i64> {
 /// __The current implementation forces the returned Vec to be a `Vec<String>`. If
 /// you need the value column call the `make_value_vector` function__
 pub fn make_address_vector(file_name: &str) -> Vec<String> {
-    //TODO: Remove unwrap and handle errors with match construct
-    let mut rdr: Reader<std::fs::File> = csv::Reader::from_path(file_name).unwrap();
-    let records: Vec<CSVRecord> = rdr
-        .deserialize()
-        .map(|result| result.expect("Error parsing CSV record"))
+    let mut rdr = csv::Reader::from_path(file_name).unwrap();
+
+    let records: Vec<String> = rdr
+        .deserialize::<CSVRecord>()
+        .par_bridge()
+        .filter_map(|result| {
+            match result {
+                Ok(record) => Some(record.addresses.clone()), // Only successful deserializations will be included.
+                Err(_) => unreachable!(),
+            }
+        })
         .collect();
+
     records
-        .par_iter()
-        .map(|record| record.addresses.clone())
-        .collect()
 }
 /// Retrieve the address and value columns in the dataframe as vectors
 pub fn addresses_and_values_as_vectors(file_name: &str) -> (Vec<String>, Vec<i64>) {
