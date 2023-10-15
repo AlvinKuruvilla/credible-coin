@@ -1,8 +1,7 @@
 //! An accumulator is a one way hash function that certifies that candidates are a member of a set without revealing the individual members of the set.
 //!
-//! This crate implements 2 types of accumulators:
-//! 1. Merkle Trees
-//! 2. Binary Accumulators
+//! This crate currently implements:
+//! 1. [`Delta Accumulator`](crate::accumulator::value_delta::DeltaAccumulator)
 
 use crate::merkle_tree_entry::MerkleTreeEntry;
 use anyhow::Result;
@@ -15,26 +14,32 @@ pub struct MembershipProof {
 }
 /// Common Functionality an accumulator should have
 pub trait AbstractAccumulator {
-    /// Prove that a [`coin::Coin`] is a member of a particular [`MembershipProof`]. For example,
-    /// we have 2 concrete implementors of the [`MembershipProof`] trait
-    /// 1. [`rs_merkle::MerkleProof`]
-    /// 2. `BinaryAccumulatorProof`
-    /// By providing a Generic parameter `M` on the function signature we specify that we will return a type `M` which has this trait as its bound (so either  [`rs_merkle::MerkleProof`] or `BinaryAccumulatorProof`)
+    /// Prove that a [`Merkle Tree
+    /// Entry`](`crate::merkle_tree_entry::MerkleTreeEntry`) is a member of a
+    /// particular set by generating a [`Membership Proof`](MembershipProof).
+    /// These merkle tree entries could from a custom proof backend like emp-zk
+    /// or an existing crate like [`rs_merkle`].
     fn prove_member(&self, element: &MerkleTreeEntry) -> Result<MembershipProof>;
-    /// Verify the proof of any type implementing [`MembershipProof`]
+    /// Verify the provided [`Membership Proof`](MembershipProof)
     fn verify(&self, element_proof: MembershipProof);
-    /// Search for a particular [`MerkleTreeEntry`] and return it's position in the file
+    /// Search for a particular [`Merkle Tree Entry`](MerkleTreeEntry) and
+    /// return it's position in the file
     fn search(&self, entry: &MerkleTreeEntry) -> anyhow::Result<usize>;
-    /// Aggregate the final delta using the public ledger's entries and the entries from the exchange's secret set
-    /// This function follows a 2-step process to perform the delta aggregation:
-    /// 1. Search for each ledger address against the exchange's secret set, keeping only the addresses
-    /// in both
-    /// 2. For each relevant address then prove membership in the exchange set, using the above prove_member function
-    /// The delta is only accumulated for those addresses in which the membership proof is true (ie they are part of the set)
+    /// Aggregate the final delta using the public ledger's entries and the
+    /// entries from the exchange's secret set This function follows a 2-step
+    /// process to perform the delta aggregation:
+    /// 1. Search for each ledger address against the exchange's secret set,
+    /// keeping only the addresses in both
+    /// 2. For each relevant address then prove membership in the exchange set,
+    /// using the above prove_member function The delta is only accumulated for
+    /// those addresses in which the membership proof is true (ie they are part
+    /// of the set)
     fn aggregate(
         &self,
         ledger: Vec<MerkleTreeEntry>,
         exchange_entries: Vec<MerkleTreeEntry>,
     ) -> Result<i64>;
 }
+/// Our custom implementation of a delta accumulation proof using emp-zk as a
+/// zero-knowledge backend
 pub mod value_delta;
