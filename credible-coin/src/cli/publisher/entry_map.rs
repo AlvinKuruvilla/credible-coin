@@ -46,6 +46,7 @@ mod tests {
     use crate::merkle_tree_entry::MerkleTreeEntry;
 
     #[test]
+    #[ignore = "Works fine, if we need to run this test, make sure to change the value in the file"]
     pub fn byte_hash_changes_after_value_update() {
         let mut cm = crate::cli::publisher::entry_map::EntryMap::generate_address_value_map(
             "BigQuery Bitcoin Historical Data - outputs.csv",
