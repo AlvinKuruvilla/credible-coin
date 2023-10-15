@@ -3,6 +3,7 @@ use std::fmt;
 use std::io;
 use thiserror::Error;
 #[derive(Error, Debug)]
+/// Errors handling failures to connect to the Redis instance
 pub enum DBConnectorError {
     #[error("Redis error: {0}")]
     RedisConnectorError(#[from] redis::RedisError),
@@ -14,6 +15,7 @@ pub enum CliError {
     #[error("Empty argument provided at position {arg_position:?}")]
     EmptyArgument { arg_position: usize },
 }
+/// Errors that can occur when trying to resolve the position of an address from a file
 #[derive(Error, Debug)]
 pub enum AddressPositionError {
     #[error("no matching index found for value: {0}")]
@@ -78,8 +80,6 @@ impl StdError for CommandError {
 
 impl From<io::Error> for CommandError {
     fn from(error: io::Error) -> Self {
-        // You need to decide which variant to use here.
-        // For the example, I'm defaulting to CommandError::CommandError.
         CommandError::CommandError(error)
     }
 }
