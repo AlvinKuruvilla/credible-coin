@@ -12,6 +12,14 @@ use crate::{
 use anyhow::Result;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
 use std::collections::HashMap;
+/// In cryptographic protocols, an accumulator is a primitive that allows you to
+/// represent a set of elements and prove membership (or non-membership) without
+/// revealing which elements are in the set A Delta Accumulator is a variation
+/// on that idea but having a secret set of address and value pairs representing
+/// the exchange's secret set Then using the public ledger, the accumulator runs
+/// a membership on each of its entries finding all of the entries the exchange
+/// can prove membership of and gets their values This value becomes the value
+/// of the exchange's liabilities
 pub struct DeltaAccumulator {
     pub exchange_secrets_path: String,
 }
