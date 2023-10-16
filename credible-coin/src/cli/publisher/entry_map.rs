@@ -6,16 +6,84 @@ use indexmap::IndexMap;
 pub struct EntryMap {
     /// The `inner` type _must_ be an `IndexMap` so that insertion order can be maintained.
     /// This ensures that if a Merkle Tree is made from the map, we shouldn't get
-    /// proof verification crashes from misordered keys
+    /// proof verification crashes from unordered keys
     pub inner: IndexMap<String, i64>,
 }
 impl EntryMap {
+    /// Creates a new, empty `EntryMap`.
+    ///
+    /// # Returns
+    ///
+    /// Returns a default-initialized `EntryMap`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use credible_coin::cli::publisher::entry_map::EntryMap;
+    /// let entry_map = EntryMap::new();
+    /// ```
     pub fn new() -> Self {
         Self::default()
     }
+
+    /// Creates an `EntryMap` from an existing `IndexMap`.
+    ///
+    /// # Arguments
+    ///
+    /// * `map` - An `IndexMap` from which to initialize the `EntryMap`.
+    ///
+    /// # Returns
+    ///
+    /// Returns an `EntryMap` containing the data from the provided `IndexMap`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// use indexmap::IndexMap;
+    /// use credible_coin::cli::publisher::entry_map::EntryMap;
+    ///
+    /// let mut map = IndexMap::new();
+    /// map.insert("key".to_string(), 42);
+    /// let entry_map = EntryMap::from_map(map);
+    /// ```
     pub fn from_map(map: IndexMap<String, i64>) -> Self {
         Self { inner: map }
     }
+    /// Constructs an `EntryMap` from two separate vectors: one for keys and one for values.
+    ///
+    /// The vectors should be of the same length, and each key in the `key_vector` will be paired with the
+    /// corresponding value in the `value_vector` based on their positions.
+    ///
+    /// # Arguments
+    ///
+    /// * `key_vector` - A vector of `String` keys.
+    /// * `value_vector` - A vector of `i64` values.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if `key_vector` and `value_vector` have different lengths.
+    ///
+    /// # Note
+    ///
+    /// If a key occurs multiple times in the `key_vector`, only the last corresponding value from
+    /// `value_vector` will be stored in the resulting map. As a consequence, the returned map might have
+    /// fewer entries than the original vectors.
+    ///
+    /// # Returns
+    ///
+    /// Returns an `EntryMap` constructed from the provided vectors.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use credible_coin::cli::publisher::entry_map::EntryMap;
+    /// # use indexmap::IndexMap;
+    /// let keys = vec!["key1".to_string(), "key2".to_string()];
+    /// let values = vec![1, 2];
+    /// let entry_map = EntryMap::from_vectors(keys, values);
+    /// assert_eq!(entry_map.inner.get("key1"), Some(&1));
+    /// assert_eq!(entry_map.inner.get("key2"), Some(&2));
+    /// ```
     pub fn from_vectors(key_vector: Vec<String>, value_vector: Vec<i64>) -> Self {
         assert_eq!(key_vector.len(), value_vector.len());
         let mut map = IndexMap::new();
@@ -27,6 +95,35 @@ impl EntryMap {
         }
         Self { inner: map }
     }
+    /// Constructs an `EntryMap` by reading addresses and values from a CSV file.
+    ///
+    /// The CSV file should have two columns: one for addresses (keys) and one for values. Each address in the CSV file will be paired with the corresponding value based on their positions to construct the `EntryMap`.
+    ///
+    /// # Arguments
+    ///
+    /// * `filename` - The path to the CSV file containing addresses and values.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if the addresses and values vectors obtained from the CSV file have different lengths.
+    ///
+    /// # Note
+    ///
+    /// If an address occurs multiple times in the CSV file, only the last corresponding value will be stored in the resulting map. As a consequence, the returned map might have fewer entries than the rows in the CSV file.
+    ///
+    /// # Returns
+    ///
+    /// Returns an `EntryMap` constructed from the addresses and values in the provided CSV file.
+    ///
+    /// # Examples
+    ///
+    /// ```no_run
+    /// # use credible_coin::cli::publisher::entry_map::EntryMap;
+    /// let entry_map = EntryMap::generate_address_value_map("path/to/your/test.csv");
+    /// // Assert some conditions here based on your test.csv contents
+    /// // Example:
+    /// // assert_eq!(entry_map.inner.get("some_address_from_test_csv"), Some(&some_value_from_test_csv));
+    /// ```
     pub fn generate_address_value_map(filename: &str) -> Self {
         let (addresses, values) =
             crate::utils::csv_utils::addresses_and_values_as_vectors(filename);
@@ -34,7 +131,28 @@ impl EntryMap {
         println!("Values Length: {:?}", values.len());
         EntryMap::from_vectors(addresses, values)
     }
-
+    /// Replaces the value associated with the given address key in the `EntryMap`.
+    ///
+    /// If the address key is not present in the `EntryMap`, this method will panic.
+    ///
+    /// # Arguments
+    ///
+    /// * `address_key` - The address key whose value is to be replaced.
+    /// * `new_val` - The new value to associate with the given address key.
+    ///
+    /// # Panics
+    ///
+    /// This method will panic if the `address_key` is not present in the `EntryMap`.
+    ///
+    /// # Examples
+    ///
+    /// ```rust
+    /// # use credible_coin::cli::publisher::entry_map::EntryMap;
+    /// # use indexmap::IndexMap;
+    /// let mut entry_map = EntryMap::from_map(IndexMap::from([(String::from("address1"), 100i64)]));
+    /// entry_map.replace(String::from("address1"), 200);
+    /// assert_eq!(entry_map.inner.get(&String::from("address1")), Some(&200));
+    /// ```
     pub fn replace(&mut self, address_key: String, new_val: i64) {
         assert!(self.inner.contains_key(&address_key));
         self.inner
