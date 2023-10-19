@@ -5,10 +5,12 @@
 
 use crate::merkle_tree_entry::MerkleTreeEntry;
 use anyhow::Result;
+use serde::{Deserialize, Serialize};
 /// A blanket struct type representing a "proof of membership".
 /// A membership proof is an interactive proof for a statement of the form x in L, where L is some formal language.
 /// The only information held in the type is whether the statement is a member of the language (ie the element is
 /// part of the secret set, if considering from the perspective of a membership proof)
+#[derive(Serialize, Deserialize)]
 pub struct MembershipProof {
     is_member: bool,
 }

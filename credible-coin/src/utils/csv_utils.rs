@@ -54,7 +54,7 @@ pub fn make_address_vector(file_name: &str) -> Vec<String> {
         .par_bridge()
         .filter_map(|result| {
             match result {
-                Ok(record) => Some(record.addresses.clone()), // Only successful deserializations will be included.
+                Ok(record) => Some(record.addresses.clone()), // Only successful deserialization will be included.
                 Err(_) => unreachable!(),
             }
         })

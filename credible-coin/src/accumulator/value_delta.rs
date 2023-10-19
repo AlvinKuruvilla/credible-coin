@@ -7,7 +7,9 @@ use crate::{
     },
     handle_output,
     merkle_tree_entry::MerkleTreeEntry,
-    utils::{csv_utils::get_address_position, get_project_root},
+    utils::{
+        binary_serializer::BinarySerializer, csv_utils::get_address_position, get_project_root,
+    },
 };
 use anyhow::Result;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -60,20 +62,44 @@ impl AbstractAccumulator for DeltaAccumulator {
         ledger: Vec<MerkleTreeEntry>,
         exchange_entries: Vec<MerkleTreeEntry>,
     ) -> Result<i64> {
-        // Create a HashMap to cache the results of prove_member for each exchange_entry
-        let membership_proof_cache: HashMap<_, _> = exchange_entries
-            .iter()
-            .map(|entry| (entry.clone(), self.prove_member(entry)))
-            .collect();
+        let path: &str = "prove_member.bin";
 
-        let delta = std::sync::Arc::new(std::sync::Mutex::new(0));
+        let membership_proof_cache: HashMap<MerkleTreeEntry, Result<MembershipProof, String>>;
+
+        if !BinarySerializer::path_exists(path) {
+            membership_proof_cache = exchange_entries
+                .iter()
+                .map(|entry| {
+                    (
+                        entry.clone(),
+                        self.prove_member(entry).map_err(|e| e.to_string()),
+                    )
+                })
+                .collect();
+            BinarySerializer::serialize_to_file(&membership_proof_cache, path);
+        } else {
+            membership_proof_cache = BinarySerializer::deserialize_from_file(path);
+        }
+
+        // Convert the string errors back to anyhow::Error
+        let membership_proof_cache = membership_proof_cache
+            .into_iter()
+            .map(|(k, v)| match v {
+                Ok(value) => (k, Ok(value)),
+                Err(err_string) => (k, Err(anyhow::anyhow!(err_string))),
+            })
+            .collect::<HashMap<_, Result<MembershipProof, anyhow::Error>>>();
+
+        let delta: std::sync::Arc<std::sync::Mutex<i64>> =
+            std::sync::Arc::new(std::sync::Mutex::new(0));
 
         ledger.par_iter().for_each(|ledger_entry| {
             if self.search(ledger_entry).is_ok() {
                 exchange_entries.par_iter().for_each(|exchange_entry| {
+                    let local_delta = delta.clone();
                     if let Some(prove_member_result) = membership_proof_cache.get(exchange_entry) {
                         if prove_member_result.is_ok() {
-                            let mut delta_lock = delta.lock().unwrap();
+                            let mut delta_lock = local_delta.lock().unwrap();
                             *delta_lock += exchange_entry.entry_value();
                         }
                     } else {
@@ -83,7 +109,8 @@ impl AbstractAccumulator for DeltaAccumulator {
             }
         });
 
-        Ok(*delta.clone().lock().unwrap())
+        let final_delta = *delta.lock().unwrap();
+        Ok(final_delta)
     }
 }
 impl DeltaAccumulator {

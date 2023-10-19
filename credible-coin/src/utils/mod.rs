@@ -5,6 +5,7 @@ use std::io::ErrorKind;
 use std::io::{self};
 use std::path::PathBuf;
 
+pub mod binary_serializer;
 pub mod csv_utils;
 pub mod file_generators;
 /// A helper trait to convert vector and slice types
