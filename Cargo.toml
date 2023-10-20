@@ -1,0 +1,8 @@
+[workspace]
+members = [
+	"credible-coin",
+]
+
+[profile.release]
+debug=true
+

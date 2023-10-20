@@ -3,3 +3,5 @@ env/
 *.svg
 *.cpp
 .vscode
+target/
+Cargo.lock
