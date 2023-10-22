@@ -12,8 +12,7 @@ use crate::{
     },
 };
 use anyhow::Result;
-use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 /// In cryptographic protocols, an accumulator is a primitive that allows you to
 /// represent a set of elements and prove membership (or non-membership) without
 /// revealing which elements are in the set A Delta Accumulator is a variation
@@ -51,6 +50,12 @@ impl AbstractAccumulator for DeltaAccumulator {
         panic!("This function should not be called");
     }
     fn search(&self, entry: &MerkleTreeEntry) -> Result<usize> {
+        println!(
+            "{:?}, {:?}: {:?}",
+            entry.entry_address(),
+            entry.entry_value(),
+            get_address_position(&self.exchange_secrets_path, entry.entry_address(), None)?
+        );
         Ok(get_address_position(
             &self.exchange_secrets_path,
             entry.entry_address(),
@@ -93,17 +98,19 @@ impl AbstractAccumulator for DeltaAccumulator {
         let delta: std::sync::Arc<std::sync::Mutex<i64>> =
             std::sync::Arc::new(std::sync::Mutex::new(0));
 
-        ledger.par_iter().for_each(|ledger_entry| {
+        ledger.iter().for_each(|ledger_entry: &MerkleTreeEntry| {
             if self.search(ledger_entry).is_ok() {
-                exchange_entries.par_iter().for_each(|exchange_entry| {
+                exchange_entries.iter().for_each(|exchange_entry| {
                     let local_delta = delta.clone();
-                    if let Some(prove_member_result) = membership_proof_cache.get(exchange_entry) {
-                        if prove_member_result.is_ok() {
+                    match membership_proof_cache.get(exchange_entry) {
+                        Some(_) => {
                             let mut delta_lock = local_delta.lock().unwrap();
                             *delta_lock += exchange_entry.entry_value();
+                            // println!("\x1B[32mIn the happy path!\x1B[0m");
                         }
-                    } else {
-                        unreachable!()
+                        None => {
+                            println!("\x1B[31mFirst sad path!\x1B[0m");
+                        } // Do nothing if is_member is false
                     }
                 });
             }
@@ -118,5 +125,64 @@ impl DeltaAccumulator {
         return Self {
             exchange_secrets_path: exchange_path,
         };
+    }
+    pub fn get_all_matching_address_entries(
+        &self,
+        ledger_entries: Vec<MerkleTreeEntry>,
+        address: String,
+    ) -> Vec<MerkleTreeEntry> {
+        let mut res: Vec<MerkleTreeEntry> = Vec::new();
+
+        for entry in ledger_entries {
+            if entry.entry_address() == address {
+                res.push(entry);
+            }
+        }
+        res
+    }
+    pub fn get_all_unique_addresses(&self, entries: Vec<MerkleTreeEntry>) -> HashSet<String> {
+        let mut unique_addresses = HashSet::new();
+        for entry in entries {
+            unique_addresses.insert(entry.entry_address());
+        }
+        unique_addresses
+    }
+    pub fn aggregate_v2(&self, ledger: Vec<MerkleTreeEntry>) -> Result<i64> {
+        let mut delta = 0;
+
+        // Organize ledger entries by address for efficient lookups using references
+        let mut ledger_by_address: std::collections::HashMap<String, Vec<&MerkleTreeEntry>> =
+            std::collections::HashMap::new();
+        for entry in &ledger {
+            ledger_by_address
+                .entry(entry.entry_address())
+                .or_insert_with(Vec::new)
+                .push(entry);
+        }
+
+        for addr in ledger_by_address.keys() {
+            // If the address is not in exchange secrets, continue to the next
+            if get_address_position(&self.exchange_secrets_path, addr.to_string(), None).is_err() {
+                continue;
+            }
+
+            // If the address is valid, process its related ledger entries
+            if let Some(matching_entries) = ledger_by_address.get(addr) {
+                for entry_match in matching_entries {
+                    match self.prove_member(entry_match) {
+                        Ok(member) => {
+                            if member.is_member {
+                                delta += entry_match.entry_value();
+                            }
+                        }
+                        Err(_) => {
+                            println!("Could not find entry: {:?}", entry_match);
+                        }
+                    }
+                }
+            }
+        }
+
+        Ok(delta)
     }
 }

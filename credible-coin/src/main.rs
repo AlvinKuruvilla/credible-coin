@@ -9,9 +9,9 @@ fn main() -> Result<()> {
     let publisher_set: Vec<credible_coin::merkle_tree_entry::MerkleTreeEntry> =
         credible_coin::merkle_tree_entry::MerkleTreeEntry::create_entries_vector(v1, v2);
     let a = credible_coin::utils::csv_utils::get_exchange_addresses_and_values_from_file(&args[2]);
-    let exchange_set = credible_coin::utils::csv_utils::into_merkle_tree_entries(a);
+    // let exchange_set = credible_coin::utils::csv_utils::into_merkle_tree_entries(a);
     let d = DeltaAccumulator::new(args[1].clone());
-    let res = d.aggregate(publisher_set, exchange_set)?;
+    let res = d.aggregate_v2(publisher_set)?;
     println!("{}", res);
     Ok(())
 }
