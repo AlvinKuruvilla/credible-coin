@@ -12,7 +12,8 @@ use crate::{
     },
 };
 use anyhow::Result;
-use std::collections::{HashMap, HashSet};
+use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
+use std::collections::HashMap;
 /// In cryptographic protocols, an accumulator is a primitive that allows you to
 /// represent a set of elements and prove membership (or non-membership) without
 /// revealing which elements are in the set A Delta Accumulator is a variation
@@ -25,10 +26,17 @@ pub struct DeltaAccumulator {
     pub exchange_secrets_path: String,
 }
 impl AbstractAccumulator for DeltaAccumulator {
-    fn prove_member(&self, element: &MerkleTreeEntry) -> Result<MembershipProof> {
-        let pos = self.search(element)?;
+    fn prove_member(
+        &self,
+        element: &MerkleTreeEntry,
+        pos: Option<usize>,
+    ) -> Result<MembershipProof> {
         let mut sub_map: HashMap<String, String> = HashMap::new();
-        sub_map.insert("actual_leaf_index".to_string(), pos.to_string());
+        if pos.is_none() {
+            let pos = self.search(element)?;
+            sub_map.insert("actual_leaf_index".to_string(), pos.to_string());
+        }
+        sub_map.insert("actual_leaf_index".to_string(), pos.unwrap().to_string());
         let generator = CppFileGenerator::new(&get_project_root().unwrap(), sub_map);
         if let Err(err) = generator.generate("gen") {
             eprintln!("Error generating C++ file: {:?}", err);
@@ -77,7 +85,7 @@ impl AbstractAccumulator for DeltaAccumulator {
                 .map(|entry| {
                     (
                         entry.clone(),
-                        self.prove_member(entry).map_err(|e| e.to_string()),
+                        self.prove_member(entry, None).map_err(|e| e.to_string()),
                     )
                 })
                 .collect();
@@ -123,66 +131,75 @@ impl AbstractAccumulator for DeltaAccumulator {
 impl DeltaAccumulator {
     pub fn new(exchange_path: String) -> Self {
         return Self {
-            exchange_secrets_path: exchange_path,
+            exchange_secrets_path: exchange_path.into(),
         };
     }
     pub fn get_all_matching_address_entries(
         &self,
-        ledger_entries: Vec<MerkleTreeEntry>,
-        address: String,
+        ledger_entries: &[MerkleTreeEntry],
+        address: &str,
     ) -> Vec<MerkleTreeEntry> {
-        let mut res: Vec<MerkleTreeEntry> = Vec::new();
+        ledger_entries
+            .par_iter()
+            .filter(|entry| entry.entry_address() == address)
+            .cloned()
+            .collect()
+    }
+    pub fn precompute_matching_entries(
+        &self,
+        ledger_entries: &[MerkleTreeEntry],
+    ) -> HashMap<String, Vec<MerkleTreeEntry>> {
+        let mut map: HashMap<String, Vec<MerkleTreeEntry>> = HashMap::new();
 
         for entry in ledger_entries {
-            if entry.entry_address() == address {
-                res.push(entry);
-            }
+            map.entry(entry.entry_address())
+                .or_insert_with(Vec::new)
+                .push(entry.clone());
         }
-        res
+
+        map
     }
-    pub fn get_all_unique_addresses(&self, entries: Vec<MerkleTreeEntry>) -> HashSet<String> {
-        let mut unique_addresses = HashSet::new();
-        for entry in entries {
-            unique_addresses.insert(entry.entry_address());
-        }
-        unique_addresses
-    }
-    pub fn aggregate_v2(&self, ledger: Vec<MerkleTreeEntry>) -> Result<i64> {
+
+    pub fn aggregate_v2(&self, ledger_file: String, ledger: Vec<MerkleTreeEntry>) -> Result<i64> {
+        // Precompute the matching entries for each unique address
+        let matching_entries_map = self.precompute_matching_entries(&ledger);
+
+        let unique_addresses = matching_entries_map.keys();
         let mut delta = 0;
 
-        // Organize ledger entries by address for efficient lookups using references
-        let mut ledger_by_address: std::collections::HashMap<String, Vec<&MerkleTreeEntry>> =
-            std::collections::HashMap::new();
-        for entry in &ledger {
-            ledger_by_address
-                .entry(entry.entry_address())
-                .or_insert_with(Vec::new)
-                .push(entry);
-        }
-
-        for addr in ledger_by_address.keys() {
-            // If the address is not in exchange secrets, continue to the next
-            if get_address_position(&self.exchange_secrets_path, addr.to_string(), None).is_err() {
-                continue;
-            }
-
-            // If the address is valid, process its related ledger entries
-            if let Some(matching_entries) = ledger_by_address.get(addr) {
+        for addr in unique_addresses {
+            if let Some(matching_entries) = matching_entries_map.get(addr) {
+                // println!("{:?}", matching_entries);
                 for entry_match in matching_entries {
-                    match self.prove_member(entry_match) {
-                        Ok(member) => {
-                            if member.is_member {
+                    // println!("Current entry: {:?}", entry_match);
+                    let pos = get_address_position(
+                        &ledger_file,
+                        entry_match.entry_address(),
+                        Some(entry_match.entry_value()),
+                    )?;
+                    match self.prove_member(&entry_match, Some(pos)) {
+                        Ok(member_proof) => match member_proof.is_member {
+                            true => {
+                                println!(
+                                    "Current delta: {:?} + value: {:?}",
+                                    delta,
+                                    entry_match.entry_value()
+                                );
                                 delta += entry_match.entry_value();
                             }
-                        }
-                        Err(_) => {
-                            println!("Could not find entry: {:?}", entry_match);
-                        }
+                            false => {
+                                println!(
+                                    "Entry is not member  {:?}: {:?}",
+                                    entry_match.entry_address(),
+                                    entry_match.entry_value()
+                                );
+                            }
+                        },
+                        Err(_) => println!("Failed to prove member {}", entry_match),
                     }
                 }
             }
         }
-
         Ok(delta)
     }
 }
