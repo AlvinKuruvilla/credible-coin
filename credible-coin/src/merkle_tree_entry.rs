@@ -6,6 +6,8 @@
 //! values (used by the exchange client to maintain a secret set). In either
 //! case, these entries end up in a merkle tree.
 
+use std::fmt::{self, Display};
+
 use rs_merkle::{algorithms::Sha256, Hasher};
 use serde::{Deserialize, Serialize};
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
@@ -158,6 +160,11 @@ impl MerkleTreeEntry {
     /// ```
     pub fn hash_bytes(bytevector: Vec<u8>) -> [u8; 32] {
         Sha256::hash(&bytevector)
+    }
+}
+impl Display for MerkleTreeEntry {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        write!(f, "Address: {}, Value: {}", self.coin_address, self.value)
     }
 }
 #[cfg(test)]
