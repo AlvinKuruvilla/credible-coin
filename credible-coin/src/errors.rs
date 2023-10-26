@@ -18,8 +18,8 @@ pub enum CliError {
 /// Errors that can occur when trying to resolve the position of an address from a file
 #[derive(Error, Debug)]
 pub enum AddressPositionError {
-    #[error("no matching index found for value: {0}")]
-    NoMatchingIndexForValue(i64),
+    #[error("no matching index found for address: {0}, value: {1}")]
+    NoMatchingIndexForValue(String, i64),
     #[error("no matching address found: {0}")]
     NoMatchingAddress(String),
     #[error("no matching indices found for {address} with value: {value}")]

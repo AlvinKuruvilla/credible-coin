@@ -1,9 +1,7 @@
 use std::fs::OpenOptions;
 
 use csv::{Reader, Writer};
-use rayon::prelude::{
-    IndexedParallelIterator, IntoParallelRefIterator, ParallelBridge, ParallelIterator,
-};
+use rayon::prelude::{IndexedParallelIterator, IntoParallelRefIterator, ParallelIterator};
 use serde::{Deserialize, Serialize};
 
 use crate::{errors::AddressPositionError, merkle_tree_entry::MerkleTreeEntry};
@@ -42,21 +40,20 @@ pub fn make_value_vector(filename: &str) -> Vec<i64> {
         .collect();
     records.par_iter().map(|record| record.value).collect()
 }
-/// Given a filename as input return the
-/// address column as a `Vec<String>`
-/// __The current implementation forces the returned Vec to be a `Vec<String>`. If
-/// you need the value column call the `make_value_vector` function__
+/// Given a filename as input return the address column as a `Vec<String>`
+/// NOTE 1: The current implementation forces the returned Vec to be a
+/// `Vec<String>`. If you need the value column call the `make_value_vector`
+/// function
+/// NOTE 2: We cannot parallelize this function because doing par_bridge when
+/// deserializing messes with element order guarantees vector gives
 pub fn make_address_vector(file_name: &str) -> Vec<String> {
     let mut rdr = csv::Reader::from_path(file_name).unwrap();
 
     let records: Vec<String> = rdr
         .deserialize::<CSVRecord>()
-        .par_bridge()
-        .filter_map(|result| {
-            match result {
-                Ok(record) => Some(record.addresses.clone()), // Only successful deserialization will be included.
-                Err(_) => unreachable!(),
-            }
+        .filter_map(|result| match result {
+            Ok(record) => Some(record.addresses.clone()),
+            Err(_) => unreachable!(),
         })
         .collect();
 
@@ -78,9 +75,8 @@ pub fn get_address_position(
 
     if let Some(val) = value {
         let values = make_value_vector(filename); // This function should properly handle errors and possibly return Result
-
         find_matching_indices(&address_vec, &public_address, &values, &val)
-            .map_err(|_| AddressPositionError::NoMatchingIndexForValue(val))
+            .map_err(|_| AddressPositionError::NoMatchingIndexForValue(public_address, val))
     } else {
         address_vec
             .par_iter()
