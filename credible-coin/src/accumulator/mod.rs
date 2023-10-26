@@ -18,10 +18,15 @@ pub struct MembershipProof {
 pub trait AbstractAccumulator {
     /// Prove that a [`Merkle Tree
     /// Entry`](`crate::merkle_tree_entry::MerkleTreeEntry`) is a member of a
-    /// particular set by generating a [`Membership Proof`](MembershipProof).
-    /// These merkle tree entries could from a custom proof backend like emp-zk
-    /// or an existing crate like [`rs_merkle`].
-    fn prove_member(&self, element: &MerkleTreeEntry) -> Result<MembershipProof>;
+    /// particular set by generating a [`Membership Proof`](MembershipProof),
+    /// optionally providing a position for the entry. These merkle tree entries
+    /// could from a custom proof backend like emp-zk or an existing crate like
+    /// [`rs_merkle`].
+    fn prove_member(
+        &self,
+        element: &MerkleTreeEntry,
+        pos: Option<usize>,
+    ) -> Result<MembershipProof>;
     /// Verify the provided [`Membership Proof`](MembershipProof)
     fn verify(&self, element_proof: MembershipProof);
     /// Search for a particular [`Merkle Tree Entry`](MerkleTreeEntry) and
