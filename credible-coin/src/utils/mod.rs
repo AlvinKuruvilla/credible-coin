@@ -1,16 +1,20 @@
+//! A module containing various utilities for csv parsing, file generation, and serialization
 use std::env;
 use std::ffi::OsString;
 use std::fs::read_dir;
 use std::io::ErrorKind;
 use std::io::{self};
 use std::path::PathBuf;
-
+/// A simple binary serializer
 pub mod binary_serializer;
+/// Helper functions for bitcoin
+pub mod bitcoin_utils;
+/// A set of csv helper functions
 pub mod csv_utils;
-pub mod file_generators;
 /// A helper trait to convert vector and slice types
 /// to Vec<&[u8]> to be hashed by the sha crate
 pub mod hashable;
+/// Helper functions to work with the merkle tree from `rs::merkle`
 pub mod merkle_utils;
 
 /// Get the project root (relative to closest Cargo.lock file)
