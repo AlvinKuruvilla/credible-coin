@@ -1,13 +1,20 @@
 //! A type holding all of our configuration properties. Namely:
 //! 1. emp_path: The path to the emp project test directory where we put generated c++ files for membership proofs
 //! 2. emp_root_path: The path to the emp project root directory
+use std::sync::RwLock;
+
 use config::{Config, ConfigError, File, FileFormat};
 use serde::Deserialize;
+
 #[derive(Debug, Deserialize, Clone)]
 struct CredibleConfig {
     emp_path: String,
     emp_root_path: String,
 }
+lazy_static! {
+    static ref CONFIG: RwLock<Option<CredibleConfig>> = RwLock::new(None);
+}
+
 fn get_config() -> Result<CredibleConfig, ConfigError> {
     let config = Config::builder()
         .add_source(File::new("credible_config", FileFormat::Yaml))
@@ -46,6 +53,18 @@ pub fn get_emp_copy_path() -> String {
 /// This function will panic if it fails to fetch the configuration.
 
 pub fn get_emp_root_path() -> String {
+    {
+        let config_read = CONFIG.read().unwrap();
+        if let Some(conf) = &*config_read {
+            return conf.emp_root_path.clone();
+        }
+    }
+
     let config = get_config().unwrap();
-    config.emp_root_path
+    let path = config.emp_root_path.clone();
+
+    let mut config_write = CONFIG.write().unwrap();
+    *config_write = Some(config);
+
+    path
 }

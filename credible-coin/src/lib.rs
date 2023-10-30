@@ -81,6 +81,9 @@
 //! Currently the plan is to implement this system for Bitcoin, however, this crate should be built so
 //! that it should relatively easy to implement for other cryptocurrency exchanges
 
+#[macro_use]
+extern crate lazy_static;
+
 pub mod accumulator;
 pub mod cli;
 pub mod credible_config;
