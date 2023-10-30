@@ -9,7 +9,7 @@ use crate::emp::executor::{execute_compiled_binary, execute_make_install};
 use crate::utils::csv_utils::get_address_position;
 use crate::utils::get_project_root;
 use crate::utils::{
-    csv_utils::append_record, file_generators::generate_address_with_provided_public_key,
+    bitcoin_utils::generate_address_with_provided_public_key, csv_utils::append_record,
 };
 use crate::{handle_output, render_file_preview};
 use bitcoin::PublicKey;
@@ -25,11 +25,11 @@ use rs_merkle::MerkleTree;
 use std::collections::HashMap;
 
 #[derive(Default)]
-pub struct ExchangeShell {
+pub(crate) struct ExchangeShell {
     tree: Option<MerkleTree<Sha256>>,
     filename: String,
 }
-pub fn shell_commands() -> Vec<String> {
+pub(crate) fn shell_commands() -> Vec<String> {
     vec![
         "exit".into(),
         "createPrivateKey".into(),
@@ -47,10 +47,10 @@ pub fn shell_commands() -> Vec<String> {
 /// provide a valid CSV file of their coin addresses and values and it
 /// gets created into an in-memory merkle tree.
 impl ExchangeShell {
-    pub fn new(tree: Option<MerkleTree<Sha256>>, filename: String) -> Self {
+    pub(crate) fn new(tree: Option<MerkleTree<Sha256>>, filename: String) -> Self {
         Self { tree, filename }
     }
-    pub fn start(&mut self) -> anyhow::Result<()> {
+    pub(crate) fn start(&mut self) -> anyhow::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
         let commands = shell_commands();
         let completer: Box<DefaultCompleter> =

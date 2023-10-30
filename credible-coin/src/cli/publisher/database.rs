@@ -5,8 +5,19 @@ use std::path::Path;
 use std::sync::Mutex;
 
 use crate::cli::publisher::shell::PublisherShell;
-use crate::utils::file_generators::generate_n_address_value_pairs;
+use crate::utils::bitcoin_utils::generate_n_address_value_pairs;
 use crate::utils::merkle_utils::load_merkle_leaves_from_csv;
+/// Represents the CLI command for creating a publisher database of a specific size.
+///
+/// This struct encapsulates the details needed to generate a dataset with a given
+/// number of rows and save it to a specified file. It primarily serves as a
+/// command configuration for data-creation operations.
+///
+/// # Fields
+///
+/// * `out_filename`: The path where the generated data should be saved.
+/// * `row_count`: The number of rows of data to generate.
+///
 
 #[derive(Parser, Debug)]
 #[command(infer_subcommands = true)]
@@ -14,6 +25,14 @@ pub struct CreateCmd {
     out_filename: String,
     row_count: u32,
 }
+/// Represents the CLI command for loading a publisher database.
+///
+/// This struct encapsulates the necessary details to load data from a specified csv file.
+///
+/// # Fields
+///
+/// * `filename`: The path to the csv file from which the data should be loaded.
+
 #[derive(Parser, Debug)]
 #[command(infer_subcommands = true)]
 pub struct LoadCmd {
@@ -21,6 +40,7 @@ pub struct LoadCmd {
 }
 impl CreateCmd {
     // TODO: This needs to return an eyere::Result<()> at the end
+    /// Create the db
     pub fn run(self) {
         // 1. Check that the out_file doesn't already exist and handle errors
         // 2. Create the new file
@@ -29,6 +49,7 @@ impl CreateCmd {
 }
 impl LoadCmd {
     // TODO: This needs to return an eyere::Result<()> at the end
+    /// Load the db
     pub fn run(self) {
         // 1. Check if the provided csv path exists and handle errors
         assert!(Path::new(&self.filename)
@@ -81,7 +102,7 @@ pub fn create_db(filename: &str, row_count: u32) {
     writer.flush().unwrap();
 }
 
-// Loads a merkle tree from the coin leaves
+/// Loads a merkle tree from the coin leaves
 pub fn load_db(coin_leaves: Vec<[u8; 32]>) -> MerkleTree<Sha256> {
     MerkleTree::<Sha256>::from_leaves(&coin_leaves)
 }

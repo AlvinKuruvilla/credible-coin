@@ -1,6 +1,10 @@
 #![deny(
     clippy::all,
     rustdoc::all,
+    missing_docs,
+    missing_debug_implementations,
+    unreachable_pub,
+    rustdoc::broken_intra_doc_links,
     clippy::await_holding_lock,
     clippy::char_lit_as_u8,
     clippy::checked_conversions,

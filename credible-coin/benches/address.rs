@@ -1,4 +1,4 @@
-use credible_coin::utils::file_generators::generate_n_address_value_pairs;
+use credible_coin::utils::bitcoin_utils::generate_n_address_value_pairs;
 use criterion::{criterion_group, criterion_main, Criterion};
 
 pub fn bench_address_generation(c: &mut Criterion) {

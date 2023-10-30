@@ -5,8 +5,15 @@ use std::path::Path;
 use crate::errors::{CppGenError, FileError};
 
 use super::template_engine::TemplateEngine;
-
-/// C++ file generator.
+/// A utility struct for generating C++ files.
+///
+/// It uses a given template and outputs the generated files into a specified directory.
+///
+/// # Attributes
+///
+/// * `directory`: The output directory where the generated C++ files will be stored.
+/// * `template`: A template string used for generating the C++ file.
+#[derive(Debug)]
 pub struct CppFileGenerator {
     directory: String,
     template: String,

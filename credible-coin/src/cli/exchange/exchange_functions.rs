@@ -9,7 +9,7 @@ use crate::{
     cli::exchange::db_connector::insert_key_or_update, merkle_tree_entry::MerkleTreeEntry,
     utils::csv_utils::addresses_and_values_as_vectors,
 };
-/// Create a SECP256K1 Private Key
+/// Create a new SECP256K1 Private Key
 pub fn create_private_key() -> PublicKey {
     let s = Secp256k1::new();
     let key = PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);

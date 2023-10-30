@@ -2,10 +2,19 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::Path;
-
+/// A simple template engine which handles dynamic ad-hoc c++ script generation
+#[derive(Debug)]
 pub struct TemplateEngine {}
 
 impl TemplateEngine {
+    /// Constructs a new instance of the `TemplateEngine`.
+    ///
+    /// This function initializes and returns a new `TemplateEngine` object.
+    /// ```rust
+    /// use credible_coin::emp::template_engine::TemplateEngine;
+    /// let engine = TemplateEngine::new();
+    /// ```
+
     pub fn new() -> Self {
         TemplateEngine {}
     }

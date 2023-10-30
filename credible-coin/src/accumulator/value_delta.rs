@@ -22,7 +22,9 @@ use std::collections::HashMap;
 /// a membership on each of its entries finding all of the entries the exchange
 /// can prove membership of and gets their values This value becomes the value
 /// of the exchange's liabilities
+#[derive(Debug)]
 pub struct DeltaAccumulator {
+    /// The path to the exchange secrets file
     pub exchange_secrets_path: String,
 }
 impl AbstractAccumulator for DeltaAccumulator {
@@ -47,6 +49,7 @@ impl AbstractAccumulator for DeltaAccumulator {
         let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
         // println!("{:?}", output);
         let s = retrieve_membership_string(output)?;
+        // TODO: Replace with match
         if s == "leaf does have path to root" {
             Ok(MembershipProof { is_member: true })
         } else {
@@ -129,11 +132,19 @@ impl AbstractAccumulator for DeltaAccumulator {
     }
 }
 impl DeltaAccumulator {
+    /// Make a new `DeltaAccumulator` from the provided exchange_path string
     pub fn new(exchange_path: String) -> Self {
         return Self {
             exchange_secrets_path: exchange_path.into(),
         };
     }
+    /// Returns all `MerkleTreeEntry` items from the provided ledger entries that match the specified address.
+    ///
+    /// # Arguments
+    ///
+    /// * `ledger_entries` - A slice containing ledger entries to search through.
+    /// * `address` - The target address to match against the entries.
+    ///
     pub fn get_all_matching_address_entries(
         &self,
         ledger_entries: &[MerkleTreeEntry],
@@ -145,6 +156,18 @@ impl DeltaAccumulator {
             .cloned()
             .collect()
     }
+    /// Precomputes and groups ledger entries by their address.
+    ///
+    /// This function constructs a HashMap where the keys are addresses and the values are vectors of `MerkleTreeEntry` items
+    /// that share the same address. This allows for efficient retrieval of all entries associated with a particular address.
+    ///
+    /// # Arguments
+    ///
+    /// * `ledger_entries` - A slice containing ledger entries to be grouped by address.
+    ///
+    /// # Returns
+    ///
+    /// A `HashMap` where each key is an address string, and each value is a vector of `MerkleTreeEntry` items associated with that address.
     pub fn precompute_matching_entries(
         &self,
         ledger_entries: &[MerkleTreeEntry],
@@ -159,7 +182,7 @@ impl DeltaAccumulator {
 
         map
     }
-
+    /// Compute the delta accumulation for the given ledger file and set of ledger entries
     pub fn aggregate_v2(&self, ledger_file: String, ledger: Vec<MerkleTreeEntry>) -> Result<i64> {
         // Precompute the matching entries for each unique address
         let matching_entries_map = self.precompute_matching_entries(&ledger);

@@ -1,7 +1,7 @@
 use num_traits::Num;
 
 /// A trait implementing type conversions of primitive integer container types (slices and vectors)
-/// to Vec<&[u8]>, allowing them to be used as input to the sha hash crate
+/// to Vec<&[u8]>, allowing them to be used as input to the rs_merkle Sha256 hash function.
 ///
 /// Safety argument:
 /// 1. `as_ptr()`: The `self.as_ptr()` method returns a raw pointer to the start of the slice. Since
@@ -21,6 +21,33 @@ use num_traits::Num;
 ///    and safety.
 
 pub trait ToHashable {
+    /// Convert the implementing object into a vector of byte slices, suitable for hashing.
+    ///
+    /// This method facilitates the conversion of an implementing object (like a slice or vector of
+    /// integer types) into a `Vec<&[u8]>`. This conversion makes the object compatible for use with
+    /// hash functions that expect byte slices as input, rs_merkle Sha256 hash function.
+    ///
+    /// # Returns
+    ///
+    /// A `Vec<&[u8]>` where each element represents a byte slice view into the original data of the
+    /// implementing object.
+    ///
+    /// # Safety
+    ///
+    /// The method guarantees safety through the following precautions:
+    ///
+    /// 1. `as_ptr()`: Utilizes the `as_ptr()` method to fetch a raw pointer to the start of the slice
+    ///    without exposing it outside the function.
+    /// 2. **Type compatibility**: Converts the raw pointer from the original type (e.g., `*const u32`)
+    ///    to `*const u8`, and creates a temporary slice using `std::slice::from_raw_parts`. This ensures
+    ///    that the raw pointer points to valid memory and the specified length does not exceed the size
+    ///    of accessible memory.
+    /// 3. **Temporary scope**: By creating the temporary slice inside a confined block, it guarantees
+    ///    that the slice doesn't outlive its context, preserving safety.
+    /// 4. **Return value**: The function only returns safe references, encapsulated within a `Vec<&[u8]>`.
+    ///    This ensures the validity of these references and confines them within a safe boundary.
+    ///
+    /// NOTE: To see usage examples, check the tests folder
     fn to_hashable_vec_slice(&self) -> Vec<&[u8]>;
 }
 /// Convert a generic slice to a "hashable" Vec<&[u8]>

@@ -2,7 +2,7 @@ use indexmap::IndexMap;
 
 /// A ``EntryMap`` is a mapping of address to value pairs. It is safe to keep these mappings in plain-text
 /// because this map is only used by the publisher. Internally, this just uses a IndexMap<String,i64>
-#[derive(Default)]
+#[derive(Default, Debug)]
 pub struct EntryMap {
     /// The `inner` type _must_ be an `IndexMap` so that insertion order can be maintained.
     /// This ensures that if a Merkle Tree is made from the map, we shouldn't get
@@ -165,7 +165,7 @@ mod tests {
 
     #[test]
     #[ignore = "Works fine, if we need to run this test, make sure to change the value in the file"]
-    pub fn byte_hash_changes_after_value_update() {
+    fn byte_hash_changes_after_value_update() {
         let mut cm = crate::cli::publisher::entry_map::EntryMap::generate_address_value_map(
             "BigQuery Bitcoin Historical Data - outputs.csv",
         );
@@ -200,7 +200,7 @@ mod tests {
         assert_ne!(old_hash, new_hash);
     }
     #[test]
-    pub fn bytes_equality() {
+    fn bytes_equality() {
         let mut address: String = "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_owned();
         // &address.push_str(&22222.to_string());
         // assert_eq!(address, "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k22222".to_owned());

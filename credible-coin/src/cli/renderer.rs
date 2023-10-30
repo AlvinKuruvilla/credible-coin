@@ -48,6 +48,7 @@ pub(crate) fn render_txt(path: &str) {
         .unwrap();
 }
 #[macro_export]
+/// A macro to pretty print a file preview based on the file extension
 macro_rules! render_file_preview {
     ($path:expr) => {
         match crate::cli::exchange::asset_database::get_extension_from_filename($path) {

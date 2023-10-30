@@ -21,9 +21,11 @@
 use anyhow::{anyhow, ensure, Result};
 
 use crate::errors::CliError;
-
+/// Core functionality for the exchange shell and cli
 pub mod exchange;
+/// Core functionality for the publisher shell and cli
 pub mod publisher;
+/// Helper functions for pretty rendering
 #[macro_use]
 pub mod renderer;
 /// ``ArgsList`` abstracts away the responsibility of input sanitization away
@@ -33,6 +35,7 @@ pub mod renderer;
 /// 1. Checks the number of arguments passed in (aside from the command itself)
 /// 2. Checks for empty strings. In any error case we should return a matchable
 /// error type, so the shell can do error handling
+#[derive(Debug)]
 pub struct ArgsList {
     #[allow(dead_code)]
     args: Vec<String>,

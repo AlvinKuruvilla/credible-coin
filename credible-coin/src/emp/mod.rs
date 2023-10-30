@@ -5,8 +5,8 @@
 //! 2. Compile and run the generated file
 //! 3. Parse the output to see if the address was in the tree
 
-//! Handles generating cpp script files on the fly using [`Template
-//! Engine`](crate::emp::template_engine::TemplateEngine)
+/// Handles generating cpp script files on the fly using [`Template
+/// Engine`](crate::emp::template_engine::TemplateEngine)
 pub mod cpp_gen;
 // Handles executing the cpp script file within the emp environment. This
 // includes:

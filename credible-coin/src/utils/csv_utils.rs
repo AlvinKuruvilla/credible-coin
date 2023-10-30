@@ -7,6 +7,17 @@ use serde::{Deserialize, Serialize};
 use crate::{errors::AddressPositionError, merkle_tree_entry::MerkleTreeEntry};
 
 #[derive(Debug, Deserialize, Serialize)]
+/// Represents a record from a CSV file.
+///
+/// This struct models the data structure for a record in a CSV file, primarily
+/// focusing on an address and its associated value. The structure utilizes
+/// serde's alias attribute to accommodate CSVs with slightly different column names.
+///
+/// # Fields
+///
+/// - `addresses`: The source address from the CSV. Can be found under the "source_address" column.
+/// - `value`: The associated value for the given address. Can be located under either
+///   the "delta" or "satoshi" columns in the CSV.
 pub struct CSVRecord {
     #[serde(alias = "source_address")]
     addresses: String,
@@ -96,11 +107,31 @@ pub fn update_csv_value(filename: &str, address: String, value: i64) {
         if record.addresses == address {
             record.value = value;
         }
-        writer.serialize(record);
+        let _ = writer.serialize(record);
     }
     std::fs::remove_file(filename).unwrap();
     std::fs::rename("temp.csv", filename).unwrap();
 }
+/// Extracts exchange addresses and their associated values from a given CSV file.
+///
+/// This function reads the provided CSV file, extracts the `addresses` and `value`
+/// columns, and returns them as separate vectors.
+///
+/// # Parameters
+///
+/// - `file_name`: The path to the CSV file.
+///
+/// # Returns
+///
+/// A tuple containing two vectors:
+/// 1. A `Vec<String>` of extracted addresses.
+/// 2. A `Vec<i64>` of the corresponding values for each address.
+///
+/// # Panics
+///
+/// This function will panic if:
+/// - The provided file path is not found or there's an error in reading the file.
+/// - There's a problem in deserializing the CSV records into the `CSVRecord` struct.
 pub fn get_exchange_addresses_and_values_from_file(file_name: &str) -> (Vec<String>, Vec<i64>) {
     let mut rdr: Reader<std::fs::File> = csv::Reader::from_path(file_name).unwrap();
     let mut address_col = Vec::new();
@@ -133,8 +164,29 @@ pub fn append_record(file: &str, address: String, value: u64) {
     } else {
         log::error!("Failed to write record");
     }
-    writer.flush();
+    let _ = writer.flush();
 }
+/// Transforms paired vectors of strings and integers into a vector of `MerkleTreeEntry` structs.
+///
+/// This function takes a tuple of vectors containing strings and integers, and constructs
+/// a new vector of `MerkleTreeEntry` structs, where each entry is initialized with an
+/// element from both input vectors.
+///
+/// # Parameters
+///
+/// - `set`: A tuple containing:
+///   1. A `Vec<String>` of addresses or any string identifiers.
+///   2. A `Vec<i64>` of associated integer values.
+///
+/// # Returns
+///
+/// A `Vec<MerkleTreeEntry>`, where each entry is constructed from paired elements of
+/// the input vectors.
+///
+/// # Panics
+///
+/// This function assumes that both vectors in the input tuple are of the same length.
+/// If they are not, the function will panic due to the behavior of the `zip` function.
 pub fn into_merkle_tree_entries(set: (Vec<String>, Vec<i64>)) -> Vec<MerkleTreeEntry> {
     let (vec1, vec2) = set;
     let mut ret = Vec::new();

@@ -13,7 +13,7 @@ use std::process::{Command, Output};
 /// * `args` - The arguments for the command.
 ///
 /// # Return
-/// out: the output of the command
+/// The output of the command
 
 pub fn sudo_execute(dir: &str, command: &str, args: &[&str]) -> Result<Output, CommandError> {
     // KEEP: Example of how we can hopefully ask for sudo permissions
@@ -51,7 +51,7 @@ pub fn sudo_execute(dir: &str, command: &str, args: &[&str]) -> Result<Output, C
 /// * `args` - The arguments for the command.
 ///
 /// # Return
-/// out: the output of the command
+/// The output of the command
 
 pub fn execute(dir: &str, command: &str, args: &[&str]) -> Result<(), CommandError> {
     // Store the current directory.
@@ -75,6 +75,23 @@ pub fn execute(dir: &str, command: &str, args: &[&str]) -> Result<(), CommandErr
 
     Ok(())
 }
+
+/// Executes the `make install` command with multi-threading support.
+///
+/// This function leverages the number of available CPU cores to speed up the
+/// compilation and installation process using the `-j` flag.
+///
+/// # Remarks
+///
+/// The function assumes that `ccache` is being used for caching and speeding up
+/// recompilation. This is determined externally via environment variables.
+/// Refer to [this StackOverflow answer](https://stackoverflow.com/a/37828605) for more details.
+///
+/// # Returns
+///
+/// Returns a `Result` wrapping the command's output. In case of any issues during execution,
+/// it returns a `CommandError`.
+///
 pub fn execute_make_install() -> Result<Output, CommandError> {
     // Ccache should already be being used because I exported the environment
     // variable and saw the performance difference
@@ -82,10 +99,45 @@ pub fn execute_make_install() -> Result<Output, CommandError> {
     let num_jobs = num_cpus::get().to_string();
     sudo_execute(&get_emp_root_path(), "make", &["install", "-j", &num_jobs])
 }
+/// Executes the `make install` command with multi-threading support.
+///
+/// This function leverages the number of available CPU cores to speed up the
+/// compilation and installation process using the `-j` flag.
+///
+/// # Remarks
+///
+/// The function assumes that `ccache` is being used for caching and speeding up
+/// recompilation. This is determined externally via environment variables.
+/// Refer to [this StackOverflow answer](https://stackoverflow.com/a/37828605) for more details.
+///
+/// # Returns
+///
+/// Returns a `Result` wrapping the command's output. In case of any issues during execution,
+/// it returns a `CommandError`.
+///
 pub fn execute_compiled_binary(binary_path: String) -> Result<Output, CommandError> {
     sudo_execute(&get_emp_root_path(), "./run", &[&binary_path])
 }
 #[macro_export]
+/// Handles the output of a command executed through `std::process::Command`.
+///
+/// This macro processes the `Result<Output, E>` from a command execution.
+/// If the command ran successfully, it checks the exit status.
+/// - If the command succeeded, it does nothing.
+/// - If the command failed, it prints the command's standard error.
+/// If there was an error while trying to run the command (e.g., command not found), it prints that error.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::process::Command;
+///
+/// use credible_coin::handle_output;
+///
+/// let result = Command::new("ls").arg("-l").output();
+/// handle_output!(result);
+/// ```
+///
 macro_rules! handle_output {
     ($output:expr) => {
         match $output {
@@ -105,6 +157,49 @@ macro_rules! handle_output {
         }
     };
 }
+/// Retrieves the membership string from the output of a command.
+///
+/// This function expects the command output to contain a line with the keyword "leaf".
+/// It extracts this line and returns it as a `String`.
+/// If no line with the keyword "leaf" is found, it returns an empty string.
+///
+/// # Parameters
+///
+/// - `output`: The output from a command execution.
+///
+/// # Returns
+///
+/// - `Ok(String)`: The line from the command output that contains the keyword "leaf", or an empty string if not found.
+/// - `Err(CommandError)`: If there was an error executing the command.
+///
+/// # Examples
+///
+///
+///
+/// ```no_run
+/// /// Assuming the command executed produces the following output:
+/// // some random text
+/// // leaf: example_data
+/// // more random text
+/// use std::process::{Command, Output};
+/// use std::os::unix::process::ExitStatusExt;
+/// use credible_coin::emp::executor::retrieve_membership_string;
+/// use credible_coin::errors::CommandError;
+/// fn mocked_command() -> Result<Output, CommandError> {
+///     Ok(Output {
+///         status: std::process::ExitStatus::from_raw(0),
+///         stdout: b"some random text\nleaf: example_data\nmore random text".to_vec(),
+///         stderr: vec![],
+///     })
+/// }
+///
+/// let output = mocked_command();
+/// let membership = retrieve_membership_string(output).unwrap();
+/// assert_eq!(membership, "leaf: example_data");
+/// ```
+///
+/// Note: The example uses a mocked command execution function for demonstration purposes.
+
 pub fn retrieve_membership_string(
     output: Result<Output, CommandError>,
 ) -> Result<String, CommandError> {

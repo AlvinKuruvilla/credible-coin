@@ -14,11 +14,11 @@ use crate::render_file_preview;
 use crate::utils::merkle_utils::prove_membership;
 
 #[derive(Default)]
-pub struct PublisherShell {
+pub(crate) struct PublisherShell {
     tree: MerkleTree<Sha256>,
     filename: String,
 }
-pub fn shell_commands() -> Vec<String> {
+pub(crate) fn shell_commands() -> Vec<String> {
     vec![
         "clear".into(),
         "exit".into(),
@@ -34,10 +34,10 @@ pub fn shell_commands() -> Vec<String> {
 /// provide a valid CSV file of their coin addresses and values and it
 /// gets created into an in-memory merkle tree.
 impl PublisherShell {
-    pub fn new(tree: MerkleTree<Sha256>, filename: String) -> Self {
+    pub(crate) fn new(tree: MerkleTree<Sha256>, filename: String) -> Self {
         Self { tree, filename }
     }
-    pub fn start(&mut self) -> anyhow::Result<()> {
+    pub(crate) fn start(&mut self) -> anyhow::Result<()> {
         println!("Ctrl-D or Ctrl-C to quit");
         let commands = shell_commands();
         let completer: Box<DefaultCompleter> =

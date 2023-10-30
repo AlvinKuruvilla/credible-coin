@@ -10,6 +10,14 @@ use std::fmt::{self, Display};
 
 use rs_merkle::{algorithms::Sha256, Hasher};
 use serde::{Deserialize, Serialize};
+/// A simple wrapper type representing a piece of cryptocurrency
+///
+/// Contains a [`i64`] value and a [`String`] address This could represent a
+/// transaction on the public blockchain ledger (used by the publisher client)
+/// or it could also represent a set of accounts and their associated account
+/// values (used by the exchange client to maintain a secret set). In either
+/// case, these entries end up in a merkle tree.
+
 #[derive(Debug, Clone, Deserialize, Serialize, Default, PartialEq, Eq, Hash)]
 pub struct MerkleTreeEntry {
     coin_address: String,
@@ -184,7 +192,7 @@ mod tests {
         assert_ne!(coin_bytes, distinct_bytes);
     }
     #[test]
-    pub fn combine_address_and_value() {
+    fn combine_address_and_value() {
         let mut address: String = "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_owned();
         address.push_str(&22222.to_string());
         assert_eq!(

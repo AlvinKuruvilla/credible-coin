@@ -16,8 +16,6 @@ pub fn load_merkle_leaves_from_csv(file_name: &str) -> Vec<[u8; 32]> {
     for entry in vec_entries {
         serialized_entries.push(entry.serialize_entry());
     }
-    // println!("{:?}", u8coins);
-    // std::thread::sleep(std::time::Duration::from_millis(100000));
     let mut leaves_vec: Vec<[u8; 32]> = Vec::new();
     for entry in serialized_entries {
         leaves_vec.push(MerkleTreeEntry::hash_bytes(entry));

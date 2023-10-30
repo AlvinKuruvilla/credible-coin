@@ -8,13 +8,13 @@ use std::path::Path;
 pub(crate) struct BinarySerializer;
 
 impl BinarySerializer {
-    pub fn serialize_to_file<K: Serialize, V: Serialize>(data: &HashMap<K, V>, path: &str) {
+    pub(crate) fn serialize_to_file<K: Serialize, V: Serialize>(data: &HashMap<K, V>, path: &str) {
         let serialized = serialize(&data).unwrap();
         let mut file = File::create(path).unwrap();
         file.write_all(&serialized).unwrap();
     }
 
-    pub fn deserialize_from_file<K, V>(path: &str) -> HashMap<K, V>
+    pub(crate) fn deserialize_from_file<K, V>(path: &str) -> HashMap<K, V>
     where
         K: for<'de> Deserialize<'de> + std::cmp::Eq + std::hash::Hash,
         V: for<'de> Deserialize<'de>,
@@ -22,7 +22,7 @@ impl BinarySerializer {
         let file = File::open(path).unwrap();
         bincode::deserialize_from(file).unwrap()
     }
-    pub fn path_exists(path: &str) -> bool {
+    pub(crate) fn path_exists(path: &str) -> bool {
         Path::new(path).exists()
     }
 }
