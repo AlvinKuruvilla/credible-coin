@@ -1,5 +1,6 @@
 use std::collections::HashMap;
-use std::fs::{self};
+use std::fs::File;
+use std::io::{copy, BufReader, BufWriter};
 use std::path::Path;
 
 use crate::errors::{CppGenError, FileError};
@@ -100,15 +101,18 @@ int main(int argc, char **argv)
 ///
 /// * `filename` - The full filename including its extension.
 /// * `dest_dir` - The destination directory to which the file should be copied.
-pub fn copy_to_directory(filename: &str, dest_dir: &str) -> Result<(), FileError> {
+pub fn copy_to_directory(filename: &str, dest_dir: &str) -> std::io::Result<()> {
     let source_file_path = Path::new(filename);
+    let destination_path = Path::new(dest_dir).join(source_file_path.file_name().ok_or(
+        std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid filename"),
+    )?);
 
-    if !source_file_path.exists() {
-        return Err(FileError::FileNotFound);
-    }
-
-    let destination_path = Path::new(dest_dir).join(source_file_path.file_name().unwrap());
-    fs::copy(&source_file_path, destination_path)?;
+    // Using buffering
+    let src_file = File::open(&source_file_path)?;
+    let dst_file = File::create(&destination_path)?;
+    let mut reader = BufReader::new(src_file);
+    let mut writer = BufWriter::new(dst_file);
+    copy(&mut reader, &mut writer)?;
 
     Ok(())
 }
