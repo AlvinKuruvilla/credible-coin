@@ -187,42 +187,37 @@ impl DeltaAccumulator {
         // Precompute the matching entries for each unique address
         let matching_entries_map = self.precompute_matching_entries(&ledger);
 
-        let unique_addresses = matching_entries_map.keys();
         let mut delta = 0;
 
-        for addr in unique_addresses {
-            if let Some(matching_entries) = matching_entries_map.get(addr) {
-                // println!("{:?}", matching_entries);
-                for entry_match in matching_entries {
-                    // println!("Current entry: {:?}", entry_match);
-                    let pos = get_address_position(
-                        &ledger_file,
-                        entry_match.entry_address(),
-                        Some(entry_match.entry_value()),
-                    )?;
-                    match self.prove_member(&entry_match, Some(pos)) {
-                        Ok(member_proof) => match member_proof.is_member {
-                            true => {
-                                println!(
-                                    "Current delta: {:?} + value: {:?}",
-                                    delta,
-                                    entry_match.entry_value()
-                                );
-                                delta += entry_match.entry_value();
-                            }
-                            false => {
-                                println!(
-                                    "Entry is not member  {:?}: {:?}",
-                                    entry_match.entry_address(),
-                                    entry_match.entry_value()
-                                );
-                            }
-                        },
-                        Err(_) => println!("Failed to prove member {}", entry_match),
-                    }
+        let all_matching_entries = matching_entries_map.values().flatten();
+
+        for entry_match in all_matching_entries {
+            let pos = get_address_position(
+                &ledger_file,
+                entry_match.entry_address(),
+                Some(entry_match.entry_value()),
+            )?;
+
+            match self.prove_member(&entry_match, Some(pos)) {
+                Ok(member_proof) if member_proof.is_member => {
+                    println!(
+                        "Current delta: {:?} + value: {:?}",
+                        delta,
+                        entry_match.entry_value()
+                    );
+                    delta += entry_match.entry_value();
                 }
+                Ok(_) => {
+                    println!(
+                        "Entry is not member  {:?}: {:?}",
+                        entry_match.entry_address(),
+                        entry_match.entry_value()
+                    );
+                }
+                Err(_) => println!("Failed to prove member {}", entry_match),
             }
         }
+
         Ok(delta)
     }
 }
