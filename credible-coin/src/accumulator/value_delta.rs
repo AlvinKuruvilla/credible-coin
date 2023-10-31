@@ -47,8 +47,8 @@ impl AbstractAccumulator for DeltaAccumulator {
         let output = execute_make_install();
         handle_output!(output);
         let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
-        // println!("{:?}", output);
         let s = retrieve_membership_string(output)?;
+        println!("{:?}", s);
         // TODO: Replace with match
         if s == "leaf does have path to root" {
             Ok(MembershipProof { is_member: true })
