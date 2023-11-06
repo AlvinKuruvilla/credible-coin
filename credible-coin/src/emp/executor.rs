@@ -14,7 +14,7 @@ use std::process::{Command, Output};
 ///
 /// # Return
 /// The output of the command
-
+#[inline(always)]
 pub fn sudo_execute(dir: &str, command: &str, args: &[&str]) -> Result<Output, CommandError> {
     // KEEP: Example of how we can hopefully ask for sudo permissions
     // while the program is running
@@ -92,6 +92,7 @@ pub fn execute(dir: &str, command: &str, args: &[&str]) -> Result<(), CommandErr
 /// Returns a `Result` wrapping the command's output. In case of any issues during execution,
 /// it returns a `CommandError`.
 ///
+#[inline]
 pub fn execute_make_install() -> Result<Output, CommandError> {
     // Ccache should already be being used because I exported the environment
     // variable and saw the performance difference
@@ -115,6 +116,7 @@ pub fn execute_make_install() -> Result<Output, CommandError> {
 /// Returns a `Result` wrapping the command's output. In case of any issues during execution,
 /// it returns a `CommandError`.
 ///
+#[inline]
 pub fn execute_compiled_binary(binary_path: String) -> Result<Output, CommandError> {
     sudo_execute(&get_emp_root_path(), "./run", &[&binary_path])
 }
