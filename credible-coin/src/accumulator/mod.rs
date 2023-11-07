@@ -41,11 +41,7 @@ pub trait AbstractAccumulator {
     /// using the above prove_member function The delta is only accumulated for
     /// those addresses in which the membership proof is true (ie they are part
     /// of the set)
-    fn aggregate(
-        &self,
-        ledger: Vec<MerkleTreeEntry>,
-        exchange_entries: Vec<MerkleTreeEntry>,
-    ) -> Result<i64>;
+    fn aggregate(&self, ledger: String, ledger_entries: Vec<MerkleTreeEntry>) -> Result<i64>;
 }
 /// Our custom implementation of a delta accumulation proof using emp-zk as a
 /// zero-knowledge backend

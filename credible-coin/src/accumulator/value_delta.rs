@@ -73,62 +73,42 @@ impl AbstractAccumulator for DeltaAccumulator {
             None,
         )?)
     }
-    fn aggregate(
-        &self,
-        ledger: Vec<MerkleTreeEntry>,
-        exchange_entries: Vec<MerkleTreeEntry>,
-    ) -> Result<i64> {
-        let path: &str = "prove_member.bin";
+    fn aggregate(&self, ledger_file: String, ledger_entries: Vec<MerkleTreeEntry>) -> Result<i64> {
+        // Precompute the matching entries for each unique address
+        let matching_entries_map = self.precompute_matching_entries(&ledger_entries);
 
-        let membership_proof_cache: HashMap<MerkleTreeEntry, Result<MembershipProof, String>>;
+        let mut delta = 0;
 
-        if !BinarySerializer::path_exists(path) {
-            membership_proof_cache = exchange_entries
-                .iter()
-                .map(|entry| {
-                    (
-                        entry.clone(),
-                        self.prove_member(entry, None).map_err(|e| e.to_string()),
-                    )
-                })
-                .collect();
-            BinarySerializer::serialize_to_file(&membership_proof_cache, path);
-        } else {
-            membership_proof_cache = BinarySerializer::deserialize_from_file(path);
+        let all_matching_entries = matching_entries_map.values().flatten();
+
+        for entry_match in all_matching_entries {
+            let pos = get_address_position(
+                &ledger_file,
+                entry_match.entry_address(),
+                Some(entry_match.entry_value()),
+            )?;
+
+            match self.prove_member(&entry_match, Some(pos)) {
+                Ok(member_proof) if member_proof.is_member => {
+                    println!(
+                        "Current delta: {:?} + value: {:?}",
+                        delta,
+                        entry_match.entry_value()
+                    );
+                    delta += entry_match.entry_value();
+                }
+                Ok(_) => {
+                    println!(
+                        "Entry is not member  {:?}: {:?}",
+                        entry_match.entry_address(),
+                        entry_match.entry_value()
+                    );
+                }
+                Err(_) => println!("Failed to prove member {}", entry_match),
+            }
         }
 
-        // Convert the string errors back to anyhow::Error
-        let membership_proof_cache = membership_proof_cache
-            .into_iter()
-            .map(|(k, v)| match v {
-                Ok(value) => (k, Ok(value)),
-                Err(err_string) => (k, Err(anyhow::anyhow!(err_string))),
-            })
-            .collect::<HashMap<_, Result<MembershipProof, anyhow::Error>>>();
-
-        let delta: std::sync::Arc<std::sync::Mutex<i64>> =
-            std::sync::Arc::new(std::sync::Mutex::new(0));
-
-        ledger.iter().for_each(|ledger_entry: &MerkleTreeEntry| {
-            if self.search(ledger_entry).is_ok() {
-                exchange_entries.iter().for_each(|exchange_entry| {
-                    let local_delta = delta.clone();
-                    match membership_proof_cache.get(exchange_entry) {
-                        Some(_) => {
-                            let mut delta_lock = local_delta.lock().unwrap();
-                            *delta_lock += exchange_entry.entry_value();
-                            // println!("\x1B[32mIn the happy path!\x1B[0m");
-                        }
-                        None => {
-                            println!("\x1B[31mFirst sad path!\x1B[0m");
-                        } // Do nothing if is_member is false
-                    }
-                });
-            }
-        });
-
-        let final_delta = *delta.lock().unwrap();
-        Ok(final_delta)
+        Ok(delta)
     }
 }
 impl DeltaAccumulator {
@@ -181,43 +161,5 @@ impl DeltaAccumulator {
         }
 
         map
-    }
-    /// Compute the delta accumulation for the given ledger file and set of ledger entries
-    pub fn aggregate_v2(&self, ledger_file: String, ledger: Vec<MerkleTreeEntry>) -> Result<i64> {
-        // Precompute the matching entries for each unique address
-        let matching_entries_map = self.precompute_matching_entries(&ledger);
-
-        let mut delta = 0;
-
-        let all_matching_entries = matching_entries_map.values().flatten();
-
-        for entry_match in all_matching_entries {
-            let pos = get_address_position(
-                &ledger_file,
-                entry_match.entry_address(),
-                Some(entry_match.entry_value()),
-            )?;
-
-            match self.prove_member(&entry_match, Some(pos)) {
-                Ok(member_proof) if member_proof.is_member => {
-                    println!(
-                        "Current delta: {:?} + value: {:?}",
-                        delta,
-                        entry_match.entry_value()
-                    );
-                    delta += entry_match.entry_value();
-                }
-                Ok(_) => {
-                    println!(
-                        "Entry is not member  {:?}: {:?}",
-                        entry_match.entry_address(),
-                        entry_match.entry_value()
-                    );
-                }
-                Err(_) => println!("Failed to prove member {}", entry_match),
-            }
-        }
-
-        Ok(delta)
     }
 }

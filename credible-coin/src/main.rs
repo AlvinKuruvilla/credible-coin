@@ -1,5 +1,5 @@
 use anyhow::Result;
-use credible_coin::accumulator::value_delta::DeltaAccumulator;
+use credible_coin::accumulator::{value_delta::DeltaAccumulator, AbstractAccumulator};
 use std::env;
 fn main() -> Result<()> {
     let args: Vec<String> = env::args().collect();
@@ -11,7 +11,7 @@ fn main() -> Result<()> {
     let a = credible_coin::utils::csv_utils::get_exchange_addresses_and_values_from_file(&args[2]);
     // let exchange_set = credible_coin::utils::csv_utils::into_merkle_tree_entries(a);
     let d = DeltaAccumulator::new(args[1].clone());
-    let res = d.aggregate_v2(args[1].clone(), publisher_set)?;
+    let res = d.aggregate(args[1].clone(), publisher_set)?;
     println!("{}", res);
     Ok(())
 }
