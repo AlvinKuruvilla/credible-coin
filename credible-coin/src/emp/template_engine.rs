@@ -98,6 +98,7 @@ impl TemplateEngine {
     /// * The path cannot be created or accessed.
     /// * Writing to the file fails.
     ///
+    #[inline]
     pub fn write_to_file<P: AsRef<Path>>(
         finalized_template: &str,
         file_name: &str,
