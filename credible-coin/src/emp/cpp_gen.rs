@@ -2,10 +2,14 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{copy, BufReader, BufWriter};
 use std::path::Path;
+use std::sync::Mutex;
 
-use crate::errors::{CppGenError, FileError};
+use crate::errors::CppGenError;
 
 use super::template_engine::TemplateEngine;
+lazy_static! {
+    static ref COPY_LOCK: Mutex<()> = Mutex::new(());
+}
 /// A utility struct for generating C++ files.
 ///
 /// It uses a given template and outputs the generated files into a specified directory.
@@ -102,6 +106,7 @@ int main(int argc, char **argv)
 /// * `filename` - The full filename including its extension.
 /// * `dest_dir` - The destination directory to which the file should be copied.
 pub fn copy_to_directory(filename: &str, dest_dir: &str) -> std::io::Result<()> {
+    let _lock: std::sync::MutexGuard<'_, ()> = COPY_LOCK.lock().unwrap();
     let source_file_path = Path::new(filename);
     let destination_path = Path::new(dest_dir).join(source_file_path.file_name().ok_or(
         std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid filename"),
