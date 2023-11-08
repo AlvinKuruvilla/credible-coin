@@ -14,7 +14,6 @@ struct CredibleConfig {
 lazy_static! {
     static ref CONFIG: RwLock<Option<CredibleConfig>> = RwLock::new(None);
 }
-#[inline]
 fn get_config() -> Result<CredibleConfig, ConfigError> {
     let config = Config::builder()
         .add_source(File::new("credible_config", FileFormat::Yaml))

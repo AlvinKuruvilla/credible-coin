@@ -26,7 +26,6 @@ pub mod merkle_utils;
 /// };
 /// ```
 // adapted from https://docs.rs/project-root/latest/project_root/fn.get_project_root.html
-#[inline(always)]
 pub fn get_project_root() -> io::Result<String> {
     let path = env::current_dir()?;
     let mut path_ancestors = path.as_path().ancestors();
