@@ -2,6 +2,10 @@ use std::collections::HashMap;
 use std::fs::File;
 use std::io::{self, Write};
 use std::path::Path;
+use std::sync::Mutex;
+lazy_static! {
+    static ref WRITE_LOCK: Mutex<()> = Mutex::new(());
+}
 /// A simple template engine which handles dynamic ad-hoc c++ script generation
 #[derive(Debug)]
 pub struct TemplateEngine {}
@@ -98,12 +102,12 @@ impl TemplateEngine {
     /// * The path cannot be created or accessed.
     /// * Writing to the file fails.
     ///
-    #[inline]
     pub fn write_to_file<P: AsRef<Path>>(
         finalized_template: &str,
         file_name: &str,
         directory: P,
     ) -> io::Result<()> {
+        let _lock: std::sync::MutexGuard<'_, ()> = WRITE_LOCK.lock().unwrap();
         let path = directory.as_ref().join(format!("{}.cpp", file_name));
         let mut file = File::create(&path)?;
         file.write_all(finalized_template.as_bytes())?;
