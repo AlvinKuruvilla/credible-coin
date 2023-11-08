@@ -1,10 +1,11 @@
 //! A module containing various utilities for csv parsing, file generation, and serialization
 use std::env;
-use std::ffi::OsString;
 use std::fs::read_dir;
-use std::io::ErrorKind;
 use std::io::{self};
 use std::path::PathBuf;
+use std::sync::Mutex;
+
+use once_cell::sync::Lazy;
 /// A simple binary serializer
 pub mod binary_serializer;
 /// Helper functions for bitcoin
@@ -16,6 +17,7 @@ pub mod csv_utils;
 pub mod hashable;
 /// Helper functions to work with the merkle tree from `rs::merkle`
 pub mod merkle_utils;
+static PROJECT_ROOT: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
 
 /// Get the project root (relative to closest Cargo.lock file)
 /// ```rust
@@ -27,19 +29,28 @@ pub mod merkle_utils;
 /// ```
 // adapted from https://docs.rs/project-root/latest/project_root/fn.get_project_root.html
 pub fn get_project_root() -> io::Result<String> {
+    let mut root_cache = PROJECT_ROOT.lock().unwrap();
+
+    if let Some(ref root) = *root_cache {
+        return Ok(root.clone());
+    }
+
     let path = env::current_dir()?;
     let mut path_ancestors = path.as_path().ancestors();
 
     while let Some(p) = path_ancestors.next() {
         let has_cargo = read_dir(p)?
-            .into_iter()
-            .any(|p| p.unwrap().file_name() == OsString::from("Cargo.lock"));
+            .filter_map(|entry| entry.ok())
+            .any(|entry| entry.file_name() == "Cargo.lock");
         if has_cargo {
-            return Ok(PathBuf::from(p).to_str().unwrap().to_owned());
+            let root = PathBuf::from(p).to_str().unwrap().to_owned();
+            *root_cache = Some(root.clone());
+            return Ok(root);
         }
     }
+
     Err(io::Error::new(
-        ErrorKind::NotFound,
-        "Ran out of places to find Cargo.toml",
+        io::ErrorKind::NotFound,
+        "Ran out of places to find Cargo.lock",
     ))
 }
