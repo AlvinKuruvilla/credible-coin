@@ -11,7 +11,7 @@ use crate::utils::get_project_root;
 use crate::utils::{
     bitcoin_utils::generate_address_with_provided_public_key, csv_utils::append_record,
 };
-use crate::{handle_output, render_file_preview};
+use crate::{handle_output, handle_status, render_file_preview};
 use bitcoin::PublicKey;
 use flexi_logger::{AdaptiveFormat, Duplicate, FileSpec, Logger};
 use nu_ansi_term::Color;
@@ -146,7 +146,7 @@ impl ExchangeShell {
                         }
                         let a = copy_to_directory("gen.cpp", &get_emp_copy_path()).unwrap();
                         let output = execute_make_install();
-                        handle_output!(output);
+                        handle_status!(output);
                         let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
                         handle_output!(output);
                     }

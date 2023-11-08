@@ -1,8 +1,7 @@
 use crate::credible_config::get_emp_root_path;
 use crate::errors::CommandError;
-use std::env;
 use std::io::{self, Write};
-use std::process::{Command, Output};
+use std::process::{Command, ExitStatus, Output};
 
 /// Change the current directory to the specified one, execute the command with sudo, and revert back to the original directory.
 ///
@@ -13,36 +12,33 @@ use std::process::{Command, Output};
 /// * `args` - The arguments for the command.
 ///
 /// # Return
-/// The output of the command
-#[inline(always)]
-pub fn sudo_execute(dir: &str, command: &str, args: &[&str]) -> Result<Output, CommandError> {
+/// The exit status of the command or an error if the command was unable to be executed.
+pub fn sudo_execute(dir: &str, command: &str, args: &[&str]) -> Result<ExitStatus, CommandError> {
     // KEEP: Example of how we can hopefully ask for sudo permissions
     // while the program is running
     // https://users.rust-lang.org/t/how-to-execute-a-root-command-on-linux/50066/9
     //
-    // TODO: Check if this works in the shell environment as well
     // assert!(::std::process::Command::new("sudo")
     //     .arg("/usr/bin/id")
     //     .status()
     //     .unwrap()
     //     .success());
 
-    let output = Command::new("sudo")
+    let exit_status = Command::new("sudo")
     .current_dir(dir) // Set the current directory directly on the Command
     .arg(command)
     .args(args)
-    .output()?;
-
-    if !output.status.success() {
+    .status()?;
+    if !exit_status.success() {
         eprintln!(
             "Command exited with non-zero status: {:?}",
-            output.status.code()
+            exit_status.code()
         );
     }
 
-    Ok(output)
+    Ok(exit_status)
 }
-/// Change the current directory to the specified one, execute the command, and revert back to the original directory.
+/// Change the current directory to the specified one, execute the command with sudo, and revert back to the original directory.
 ///
 /// # Arguments
 ///
@@ -51,29 +47,26 @@ pub fn sudo_execute(dir: &str, command: &str, args: &[&str]) -> Result<Output, C
 /// * `args` - The arguments for the command.
 ///
 /// # Return
-/// The output of the command
+/// The command output or an error if the command was unable to be executed.
 
-pub fn execute(dir: &str, command: &str, args: &[&str]) -> Result<(), CommandError> {
-    // Store the current directory.
-    let current_dir = env::current_dir().map_err(CommandError::SetDirError)?;
-
-    // Change to the desired directory.
-    env::set_current_dir(dir).map_err(CommandError::SetDirError)?;
-
-    // Execute the command.
-    let status = Command::new(command)
-        .args(args)
-        .status()
-        .map_err(CommandError::CommandError)?;
-
-    if !status.success() {
-        eprintln!("Command exited with non-zero status: {:?}", status.code());
+pub fn sudo_execute_with_output(
+    dir: &str,
+    command: &str,
+    args: &[&str],
+) -> Result<Output, CommandError> {
+    let output = Command::new("sudo")
+    .current_dir(dir) // Set the current directory directly on the Command
+    .arg(command)
+    .args(args)
+    .output()?;
+    if !output.status.success() {
+        eprintln!(
+            "Command exited with non-zero status: {:?}",
+            output.status.code()
+        );
     }
 
-    // Revert back to the original directory.
-    env::set_current_dir(current_dir).map_err(CommandError::ResetDirError)?;
-
-    Ok(())
+    Ok(output)
 }
 
 /// Executes the `make install` command with multi-threading support.
@@ -92,8 +85,7 @@ pub fn execute(dir: &str, command: &str, args: &[&str]) -> Result<(), CommandErr
 /// Returns a `Result` wrapping the command's output. In case of any issues during execution,
 /// it returns a `CommandError`.
 ///
-#[inline]
-pub fn execute_make_install() -> Result<Output, CommandError> {
+pub fn execute_make_install() -> Result<ExitStatus, CommandError> {
     // Ccache should already be being used because I exported the environment
     // variable and saw the performance difference
     // See: https://stackoverflow.com/a/37828605
@@ -116,9 +108,8 @@ pub fn execute_make_install() -> Result<Output, CommandError> {
 /// Returns a `Result` wrapping the command's output. In case of any issues during execution,
 /// it returns a `CommandError`.
 ///
-#[inline]
 pub fn execute_compiled_binary(binary_path: String) -> Result<Output, CommandError> {
-    sudo_execute(&get_emp_root_path(), "./run", &[&binary_path])
+    sudo_execute_with_output(&get_emp_root_path(), "./run", &[&binary_path])
 }
 #[macro_export]
 /// Handles the output of a command executed through `std::process::Command`.
@@ -159,6 +150,46 @@ macro_rules! handle_output {
         }
     };
 }
+#[macro_export]
+/// Handles the status code of a command executed through `std::process::Command`.
+///
+/// This macro processes the `Result<ExitStatus, E>` from a command execution.
+/// If the command ran successfully, it checks the exit status.
+/// - If the command succeeded, it does nothing.
+/// - If the command failed, it prints the command's standard error.
+/// If there was an error while trying to run the command (e.g., command not found), it prints that error.
+///
+/// # Examples
+///
+/// ```no_run
+/// use std::process::Command;
+///
+/// use credible_coin::handle_status;
+///
+/// let result = Command::new("ls").arg("-l").status();
+/// handle_status!(result);
+/// ```
+///
+macro_rules! handle_status {
+    ($output:expr) => {
+        match $output {
+            std::result::Result::Ok(out) => {
+                if out.success() {
+                    // Print the standard output if the command succeeded
+                    // println!("{}", String::from_utf8_lossy(&out.stdout));
+                } else {
+                    // Print the standard error if the command failed
+                    eprintln!("Command Error Status: {}", &out.code().unwrap().to_string());
+                }
+            }
+            Err(error) => {
+                // Print the error if there's a problem running the command itself
+                eprintln!("Execution Error: {:?}", error);
+            }
+        }
+    };
+}
+
 /// Retrieves the membership string from the output of a command.
 ///
 /// This function expects the command output to contain a line with the keyword "leaf".

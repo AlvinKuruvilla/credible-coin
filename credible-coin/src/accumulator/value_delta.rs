@@ -5,11 +5,9 @@ use crate::{
         cpp_gen::{copy_to_directory, CppFileGenerator},
         executor::{execute_compiled_binary, execute_make_install, retrieve_membership_string},
     },
-    handle_output,
+    handle_status,
     merkle_tree_entry::MerkleTreeEntry,
-    utils::{
-        binary_serializer::BinarySerializer, csv_utils::get_address_position, get_project_root,
-    },
+    utils::{csv_utils::get_address_position, get_project_root},
 };
 use anyhow::Result;
 use rayon::prelude::{IntoParallelRefIterator, ParallelIterator};
@@ -43,9 +41,9 @@ impl AbstractAccumulator for DeltaAccumulator {
         if let Err(err) = generator.generate("gen") {
             eprintln!("Error generating C++ file: {:?}", err);
         }
-        let a = copy_to_directory("gen.cpp", &get_emp_copy_path()).unwrap();
+        let _ = copy_to_directory("gen.cpp", &get_emp_copy_path()).unwrap();
         let output = execute_make_install();
-        handle_output!(output);
+        handle_status!(output);
         let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
         let s = retrieve_membership_string(output)?;
         println!("{:?}", s);
@@ -57,7 +55,7 @@ impl AbstractAccumulator for DeltaAccumulator {
         }
     }
 
-    fn verify(&self, element_proof: MembershipProof) {
+    fn verify(&self, _element_proof: MembershipProof) {
         panic!("This function should not be called");
     }
     fn search(&self, entry: &MerkleTreeEntry) -> Result<usize> {
