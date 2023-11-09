@@ -59,11 +59,31 @@ impl TemplateEngine {
     /// ```
     ///
     pub fn render(&self, template: &str, placeholders: HashMap<String, String>) -> String {
-        let mut output = String::from(template);
-        for (key, value) in placeholders {
-            let token = format!("<<{}>>", key);
-            output = output.replace(&token, &value);
+        let mut output = String::with_capacity(template.len());
+        let mut temp = template;
+
+        while let Some(start_index) = temp.find("<<") {
+            let end_index = temp[start_index..].find(">>").map(|i| i + start_index + 2);
+            if let Some(end_index) = end_index {
+                let token = &temp[start_index..end_index];
+                let key = &token[2..token.len() - 2]; // Remove the delimiters to get the key
+                if let Some(value) = placeholders.get(key) {
+                    output.push_str(&temp[..start_index]); // Push the text before the placeholder
+                    output.push_str(value); // Substitute the placeholder
+                } else {
+                    output.push_str(&temp[..end_index]); // If no placeholder found, keep the original
+                }
+                temp = &temp[end_index..];
+            } else {
+                // If there is no closing ">>", just append the rest of the string
+                output.push_str(temp);
+                break;
+            }
         }
+
+        // Append any remaining part of the template that does not contain placeholders
+        output.push_str(temp);
+
         output
     }
 
