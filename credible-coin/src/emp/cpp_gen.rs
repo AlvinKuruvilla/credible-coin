@@ -1,6 +1,4 @@
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{copy, BufReader, BufWriter};
 use std::path::Path;
 use std::sync::Mutex;
 
@@ -112,12 +110,7 @@ pub fn copy_to_directory(filename: &str, dest_dir: &str) -> std::io::Result<()> 
         std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid filename"),
     )?);
 
-    // Using buffering
-    let src_file = File::open(&source_file_path)?;
-    let dst_file = File::create(&destination_path)?;
-    let mut reader = BufReader::new(src_file);
-    let mut writer = BufWriter::new(dst_file);
-    copy(&mut reader, &mut writer)?;
+    std::fs::copy(&source_file_path, &destination_path)?;
 
     Ok(())
 }
