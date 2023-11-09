@@ -1,6 +1,10 @@
 #[cfg(test)]
 mod tests {
+    use bitcoin::PublicKey;
     use credible_coin::cli::exchange::asset_database::create_exchange_database;
+    use credible_coin::cli::exchange::db_connector::{
+        insert_key_or_update, retrieve_public_key_bytes,
+    };
     use credible_coin::cli::publisher::database::{create_db, load_db};
     use credible_coin::utils::merkle_utils::load_merkle_leaves_from_csv;
     use rs_merkle::{algorithms::Sha256, MerkleProof};
@@ -81,5 +85,19 @@ mod tests {
         assert_eq!(s.as_bytes(), numeric_bytes);
         let b: i32 = bincode::deserialize(s.as_bytes()).unwrap();
         assert_eq!(a, b);
+    }
+    #[test]
+    #[ignore = "Only run when connected to the redis server"]
+    fn bytes_to_public_key() {
+        let s = secp256k1::Secp256k1::new();
+        let key = bitcoin::PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
+        let _ = insert_key_or_update(key.to_bytes());
+        let retrieved_bytes = retrieve_public_key_bytes();
+        let retrieved_key: PublicKey = PublicKey::from_slice(&retrieved_bytes.unwrap()).unwrap();
+        assert_eq!(key, retrieved_key);
+        let client = redis::Client::open("redis://127.0.0.1:6380/").unwrap();
+        // Remove the key
+        let mut conn = client.get_connection().unwrap();
+        redis::cmd("del").arg("private_key").execute(&mut conn);
     }
 }

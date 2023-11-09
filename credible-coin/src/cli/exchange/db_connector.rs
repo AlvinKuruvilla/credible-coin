@@ -55,22 +55,3 @@ pub fn retrieve_public_key_bytes() -> Result<Vec<u8>> {
         .context("Failed to retrieve key from Redis")?;
     Ok(key_bytes)
 }
-
-mod tests {
-    use bitcoin::PublicKey;
-
-    #[test]
-    #[ignore = "Only run when connected to the redis server"]
-    fn bytes_to_public_key() {
-        let s = secp256k1::Secp256k1::new();
-        let key = bitcoin::PublicKey::new(s.generate_keypair(&mut rand::thread_rng()).1);
-        let _ = super::insert_key_or_update(key.to_bytes());
-        let retrieved_bytes = super::retrieve_public_key_bytes();
-        let retrieved_key: PublicKey = PublicKey::from_slice(&retrieved_bytes.unwrap()).unwrap();
-        assert_eq!(key, retrieved_key);
-        let client = redis::Client::open("redis://127.0.0.1:6380/").unwrap();
-        // Remove the key
-        let mut conn = client.get_connection().unwrap();
-        redis::cmd("del").arg("private_key").execute(&mut conn);
-    }
-}
