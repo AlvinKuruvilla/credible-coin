@@ -5,9 +5,7 @@ use redis::Commands;
 /// exchange needs.
 ///
 /// The database is a redis server instance managing:
-/// 1. Random Number Generators
-/// 2. Private Keys
-/// 3. Address-Value Pairs (TODO)
+/// 1. Private Keys for address generation (our fallback is to generate a key on the fly)
 ///
 /// The current setup for the Random Number Generator and Private Key force there to be only
 /// 1 record present at a time. If the user calls the function to generate a private key multiple

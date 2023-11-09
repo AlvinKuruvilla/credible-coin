@@ -39,7 +39,7 @@ pub struct LoadCmd {
     filename: String,
 }
 impl CreateCmd {
-    // TODO: This needs to return an eyere::Result<()> at the end
+    // TODO: This needs to return a Result<()> at the end
     /// Create the db
     pub fn run(self) {
         // 1. Check that the out_file doesn't already exist and handle errors
@@ -48,7 +48,7 @@ impl CreateCmd {
     }
 }
 impl LoadCmd {
-    // TODO: This needs to return an eyere::Result<()> at the end
+    // TODO: This needs to return a Result<()> at the end
     /// Load the db
     pub fn run(self) {
         // 1. Check if the provided csv path exists and handle errors

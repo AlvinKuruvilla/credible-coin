@@ -57,6 +57,7 @@ pub fn make_value_vector(filename: &str) -> Vec<i64> {
 /// function
 /// NOTE 2: We cannot parallelize this function because doing par_bridge when
 /// deserializing messes with element order guarantees vector gives
+// TODO: Cache the vector?
 pub fn make_address_vector(file_name: &str) -> Vec<String> {
     let mut rdr = csv::Reader::from_path(file_name).unwrap();
 

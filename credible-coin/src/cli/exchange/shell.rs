@@ -144,7 +144,7 @@ impl ExchangeShell {
                         if let Err(err) = generator.generate("gen") {
                             eprintln!("Error generating C++ file: {:?}", err);
                         }
-                        let a = copy_to_directory("gen.cpp", &get_emp_copy_path()).unwrap();
+                        let _ = copy_to_directory("gen.cpp", &get_emp_copy_path()).unwrap();
                         let output = execute_make_install();
                         handle_status!(output);
                         let output = execute_compiled_binary("bin/test_bool_gen".to_owned());

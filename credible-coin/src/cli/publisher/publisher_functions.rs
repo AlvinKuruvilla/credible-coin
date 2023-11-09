@@ -108,7 +108,6 @@ pub fn update_coin(
         new_leaves.push(MerkleTreeEntry::hash_bytes(u8s));
     }
     let new_tree = MerkleTree::<Sha256>::from_leaves(&new_leaves);
-    //TODO: Remove unwrap
     let new_address_index = get_address_position(filename, _public_address.to_string(), None)?;
     let new_indices = vec![new_address_index];
     let new_proof = new_tree.proof(&new_indices);
