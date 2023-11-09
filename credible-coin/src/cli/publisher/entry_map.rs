@@ -161,8 +161,6 @@ impl EntryMap {
     }
 }
 mod tests {
-    use crate::merkle_tree_entry::MerkleTreeEntry;
-
     #[test]
     #[ignore = "Works fine, if we need to run this test, make sure to change the value in the file"]
     fn byte_hash_changes_after_value_update() {
@@ -174,12 +172,12 @@ mod tests {
             .get("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k")
             .unwrap();
         assert_eq!(old_value.to_owned(), 22222);
-        let old_entry = MerkleTreeEntry::new(
+        let old_entry = crate::merkle_tree_entry::MerkleTreeEntry::new(
             "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(),
             *old_value,
         );
         let old_bytes = old_entry.serialize_entry();
-        let old_hash = MerkleTreeEntry::hash_bytes(old_bytes);
+        let old_hash = crate::merkle_tree_entry::MerkleTreeEntry::hash_bytes(old_bytes);
 
         cm.replace(
             "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(),
@@ -190,13 +188,13 @@ mod tests {
             .get("bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k")
             .unwrap();
         assert_eq!(retrieved_value.to_owned(), 12345);
-        let entry = MerkleTreeEntry::new(
+        let entry = crate::merkle_tree_entry::MerkleTreeEntry::new(
             "bc1qushqa4nwpz2j0yftnpw08c5lj2u92mnah79q2k".to_string(),
             *retrieved_value,
         );
         assert_ne!(entry.serialize_entry(), old_entry.serialize_entry());
         let bytes = entry.serialize_entry();
-        let new_hash = MerkleTreeEntry::hash_bytes(bytes);
+        let new_hash = crate::merkle_tree_entry::MerkleTreeEntry::hash_bytes(bytes);
         assert_ne!(old_hash, new_hash);
     }
     #[test]
