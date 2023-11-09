@@ -39,18 +39,16 @@ pub struct LoadCmd {
     filename: String,
 }
 impl CreateCmd {
-    // TODO: This needs to return a Result<()> at the end
     /// Create the db
-    pub fn run(self) {
+    pub fn run(self) -> anyhow::Result<()> {
         // 1. Check that the out_file doesn't already exist and handle errors
         // 2. Create the new file
-        create_db(&self.out_filename, self.row_count);
+        return create_db(&self.out_filename, self.row_count);
     }
 }
 impl LoadCmd {
-    // TODO: This needs to return a Result<()> at the end
     /// Load the db
-    pub fn run(self) {
+    pub fn run(self) -> anyhow::Result<()> {
         // 1. Check if the provided csv path exists and handle errors
         assert!(Path::new(&self.filename)
             .try_exists()
@@ -61,11 +59,11 @@ impl LoadCmd {
         let merkle_leaves = load_merkle_leaves_from_csv(&self.filename);
         let coin_tree = load_db(merkle_leaves.clone());
         let mut publisher_shell = PublisherShell::new(coin_tree, self.filename);
-        let _ = publisher_shell.start();
+        publisher_shell.start()
     }
 }
 /// Creates csv file from random addresses and values
-pub fn create_db(filename: &str, row_count: u32) {
+pub fn create_db(filename: &str, row_count: u32) -> anyhow::Result<()> {
     assert!(
         !Path::new(filename)
             .try_exists()
@@ -89,17 +87,16 @@ pub fn create_db(filename: &str, row_count: u32) {
 
     let (addresses, values) = generate_n_address_value_pairs(row_count);
     // Create the file but don't save the handle
-    std::fs::File::create(filename).unwrap();
+    std::fs::File::create(filename)?;
     let mut writer = Writer::from_path(filename).unwrap();
     assert_eq!(addresses.len(), values.len());
-    writer.write_record(["addresses", "value"]).unwrap();
+    writer.write_record(["addresses", "value"])?;
 
     for (index, address) in addresses.iter().enumerate() {
-        writer
-            .write_record([address, &values[index].to_string()])
-            .unwrap();
+        writer.write_record([address, &values[index].to_string()])?;
     }
-    writer.flush().unwrap();
+    writer.flush()?;
+    Ok(())
 }
 
 /// Loads a merkle tree from the coin leaves

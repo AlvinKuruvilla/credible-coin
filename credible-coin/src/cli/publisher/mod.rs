@@ -61,10 +61,10 @@ impl PublisherCmd {
         // So we have 2 potential commands to run: load or create, now we just have to parse the arguments
         match self {
             Self::Create(cmd) => {
-                cmd.run();
+                cmd.run()?;
             }
             Self::Load(cmd) => {
-                cmd.run();
+                cmd.run()?;
             }
         }
         Ok(())

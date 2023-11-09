@@ -11,8 +11,7 @@ mod tests {
     #[test]
     #[ignore = "Flaky in the test environment, but empirically it has been fine"]
     pub fn create_db_test() {
-        // TODO: This should return a result with an error variant if the file already exists
-        create_db("test.csv", 20);
+        create_db("test.csv", 20).unwrap();
         assert!(Path::new("test.csv")
             .try_exists()
             .expect("Can't find the file"));
@@ -21,7 +20,7 @@ mod tests {
     #[test]
     pub fn repeat_publisher_db_create_test() {
         for _ in 0..1000 {
-            create_db("pub_test.csv", 20);
+            create_db("pub_test.csv", 20).unwrap();
             Path::new("pub_test.csv")
                 .try_exists()
                 .expect("Can't find the file");
