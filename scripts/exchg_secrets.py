@@ -92,11 +92,21 @@ def generate_unique_values(length):
     return list(value_set)
 
 
-def main(directory):
-    dfs = []
+def write_address_file(final_df):
+    script_dir = os.path.dirname(os.path.abspath(__file__))
+    # # This will ensure that no matter from what relative location we run the script from
+    # # we will always save to the folder in the same directory as the script
+    output_path = os.path.join(script_dir, "generated/exchange_secret.csv")
+    final_df.to_csv(output_path, index=False)
+    with open(
+        os.path.join(script_dir, "generated/out.txt"), "w", encoding="utf-8"
+    ) as f:
+        for element in final_df["satoshi"]:
+            f.write("%s\n" % str(element))
 
-    if not os.path.exists(directory) or not os.path.isdir(directory):
-        sys.exit(f"Error: The path {directory} does not exist or is not a directory.")
+
+def finalize_address_value_pairings(directory):
+    dfs = []
 
     for entry in os.listdir(directory):
         full_path = os.path.join(directory, entry)
@@ -124,28 +134,37 @@ def main(directory):
     assert is_power_of_two(
         final_df.shape[0]
     ), "Resulting DataFrame does not have a number of rows that is a power of two."
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    # # This will ensure that no matter from what relative location we run the script from
-    # # we will always save to the folder in the same directory as the script
-    output_path = os.path.join(script_dir, "generated/exchange_secret.csv")
-    final_df.to_csv(output_path, index=False)
-    with open(
-        os.path.join(script_dir, "generated/out.txt"), "w", encoding="utf-8"
-    ) as f:
-        for element in final_df["satoshi"]:
-            f.write("%s\n" % str(element))
+    return final_df
 
-        project_config = yaml.safe_load(
-            open(os.path.join(os.getcwd(), "credible_config.yaml"), "r")
-        )
-        # Should be able to overwrite the file if it exists
-        shutil.copy(
-            os.path.join(script_dir, "generated/out.txt"), project_config["emp_path"]
-        )
+
+def main(directory):
+    final_df = finalize_address_value_pairings(directory)
+    write_address_file(final_df)
+    project_config = yaml.safe_load(
+        open(os.path.join(os.getcwd(), "credible_config.yaml"), "r")
+    )
+    # Should be able to overwrite the file if it exists
+    shutil.copy(
+        os.path.join(os.path.dirname(os.path.abspath(__file__)), "generated/out.txt"),
+        project_config["emp_path"],
+    )
 
 
 if __name__ == "__main__":
     if len(sys.argv) != 2:
         sys.exit("Usage: python3 exchg_secrets.py <directory_path>")
-
+    if not os.path.exists(sys.argv[1]) or not os.path.isdir(sys.argv[1]):
+        sys.exit(f"Error: The path {sys.argv[1]} does not exist or is not a directory.")
+    project_config = yaml.safe_load(
+        open(os.path.join(os.getcwd(), "credible_config.yaml"), "r")
+    )
+    if project_config["exchange_secret_set_size"] < 1024:
+        sys.exit("Error: exchange_secret_set_size must be at least 1024.")
+    if is_power_of_two(project_config["exchange_secret_set_size"]) == False:
+        sys.exit("Error: exchange_secret_set_size must be a power of 2.")
+    print(
+        "Generating exchange secrets of size",
+        project_config["exchange_secret_set_size"],
+        "...",
+    )
     main(sys.argv[1])

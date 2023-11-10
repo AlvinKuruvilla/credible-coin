@@ -8,8 +8,13 @@
 # emp_root_path:
 # The path to the root of the emp project directory (where the main CMakeLists is)
 
+# exchange_secret_set_size:
+# The size of the secret set for the exchange (must be at leas 1024 and mus
+# be a power of 2)
+
 # NOTE: Make sure to copy this file and make a new configuration
 # file in the same directory as this sample (it must be named credible_config.yaml)
 # The credible_config.yaml should also be added to .gitignore (if not already)
 emp_path: "/path/to/emp/test/folder"
 emp_root_path: "/path/to/emp/test/folder"
+exchange_secret_set_size: 1024
