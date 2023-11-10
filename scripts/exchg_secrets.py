@@ -122,7 +122,11 @@ def finalize_address_value_pairings(directory):
         {"source_address": unique_addresses, "satoshi": unique_values}
     )
     current_row_count = len(unique_addresses)
-    needed_row_count = next_power_of_2(current_row_count)
+    project_config = yaml.safe_load(
+        open(os.path.join(os.getcwd(), "credible_config.yaml"), "r")
+    )
+
+    needed_row_count = next_power_of_2(project_config["exchange_secret_set_size"])
 
     extra_addresses = generate_unique_addresses(needed_row_count - current_row_count)
     extra_values = generate_unique_values(needed_row_count - current_row_count)
