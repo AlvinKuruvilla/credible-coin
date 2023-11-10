@@ -1,3 +1,4 @@
 pandas
 ecdsa
 base58
+pyyaml

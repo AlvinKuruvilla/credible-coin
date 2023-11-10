@@ -1,11 +1,13 @@
 import sys
 import hashlib
+import shutil
 import binascii
 import os
 import random
 import pandas as pd
 import ecdsa
 import base58
+import yaml
 
 
 def generate_bitcoin_address():
@@ -132,6 +134,14 @@ def main(directory):
     ) as f:
         for element in final_df["satoshi"]:
             f.write("%s\n" % str(element))
+
+        project_config = yaml.safe_load(
+            open(os.path.join(os.getcwd(), "credible_config.yaml"), "r")
+        )
+        # Should be able to overwrite the file if it exists
+        shutil.copy(
+            os.path.join(script_dir, "generated/out.txt"), project_config["emp_path"]
+        )
 
 
 if __name__ == "__main__":
