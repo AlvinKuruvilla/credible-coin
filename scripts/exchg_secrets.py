@@ -150,7 +150,7 @@ def main(directory):
     # Should be able to overwrite the file if it exists
     shutil.copy(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "generated/out.txt"),
-        project_config["emp_path"],
+        project_config["emp_root_path"],
     )
 
 
