@@ -5,7 +5,6 @@ use std::io::{self};
 use std::path::PathBuf;
 use std::sync::Mutex;
 
-use once_cell::sync::Lazy;
 /// A simple binary serializer
 pub mod binary_serializer;
 /// Helper functions for bitcoin
@@ -17,7 +16,9 @@ pub mod csv_utils;
 pub mod hashable;
 /// Helper functions to work with the merkle tree from `rs::merkle`
 pub mod merkle_utils;
-static PROJECT_ROOT: Lazy<Mutex<Option<String>>> = Lazy::new(|| Mutex::new(None));
+lazy_static! {
+    static ref PROJECT_ROOT: Mutex<Option<String>> = Mutex::new(None);
+}
 
 /// Get the project root (relative to closest Cargo.lock file)
 /// ```rust
