@@ -1,7 +1,7 @@
 use crate::credible_config::get_emp_root_path;
 use crate::errors::CommandError;
 use std::io::{self, Write};
-use std::process::{Command, ExitStatus, Output};
+use std::process::{Command, ExitStatus, Output, Stdio};
 
 /// Change the current directory to the specified one, execute the command with sudo, and revert back to the original directory.
 ///
@@ -28,6 +28,8 @@ pub fn sudo_execute(dir: &str, command: &str, args: &[&str]) -> Result<ExitStatu
     .current_dir(dir) // Set the current directory directly on the Command
     .arg(command)
     .args(args)
+    .stdout(Stdio::null()) // redirect everything from stdout to /dev/null
+    .stderr(Stdio::null()) // redirect everything from stderr to /dev/null
     .status()?;
     if !exit_status.success() {
         eprintln!(
