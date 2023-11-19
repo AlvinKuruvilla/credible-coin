@@ -189,7 +189,12 @@ impl ExchangeShell {
                             }
                             Err(err) => {
                                 log::error!("{:?}", err);
-                                continue;
+                                log::info!("Generating key ad-hoc");
+                                let s = secp256k1::Secp256k1::new();
+                                let key = bitcoin::PublicKey::new(
+                                    s.generate_keypair(&mut rand::thread_rng()).1,
+                                );
+                                retrieved_bytes = key.to_bytes();
                             }
                         };
 
