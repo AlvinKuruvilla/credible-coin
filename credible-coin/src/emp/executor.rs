@@ -2,7 +2,11 @@ use crate::credible_config::get_emp_root_path;
 use crate::errors::CommandError;
 use std::io::{self, Write};
 use std::process::{Command, ExitStatus, Output, Stdio};
-
+use std::sync::Mutex;
+lazy_static! {
+    static ref MAKE_LOCK: Mutex<()> = Mutex::new(());
+    static ref BINARY_EXEC_LOCK: Mutex<()> = Mutex::new(());
+}
 /// Change the current directory to the specified one, execute the command with sudo, and revert back to the original directory.
 ///
 /// # Arguments
@@ -88,6 +92,7 @@ pub fn sudo_execute_with_output(
 /// it returns a `CommandError`.
 ///
 pub fn execute_make_install() -> Result<ExitStatus, CommandError> {
+    let _lock: std::sync::MutexGuard<'_, ()> = MAKE_LOCK.lock().unwrap();
     // Ccache should already be being used because I exported the environment
     // variable and saw the performance difference
     // See: https://stackoverflow.com/a/37828605
@@ -111,6 +116,7 @@ pub fn execute_make_install() -> Result<ExitStatus, CommandError> {
 /// it returns a `CommandError`.
 ///
 pub fn execute_compiled_binary(binary_path: String) -> Result<Output, CommandError> {
+    let _lock: std::sync::MutexGuard<'_, ()> = BINARY_EXEC_LOCK.lock().unwrap();
     sudo_execute_with_output(&get_emp_root_path(), "./run", &[&binary_path])
 }
 #[macro_export]
