@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::Mutex;
+
+use tokio::fs;
+use tokio::sync::{Mutex, MutexGuard};
 
 use crate::errors::CppGenError;
 
@@ -103,14 +105,15 @@ int main(int argc, char **argv)
 ///
 /// * `filename` - The full filename including its extension.
 /// * `dest_dir` - The destination directory to which the file should be copied.
-pub fn copy_to_directory(filename: &str, dest_dir: &str) -> std::io::Result<()> {
-    let _lock: std::sync::MutexGuard<'_, ()> = COPY_LOCK.lock().unwrap();
+//TODO: Retest performance on a fresh boot
+pub async fn copy_to_directory(filename: &str, dest_dir: &str) -> std::io::Result<()> {
+    let _lock: MutexGuard<'_, ()> = COPY_LOCK.lock().await;
     let source_file_path = Path::new(filename);
     let destination_path = Path::new(dest_dir).join(source_file_path.file_name().ok_or(
         std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid filename"),
     )?);
 
-    std::fs::copy(&source_file_path, &destination_path)?;
+    fs::copy(&source_file_path, &destination_path).await?;
 
     Ok(())
 }
