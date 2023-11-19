@@ -75,10 +75,21 @@ impl AbstractAccumulator for DeltaAccumulator {
         let matching_entries_map = self.precompute_matching_entries(&ledger_entries);
 
         let mut delta = 0;
+        let reset = "\x1b[0m";
+        let green = "\x1b[32m";
 
         let all_matching_entries = matching_entries_map.values().flatten();
-
+        let mut entry_index = 0;
         for entry_match in all_matching_entries {
+            println!(
+                "Index {}{}{}: of: {}{}{}",
+                green,
+                entry_index,
+                reset,
+                green,
+                matching_entries_map.values().flatten().count(),
+                reset
+            );
             let pos = get_address_position(
                 &ledger_file,
                 entry_match.entry_address(),
@@ -103,6 +114,7 @@ impl AbstractAccumulator for DeltaAccumulator {
                 }
                 Err(_) => println!("Failed to prove member {}", entry_match),
             }
+            entry_index += 1;
         }
 
         Ok(delta)
