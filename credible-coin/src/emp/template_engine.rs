@@ -1,8 +1,9 @@
 use std::collections::HashMap;
-use std::fs::File;
-use std::io::{self, Write};
+use std::io::{self};
 use std::path::Path;
-use std::sync::Mutex;
+use tokio::fs::File;
+use tokio::io::AsyncWriteExt;
+use tokio::sync::Mutex;
 lazy_static! {
     static ref WRITE_LOCK: Mutex<()> = Mutex::new(());
 }
@@ -122,15 +123,15 @@ impl TemplateEngine {
     /// * The path cannot be created or accessed.
     /// * Writing to the file fails.
     ///
-    pub fn write_to_file<P: AsRef<Path>>(
+    pub async fn write_to_file<P: AsRef<Path>>(
         finalized_template: &str,
         file_name: &str,
         directory: P,
     ) -> io::Result<()> {
-        let _lock: std::sync::MutexGuard<'_, ()> = WRITE_LOCK.lock().unwrap();
+        let _lock = WRITE_LOCK.lock().await;
         let path = directory.as_ref().join(format!("{}.cpp", file_name));
-        let mut file = File::create(&path)?;
-        file.write_all(finalized_template.as_bytes())?;
+        let mut file = File::create(&path).await?;
+        file.write_all(finalized_template.as_bytes()).await?;
         Ok(())
     }
 }

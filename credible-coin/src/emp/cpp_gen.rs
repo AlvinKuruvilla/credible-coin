@@ -95,7 +95,11 @@ int main(int argc, char **argv)
 
     /// Generates a C++ file based on the configuration.
     pub fn generate(&self, filename: &str) -> Result<(), CppGenError> {
-        TemplateEngine::write_to_file(&self.template, filename, self.directory.clone())?;
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+            TemplateEngine::write_to_file(&self.template, filename, self.directory.clone())
+                .await
+                .unwrap();
+        });
         Ok(())
     }
 }
