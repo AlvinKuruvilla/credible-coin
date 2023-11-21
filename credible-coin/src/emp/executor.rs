@@ -267,3 +267,13 @@ pub fn retrieve_membership_string(
         }
     }
 }
+/// We heavily rely on ccache to speed up "make install"
+/// so we want the user to have it installed
+pub fn is_ccache_installed() -> bool {
+    Command::new("sh")
+        .arg("-c")
+        .arg("ccache --version")
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
+}
