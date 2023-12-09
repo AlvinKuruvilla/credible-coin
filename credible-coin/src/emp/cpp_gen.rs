@@ -50,7 +50,8 @@ int main(int argc, char **argv)
     setup_zk_bool<BoolIO<NetIO>>(ios, threads, party);
 
     bool **array_leaves = new bool *[8];
-    dynamic_leaf_array_init(8, array_leaves);
+    bool **addr_leaves = new bool *[8];
+    dynamic_leaf_array_init(8, array_leaves, addr_leaves);
 
     sort_leaves(array_leaves, 8, 256);
 
