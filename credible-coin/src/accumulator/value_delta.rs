@@ -36,6 +36,8 @@ impl AbstractAccumulator for DeltaAccumulator {
             let pos = self.search(element)?;
             sub_map.insert("actual_leaf_index".to_string(), pos.to_string());
         }
+        println!("pos: {:?}", pos);
+        // crate::_pause();
         sub_map.insert("actual_leaf_index".to_string(), pos.unwrap().to_string());
         let generator = CppFileGenerator::new(&get_project_root().unwrap(), sub_map);
         if let Err(err) = generator.generate("gen") {
@@ -97,8 +99,17 @@ impl AbstractAccumulator for DeltaAccumulator {
                 entry_match.entry_address(),
                 Some(entry_match.entry_value()),
             )?;
-
-            match self.prove_member(&entry_match, Some(pos)) {
+            println!("pos: {:?}", pos);
+            println!("Entry Match: {:?}", entry_match);
+            // crate::_pause();
+            //*TODO: Double check that the +1 ensures that the C++ merkle tree
+            //* picks the correct entry to prove membership
+            //*
+            //* NOTE: The +1 is very important to ensure that we account
+            //* for the lack of headers in the out.txt file that the c++ merkle tree
+            //* uses. This is particularly important because the entry it would try to prove
+            //* otherwise would be right above the one we actually want to prove
+            match self.prove_member(&entry_match, Some(pos + 1)) {
                 Ok(member_proof) if member_proof.is_member => {
                     println!(
                         "Current delta: {:?} + value: {:?}",
