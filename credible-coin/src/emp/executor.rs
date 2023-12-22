@@ -97,6 +97,8 @@ pub fn execute_make_install() -> Result<ExitStatus, CommandError> {
     // variable and saw the performance difference
     // See: https://stackoverflow.com/a/37828605
     let num_jobs = num_cpus::get().to_string();
+    // TODO: use just 'make' not 'make install' to avoid the overhead of sudo permissions
+    // https://stackoverflow.com/questions/16637860/why-make-before-make-install
     sudo_execute(&get_emp_root_path(), "make", &["install", "-j", &num_jobs])
 }
 /// Executes the `make install` command with multi-threading support.
