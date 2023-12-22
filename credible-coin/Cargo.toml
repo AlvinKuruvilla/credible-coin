@@ -30,6 +30,7 @@ rayon = "1.7.0"
 config = "0.13.3"
 bat = "0.24.0"
 lazy_static = "1.4.0"
+tokio = {version = "1.34.0", features = ["full"] }
 num_cpus = "1.16.0"
 [dev-dependencies]
 criterion = "0.5.1"

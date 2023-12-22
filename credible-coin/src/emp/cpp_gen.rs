@@ -1,6 +1,8 @@
 use std::collections::HashMap;
 use std::path::Path;
-use std::sync::Mutex;
+
+use tokio::fs;
+use tokio::sync::{Mutex, MutexGuard};
 
 use crate::errors::CppGenError;
 
@@ -48,7 +50,8 @@ int main(int argc, char **argv)
     setup_zk_bool<BoolIO<NetIO>>(ios, threads, party);
 
     bool **array_leaves = new bool *[8];
-    dynamic_leaf_array_init(8, array_leaves);
+    bool **addr_leaves = new bool *[8];
+    dynamic_leaf_array_init(8, array_leaves, addr_leaves);
 
     sort_leaves(array_leaves, 8, 256);
 
@@ -93,7 +96,11 @@ int main(int argc, char **argv)
 
     /// Generates a C++ file based on the configuration.
     pub fn generate(&self, filename: &str) -> Result<(), CppGenError> {
-        TemplateEngine::write_to_file(&self.template, filename, self.directory.clone())?;
+        tokio::runtime::Runtime::new().unwrap().block_on(async {
+            TemplateEngine::write_to_file(&self.template, filename, self.directory.clone())
+                .await
+                .unwrap();
+        });
         Ok(())
     }
 }
@@ -103,14 +110,15 @@ int main(int argc, char **argv)
 ///
 /// * `filename` - The full filename including its extension.
 /// * `dest_dir` - The destination directory to which the file should be copied.
-pub fn copy_to_directory(filename: &str, dest_dir: &str) -> std::io::Result<()> {
-    let _lock: std::sync::MutexGuard<'_, ()> = COPY_LOCK.lock().unwrap();
+//TODO: Retest performance on a fresh boot
+pub async fn copy_to_directory(filename: &str, dest_dir: &str) -> std::io::Result<()> {
+    let _lock: MutexGuard<'_, ()> = COPY_LOCK.lock().await;
     let source_file_path = Path::new(filename);
     let destination_path = Path::new(dest_dir).join(source_file_path.file_name().ok_or(
         std::io::Error::new(std::io::ErrorKind::InvalidInput, "Invalid filename"),
     )?);
 
-    std::fs::copy(&source_file_path, &destination_path)?;
+    fs::copy(&source_file_path, &destination_path).await?;
 
     Ok(())
 }

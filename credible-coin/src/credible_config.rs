@@ -35,8 +35,20 @@ fn get_config() -> Result<CredibleConfig, ConfigError> {
 ///
 /// This function will panic if it fails to fetch the configuration.
 pub fn get_emp_copy_path() -> String {
+    {
+        let config_read = CONFIG.read().unwrap();
+        if let Some(conf) = &*config_read {
+            return conf.emp_path.clone();
+        }
+    }
+
     let config = get_config().unwrap();
-    config.emp_path
+    let path = config.emp_path.clone();
+
+    let mut config_write = CONFIG.write().unwrap();
+    *config_write = Some(config);
+
+    path
 }
 /// Retrieves the root path for EMP from the configuration.
 ///

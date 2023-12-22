@@ -11,7 +11,7 @@ use crate::utils::get_project_root;
 use crate::utils::{
     bitcoin_utils::generate_address_with_provided_public_key, csv_utils::append_record,
 };
-use crate::{handle_output, handle_status, render_file_preview};
+use crate::{handle_status, render_file_preview};
 use bitcoin::PublicKey;
 use flexi_logger::{AdaptiveFormat, Duplicate, FileSpec, Logger};
 use nu_ansi_term::Color;
@@ -144,11 +144,27 @@ impl ExchangeShell {
                         if let Err(err) = generator.generate("gen") {
                             eprintln!("Error generating C++ file: {:?}", err);
                         }
-                        let _ = copy_to_directory("gen.cpp", &get_emp_copy_path()).unwrap();
+                        tokio::runtime::Runtime::new().unwrap().block_on(async {
+                            let _ = copy_to_directory("gen.cpp", &get_emp_copy_path()).await;
+                        });
                         let output = execute_make_install();
                         handle_status!(output);
                         let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
-                        handle_output!(output);
+                        let out = output.unwrap();
+                        if out.status.code().unwrap() != 0 {
+                            log::error!("Error proving membership");
+                            break;
+                        } else {
+                            let string: String = std::str::from_utf8(&out.stdout)?.to_owned();
+                            let strings: Vec<&str> = string.split("\n").collect();
+                            println!("{:?}", strings[1]);
+                            if strings[2].len() == 0 {
+                                continue;
+                            }
+                            println!("{:?}", strings[2]);
+                        }
+                        // handle_output!(output);
+                        // println!("{}", retrieve_membership_string(output)?);
                     }
                     if args[0] == "createPrivateKey" {
                         create_private_key();
@@ -187,7 +203,12 @@ impl ExchangeShell {
                             }
                             Err(err) => {
                                 log::error!("{:?}", err);
-                                continue;
+                                log::info!("Generating key ad-hoc");
+                                let s = secp256k1::Secp256k1::new();
+                                let key = bitcoin::PublicKey::new(
+                                    s.generate_keypair(&mut rand::thread_rng()).1,
+                                );
+                                retrieved_bytes = key.to_bytes();
                             }
                         };
 
@@ -209,8 +230,11 @@ impl ExchangeShell {
                         cmd_table();
                     }
                 }
-                Signal::CtrlD | Signal::CtrlC => {
+                Signal::CtrlD => {
                     break;
+                }
+                Signal::CtrlC => {
+                    continue;
                 }
             }
         }

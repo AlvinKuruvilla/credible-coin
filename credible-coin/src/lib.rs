@@ -81,6 +81,8 @@
 //! Currently the plan is to implement this system for Bitcoin, however, this crate should be built so
 //! that it should relatively easy to implement for other cryptocurrency exchanges
 
+use std::io::{stdin, stdout, Read, Write};
+
 #[macro_use]
 extern crate lazy_static;
 
@@ -91,3 +93,9 @@ pub mod emp;
 pub mod errors;
 pub mod merkle_tree_entry;
 pub mod utils;
+pub(crate) fn _pause() {
+    let mut stdout = stdout();
+    stdout.write(b"Press Enter to continue...").unwrap();
+    stdout.flush().unwrap();
+    stdin().read(&mut [0]).unwrap();
+}

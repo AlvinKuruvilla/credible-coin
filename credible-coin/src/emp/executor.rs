@@ -2,7 +2,11 @@ use crate::credible_config::get_emp_root_path;
 use crate::errors::CommandError;
 use std::io::{self, Write};
 use std::process::{Command, ExitStatus, Output, Stdio};
-
+use std::sync::Mutex;
+lazy_static! {
+    static ref MAKE_LOCK: Mutex<()> = Mutex::new(());
+    static ref BINARY_EXEC_LOCK: Mutex<()> = Mutex::new(());
+}
 /// Change the current directory to the specified one, execute the command with sudo, and revert back to the original directory.
 ///
 /// # Arguments
@@ -88,10 +92,13 @@ pub fn sudo_execute_with_output(
 /// it returns a `CommandError`.
 ///
 pub fn execute_make_install() -> Result<ExitStatus, CommandError> {
+    let _lock: std::sync::MutexGuard<'_, ()> = MAKE_LOCK.lock().unwrap();
     // Ccache should already be being used because I exported the environment
     // variable and saw the performance difference
     // See: https://stackoverflow.com/a/37828605
     let num_jobs = num_cpus::get().to_string();
+    // TODO: use just 'make' not 'make install' to avoid the overhead of sudo permissions
+    // https://stackoverflow.com/questions/16637860/why-make-before-make-install
     sudo_execute(&get_emp_root_path(), "make", &["install", "-j", &num_jobs])
 }
 /// Executes the `make install` command with multi-threading support.
@@ -111,6 +118,7 @@ pub fn execute_make_install() -> Result<ExitStatus, CommandError> {
 /// it returns a `CommandError`.
 ///
 pub fn execute_compiled_binary(binary_path: String) -> Result<Output, CommandError> {
+    let _lock: std::sync::MutexGuard<'_, ()> = BINARY_EXEC_LOCK.lock().unwrap();
     sudo_execute_with_output(&get_emp_root_path(), "./run", &[&binary_path])
 }
 #[macro_export]
@@ -260,4 +268,14 @@ pub fn retrieve_membership_string(
             Err(err)
         }
     }
+}
+/// We heavily rely on ccache to speed up "make install"
+/// so we want the user to have it installed
+pub fn is_ccache_installed() -> bool {
+    Command::new("sh")
+        .arg("-c")
+        .arg("ccache --version")
+        .output()
+        .map(|output| output.status.success())
+        .unwrap_or(false)
 }
