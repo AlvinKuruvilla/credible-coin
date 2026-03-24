@@ -14,6 +14,12 @@ use serde::{Deserialize, Serialize};
 pub struct MembershipProof {
     is_member: bool,
 }
+impl MembershipProof {
+    /// Returns whether the element is a member of the set.
+    pub fn is_member(&self) -> bool {
+        self.is_member
+    }
+}
 /// Common Functionality an accumulator should have
 pub trait AbstractAccumulator {
     /// Prove that a [`Merkle Tree

@@ -3,15 +3,13 @@ use crate::cli::exchange::exchange_functions::{
     cmd_table, create_new_tree_from_file, create_private_key, create_rng,
 };
 use crate::cli::{arg_sanitizer, convert_to_string_vec, ArgsList, CliError};
-use crate::credible_config::get_emp_copy_path;
-use crate::emp::cpp_gen::{copy_to_directory, CppFileGenerator};
-use crate::emp::executor::{execute_compiled_binary, execute_make_install};
+use crate::credible_config::{get_circuit_file_path, get_entries_file_path};
 use crate::utils::csv_utils::get_address_position;
-use crate::utils::get_project_root;
 use crate::utils::{
     bitcoin_utils::generate_address_with_provided_public_key, csv_utils::append_record,
 };
-use crate::{handle_status, render_file_preview};
+use crate::render_file_preview;
+use emp_rs::merkle::prove_membership_from_file;
 use bitcoin::PublicKey;
 use flexi_logger::{AdaptiveFormat, Duplicate, FileSpec, Logger};
 use nu_ansi_term::Color;
@@ -22,7 +20,7 @@ use reedline::{
 };
 use rs_merkle::algorithms::Sha256;
 use rs_merkle::MerkleTree;
-use std::collections::HashMap;
+
 
 #[derive(Default)]
 pub(crate) struct ExchangeShell {
@@ -114,21 +112,17 @@ impl ExchangeShell {
                     }
                     if args[0] == "proveMembership" {
                         arg_sanitizer::sanitize_args!(args, 1, "No public address provided");
-                        // It should be safe to unwrap here because of all of the previous checking
                         let public_address = args.get(1).unwrap();
                         println!("Public address{:?}", public_address);
-                        // NOTE: I think running like this a lot breaks my run script for some reason
-                        // so we need to be careful
-                        // FIXME: Use the arguments
-                        let mutex = std::sync::Mutex::new(());
-                        let _guard = mutex.lock().unwrap();
-                        let mut sub_map: HashMap<String, String> = HashMap::new();
-                        // TODO: The value needs to be the address position
-                        match get_address_position(&self.filename, public_address.to_string(), None)
-                        {
+
+                        let pos = match get_address_position(
+                            &self.filename,
+                            public_address.to_string(),
+                            None,
+                        ) {
                             Ok(pos) => {
                                 log::info!("Address position {:?}", pos);
-                                sub_map.insert("actual_leaf_index".to_string(), pos.to_string());
+                                pos
                             }
                             Err(e) => {
                                 log::error!(
@@ -138,33 +132,23 @@ impl ExchangeShell {
                                 );
                                 continue;
                             }
-                        }
-                        let generator =
-                            CppFileGenerator::new(&get_project_root().unwrap(), sub_map);
-                        if let Err(err) = generator.generate("gen") {
-                            eprintln!("Error generating C++ file: {:?}", err);
-                        }
-                        tokio::runtime::Runtime::new().unwrap().block_on(async {
-                            let _ = copy_to_directory("gen.cpp", &get_emp_copy_path()).await;
-                        });
-                        let output = execute_make_install();
-                        handle_status!(output);
-                        let output = execute_compiled_binary("bin/test_bool_gen".to_owned());
-                        let out = output.unwrap();
-                        if out.status.code().unwrap() != 0 {
-                            log::error!("Error proving membership");
-                            break;
-                        } else {
-                            let string: String = std::str::from_utf8(&out.stdout)?.to_owned();
-                            let strings: Vec<&str> = string.split("\n").collect();
-                            println!("{:?}", strings[1]);
-                            if strings[2].len() == 0 {
-                                continue;
+                        };
+
+                        let entries_file = get_entries_file_path();
+                        let circuit_file = get_circuit_file_path();
+
+                        match prove_membership_from_file(&entries_file, &circuit_file, pos) {
+                            Ok(proof) => {
+                                if proof.is_member {
+                                    println!("leaf does have path to root");
+                                } else {
+                                    println!("leaf does NOT have path to root");
+                                }
                             }
-                            println!("{:?}", strings[2]);
+                            Err(e) => {
+                                log::error!("Error proving membership: {:?}", e);
+                            }
                         }
-                        // handle_output!(output);
-                        // println!("{}", retrieve_membership_string(output)?);
                     }
                     if args[0] == "createPrivateKey" {
                         create_private_key();

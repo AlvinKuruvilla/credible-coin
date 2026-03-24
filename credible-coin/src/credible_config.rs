@@ -1,6 +1,8 @@
-//! A type holding all of our configuration properties. Namely:
-//! 1. emp_path: The path to the emp project test directory where we put generated c++ files for membership proofs
-//! 2. emp_root_path: The path to the emp project root directory
+//! Configuration for credible-coin.
+//!
+//! Required fields:
+//! 1. circuit_file: Path to the SHA-256 Bristol format circuit file
+//! 2. entries_file: Path to the entries file (address value pairs) for Merkle tree construction
 use std::sync::RwLock;
 
 use config::{Config, ConfigError, File, FileFormat};
@@ -8,8 +10,8 @@ use serde::Deserialize;
 
 #[derive(Debug, Deserialize, Clone)]
 struct CredibleConfig {
-    emp_path: String,
-    emp_root_path: String,
+    circuit_file: String,
+    entries_file: String,
 }
 lazy_static! {
     static ref CONFIG: RwLock<Option<CredibleConfig>> = RwLock::new(None);
@@ -22,60 +24,30 @@ fn get_config() -> Result<CredibleConfig, ConfigError> {
     let settings = config.try_deserialize::<CredibleConfig>()?;
     Ok(settings)
 }
-/// Retrieves the path for the EMP copy from the configuration.
-///
-/// This function fetches the configuration using the `get_config` function and returns
-/// the `emp_path` from the configuration.
-///
-/// # Returns
-///
-/// A `String` containing the EMP copy path.
-///
-/// # Panics
-///
-/// This function will panic if it fails to fetch the configuration.
-pub fn get_emp_copy_path() -> String {
+
+fn ensure_config() -> CredibleConfig {
     {
         let config_read = CONFIG.read().unwrap();
         if let Some(conf) = &*config_read {
-            return conf.emp_path.clone();
+            return conf.clone();
         }
     }
 
     let config = get_config().unwrap();
-    let path = config.emp_path.clone();
+    let result = config.clone();
 
     let mut config_write = CONFIG.write().unwrap();
     *config_write = Some(config);
 
-    path
+    result
 }
-/// Retrieves the root path for EMP from the configuration.
-///
-/// This function fetches the configuration using the `get_config` function and returns
-/// the `emp_root_path` from the configuration.
-///
-/// # Returns
-///
-/// A `String` containing the EMP root path.
-///
-/// # Panics
-///
-/// This function will panic if it fails to fetch the configuration.
 
-pub fn get_emp_root_path() -> String {
-    {
-        let config_read = CONFIG.read().unwrap();
-        if let Some(conf) = &*config_read {
-            return conf.emp_root_path.clone();
-        }
-    }
+/// Retrieves the path to the SHA-256 Bristol format circuit file.
+pub fn get_circuit_file_path() -> String {
+    ensure_config().circuit_file
+}
 
-    let config = get_config().unwrap();
-    let path = config.emp_root_path.clone();
-
-    let mut config_write = CONFIG.write().unwrap();
-    *config_write = Some(config);
-
-    path
+/// Retrieves the path to the entries file for Merkle tree construction.
+pub fn get_entries_file_path() -> String {
+    ensure_config().entries_file
 }
